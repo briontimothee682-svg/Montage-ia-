@@ -9,16 +9,16 @@
   "brand": {
     "name": "TIM DESIGN",
     "palette_canva": {
-      "matte_black": "#0D0D0D",
-      "brushed_gold": "#C9A24D",
-      "warm_cream": "#F3E9D7"
+      "matte_black": "#111111",
+      "brushed_gold": "#C9A24B",
+      "warm_cream": "#F3EEE3"
     },
-    "palette_note": "replace these hex codes with the exact brand colors saved in Canva; use them for the color grade, the TIM DESIGN lettering and the ABONNEZ-VOUS text",
+    "palette_note": "exact brand colors saved in Canva: black #111111 for backgrounds and the color grade, gold #C9A24B for the TIM DESIGN lettering, the logo and the ABONNEZ-VOUS text, cream #F3EEE3 for secondary text",
     "typography": "elegant serif capitals with wide letter spacing, brushed gold"
   },
   "global_style": {
     "look": "cinematic high-end commercial, photorealistic, 4K",
-    "color_palette": "strictly the TIM DESIGN brand palette: matte black, brushed gold and warm cream",
+    "color_palette": "strictly the TIM DESIGN brand palette: matte black #111111, brushed gold #C9A24B and warm cream #F3EEE3",
     "lighting": "moody low-key lighting, warm golden highlights from brass pendant lamps, deep blacks",
     "grade": "slightly desaturated cinematic grade, warm tones",
     "lens": "35mm anamorphic look, subject razor sharp with crisp fine detail, soft creamy bokeh background",
@@ -156,7 +156,7 @@
       "subject": "the TIM DESIGN Instagram profile filling the frame",
       "camera": "slow push-in",
       "motion": "gold text 'ABONNEZ-VOUS' appearing over the screen with a light shimmer",
-      "editing_note": "add the ABONNEZ-VOUS text in editing (Canva / CapCut) in the brand gold, serif capitals",
+      "editing_note": "add the ABONNEZ-VOUS text in editing (Canva / CapCut) in gold #C9A24B, serif capitals",
       "transition_out": "gold flash, then fade to darker image"
     },
     {
@@ -167,7 +167,7 @@
       "subject": "dark close-up of a gold hair clipper on black leather, very low-key lighting",
       "camera": "almost static, very slow push-in",
       "motion": "faint golden glint along the blade",
-      "editing_note": "keep the image dark and calm with empty space in the center; overlay the TIM DESIGN logo and 'ABONNEZ-VOUS' in brand gold below it"
+      "editing_note": "keep the image dark and calm with empty space in the center; overlay the TIM DESIGN logo and 'ABONNEZ-VOUS' in gold #C9A24B, with any secondary text (handle, address) in cream #F3EEE3"
     }
   ],
   "negative_prompt": "people, person, clients, barbers, hands, fingers, arms, faces, body parts, silhouettes, reflections of people in mirrors, any text other than 'TIM DESIGN', misspelled lettering, garbled letters, other brand names or logos, watermark, subtitles, cartoon, illustration, CGI look, plastic textures, oversaturated colors, colors outside the black/gold/cream brand palette (blue, green, red, pink, cold chrome silver), neon lights, daylight, windows with outdoor views, harsh flat lighting, overexposed or blown-out highlights, blurry or out-of-focus subject, warped or melting objects, deformed tools, extra blades, duplicated objects, clutter, mess, hair on the floor, dirt, flicker artifacts, jitter, shaky handheld camera, fisheye distortion, dutch angle, low resolution, noise, compression artifacts"
