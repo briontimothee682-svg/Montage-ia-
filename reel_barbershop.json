@@ -1,0 +1,120 @@
+{
+  "format": {
+    "aspect_ratio": "9:16",
+    "resolution": "1080x1920",
+    "duration_seconds": 16.5,
+    "fps": 30,
+    "use": "Instagram Reel for a luxury barbershop"
+  },
+  "global_style": {
+    "look": "cinematic high-end commercial, photorealistic, 4K",
+    "color_palette": "strictly matte black, brushed gold and warm cream",
+    "lighting": "moody low-key lighting, warm golden highlights from brass pendant lamps, deep blacks",
+    "grade": "slightly desaturated cinematic grade, warm tones",
+    "lens": "35mm anamorphic look, subject razor sharp with crisp fine detail, soft creamy bokeh background",
+    "location": "upscale modern barbershop, completely empty, no clients, matte black walls, cream marble floor, dark walnut counters",
+    "editing_rhythm": "fast-paced cuts synced to a beat, inspired by premium barbershop social media reels"
+  },
+  "shots": [
+    {
+      "id": 1,
+      "time": "0.0-0.4s",
+      "purpose": "hook",
+      "subject": "extreme macro of a matte black pomade jar with a brushed gold lid on a dark wooden shelf",
+      "camera": "fast rack focus from blurred foreground to the jar",
+      "motion": "golden light glinting on the lid",
+      "transition_out": "hard cut on beat"
+    },
+    {
+      "id": 2,
+      "time": "0.4-0.8s",
+      "purpose": "hook",
+      "subject": "vintage barber pole with black and gold spiral stripes and a glowing cream-white globe on a dark wall",
+      "camera": "low angle close-up, quick upward tilt",
+      "motion": "spiral rotating",
+      "transition_out": "hard cut on beat"
+    },
+    {
+      "id": 3,
+      "time": "0.8-1.2s",
+      "purpose": "hook",
+      "subject": "macro of a professional gold metal hair clipper resting on black leather",
+      "camera": "fast lateral slide along the blade",
+      "motion": "sharp highlights moving across the gold teeth",
+      "transition_out": "hard cut on beat"
+    },
+    {
+      "id": 4,
+      "time": "1.2-1.6s",
+      "purpose": "hook",
+      "subject": "ceiling of the salon with brass pendant lamps glowing warm",
+      "camera": "low angle, slow push upward",
+      "motion": "lamps glowing with a subtle flicker",
+      "transition_out": "hard cut on beat"
+    },
+    {
+      "id": 5,
+      "time": "1.6-2.8s",
+      "purpose": "hook",
+      "subject": "gold straight razor opening slowly on a folded cream towel",
+      "camera": "macro, locked-off",
+      "motion": "blade catching a flash of golden light",
+      "transition_out": "cut to pure black for 0.2s on the beat drop"
+    },
+    {
+      "id": 6,
+      "time": "3.0-5.0s",
+      "purpose": "salon reveal",
+      "subject": "wide shot of the empty salon: two black leather barber chairs with gold details, round gold-framed mirrors, brass pendant lamps",
+      "camera": "slow smooth dolly-in at chest height",
+      "motion": "dust particles drifting in the light beams",
+      "transition_out": "hard cut"
+    },
+    {
+      "id": 7,
+      "time": "5.0-7.0s",
+      "purpose": "tools",
+      "subject": "top-down view of a barber station: straight razor, black combs, gold scissors, shaving brush, cream towel neatly arranged on dark walnut",
+      "camera": "slow lateral slide",
+      "motion": "warm light reflections moving on the metal",
+      "transition_out": "quick white-gold flash"
+    },
+    {
+      "id": 8,
+      "time": "7.0-9.0s",
+      "purpose": "detail",
+      "subject": "close-up of a black leather barber chair headrest and gold armrest",
+      "camera": "slow sideways tracking",
+      "motion": "warm reflections gliding on the leather",
+      "transition_out": "hard cut"
+    },
+    {
+      "id": 9,
+      "time": "9.0-11.0s",
+      "purpose": "products",
+      "subject": "floating dark wood shelves with rows of matte black and amber glass grooming products with gold caps, plain unlabeled packaging",
+      "camera": "slow lateral tracking",
+      "motion": "light glinting on the gold caps",
+      "transition_out": "hard cut"
+    },
+    {
+      "id": 10,
+      "time": "11.0-13.0s",
+      "purpose": "atmosphere",
+      "subject": "round gold-framed mirror reflecting the empty salon and the warm pendant lights",
+      "camera": "slow push-in toward the mirror",
+      "motion": "reflections shifting softly",
+      "transition_out": "slow fade to darker image"
+    },
+    {
+      "id": 11,
+      "time": "13.0-16.5s",
+      "purpose": "background plate for logo overlay",
+      "subject": "dark close-up of a gold hair clipper on black leather, very low-key lighting",
+      "camera": "almost static, very slow push-in",
+      "motion": "faint golden glint along the blade",
+      "notes": "keep the image dark and calm with empty space in the center for the logo added in editing"
+    }
+  ],
+  "negative_prompt": "people, hands, faces, clients, barbers, body parts, reflections of people in mirrors, text, letters, numbers, logos, brand names, product labels, signage, watermark, subtitles, cartoon, illustration, CGI look, plastic textures, oversaturated colors, colors outside the black/gold/cream palette (blue, green, red, pink, cold chrome silver), neon lights, daylight, windows with outdoor views, harsh flat lighting, overexposed or blown-out highlights, blurry or out-of-focus subject, warped or melting objects, deformed tools, extra blades, duplicated objects, clutter, mess, hair on the floor, dirt, flicker artifacts, jitter, shaky handheld camera, fisheye distortion, dutch angle, low resolution, noise, grain artifacts, compression artifacts"
+}
