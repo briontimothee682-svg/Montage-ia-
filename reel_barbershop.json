@@ -2,32 +2,45 @@
   "format": {
     "aspect_ratio": "9:16",
     "resolution": "1080x1920",
-    "duration_seconds": 16.5,
+    "duration_seconds": 19.0,
     "fps": 30,
-    "use": "Instagram Reel for a luxury barbershop"
+    "use": "Instagram Reel for the luxury barbershop TIM DESIGN"
+  },
+  "brand": {
+    "name": "TIM DESIGN",
+    "palette_canva": {
+      "matte_black": "#0D0D0D",
+      "brushed_gold": "#C9A24D",
+      "warm_cream": "#F3E9D7"
+    },
+    "palette_note": "replace these hex codes with the exact brand colors saved in Canva; use them for the color grade, the TIM DESIGN lettering and the ABONNEZ-VOUS text",
+    "typography": "elegant serif capitals with wide letter spacing, brushed gold"
   },
   "global_style": {
     "look": "cinematic high-end commercial, photorealistic, 4K",
-    "color_palette": "strictly matte black, brushed gold and warm cream",
+    "color_palette": "strictly the TIM DESIGN brand palette: matte black, brushed gold and warm cream",
     "lighting": "moody low-key lighting, warm golden highlights from brass pendant lamps, deep blacks",
     "grade": "slightly desaturated cinematic grade, warm tones",
     "lens": "35mm anamorphic look, subject razor sharp with crisp fine detail, soft creamy bokeh background",
-    "location": "upscale modern barbershop, completely empty, no clients, matte black walls, cream marble floor, dark walnut counters",
-    "editing_rhythm": "fast-paced cuts synced to a beat, inspired by premium barbershop social media reels"
+    "location": "upscale modern barbershop, completely empty, nobody inside, matte black walls, cream marble floor, dark walnut counters",
+    "content_rule": "only the salon, the tools and the products, never any person",
+    "editing_rhythm": "fast-paced cuts synced to a beat, alternating close-up and wide shots, inspired by premium barbershop social media reels"
   },
   "shots": [
     {
       "id": 1,
       "time": "0.0-0.4s",
+      "scale": "close",
       "purpose": "hook",
-      "subject": "extreme macro of a matte black pomade jar with a brushed gold lid on a dark wooden shelf",
+      "subject": "extreme macro of a matte black pomade jar with a brushed gold lid engraved 'TIM DESIGN' on a dark wooden shelf",
       "camera": "fast rack focus from blurred foreground to the jar",
-      "motion": "golden light glinting on the lid",
+      "motion": "golden light glinting on the engraved lid",
       "transition_out": "hard cut on beat"
     },
     {
       "id": 2,
       "time": "0.4-0.8s",
+      "scale": "close",
       "purpose": "hook",
       "subject": "vintage barber pole with black and gold spiral stripes and a glowing cream-white globe on a dark wall",
       "camera": "low angle close-up, quick upward tilt",
@@ -37,6 +50,7 @@
     {
       "id": 3,
       "time": "0.8-1.2s",
+      "scale": "close",
       "purpose": "hook",
       "subject": "macro of a professional gold metal hair clipper resting on black leather",
       "camera": "fast lateral slide along the blade",
@@ -46,6 +60,7 @@
     {
       "id": 4,
       "time": "1.2-1.6s",
+      "scale": "wide",
       "purpose": "hook",
       "subject": "ceiling of the salon with brass pendant lamps glowing warm",
       "camera": "low angle, slow push upward",
@@ -55,6 +70,7 @@
     {
       "id": 5,
       "time": "1.6-2.8s",
+      "scale": "close",
       "purpose": "hook",
       "subject": "gold straight razor opening slowly on a folded cream towel",
       "camera": "macro, locked-off",
@@ -64,57 +80,95 @@
     {
       "id": 6,
       "time": "3.0-5.0s",
-      "purpose": "salon reveal",
-      "subject": "wide shot of the empty salon: two black leather barber chairs with gold details, round gold-framed mirrors, brass pendant lamps",
+      "scale": "wide",
+      "purpose": "salon overview",
+      "subject": "wide establishing shot of the whole empty salon: two black leather barber chairs with gold details, round gold-framed mirrors, brass pendant lamps, cream marble floor",
       "camera": "slow smooth dolly-in at chest height",
       "motion": "dust particles drifting in the light beams",
-      "transition_out": "hard cut"
+      "transition_out": "fast zoom-in transition (wide to close) toward the nearest chair, with motion blur on the beat"
     },
     {
       "id": 7,
-      "time": "5.0-7.0s",
-      "purpose": "tools",
-      "subject": "top-down view of a barber station: straight razor, black combs, gold scissors, shaving brush, cream towel neatly arranged on dark walnut",
-      "camera": "slow lateral slide",
-      "motion": "warm light reflections moving on the metal",
-      "transition_out": "quick white-gold flash"
-    },
-    {
-      "id": 8,
-      "time": "7.0-9.0s",
-      "purpose": "detail",
+      "time": "5.0-6.5s",
+      "scale": "close",
+      "purpose": "salon detail",
       "subject": "close-up of a black leather barber chair headrest and gold armrest",
       "camera": "slow sideways tracking",
       "motion": "warm reflections gliding on the leather",
       "transition_out": "hard cut"
     },
     {
+      "id": 8,
+      "time": "6.5-8.5s",
+      "scale": "close",
+      "purpose": "tools",
+      "subject": "top-down view of a barber station: straight razor, black combs, gold scissors, shaving brush, cream towel neatly arranged on dark walnut",
+      "camera": "slow lateral slide",
+      "motion": "warm light reflections moving on the metal",
+      "transition_out": "fast pull-back transition (close to wide) on the beat"
+    },
+    {
       "id": 9,
-      "time": "9.0-11.0s",
-      "purpose": "products",
-      "subject": "floating dark wood shelves with rows of matte black and amber glass grooming products with gold caps, plain unlabeled packaging",
-      "camera": "slow lateral tracking",
-      "motion": "light glinting on the gold caps",
-      "transition_out": "hard cut"
+      "time": "8.5-9.5s",
+      "scale": "wide",
+      "purpose": "salon overview",
+      "subject": "wide view of the full row of barber stations and mirrors, empty salon",
+      "camera": "fast crane-up revealing the whole room",
+      "motion": "pendant lights flaring softly",
+      "transition_out": "quick white-gold flash"
     },
     {
       "id": 10,
-      "time": "11.0-13.0s",
-      "purpose": "atmosphere",
-      "subject": "round gold-framed mirror reflecting the empty salon and the warm pendant lights",
-      "camera": "slow push-in toward the mirror",
-      "motion": "reflections shifting softly",
-      "transition_out": "slow fade to darker image"
+      "time": "9.5-11.5s",
+      "scale": "medium",
+      "purpose": "products",
+      "subject": "floating dark wood shelves with rows of matte black and amber glass grooming products with gold caps, every label printed 'TIM DESIGN' in brushed gold serif capitals",
+      "camera": "slow lateral tracking",
+      "motion": "light glinting on the gold caps and lettering",
+      "transition_out": "fast zoom-in transition (medium to close) on one bottle"
     },
     {
       "id": 11,
-      "time": "13.0-16.5s",
-      "purpose": "background plate for logo overlay",
+      "time": "11.5-12.5s",
+      "scale": "close",
+      "purpose": "products",
+      "subject": "macro of a matte black bottle, the gold 'TIM DESIGN' lettering sharp and centered",
+      "camera": "slow rotation around the bottle",
+      "motion": "a line of golden light sweeping across the lettering",
+      "transition_out": "hard cut on beat"
+    },
+    {
+      "id": 12,
+      "time": "12.5-14.5s",
+      "scale": "medium",
+      "purpose": "instagram call to action",
+      "subject": "matte black smartphone rising up by itself from behind a dark walnut counter into frame, standing upright, screen showing the TIM DESIGN Instagram profile page",
+      "camera": "low angle, slow push-in toward the screen",
+      "motion": "phone sliding up smoothly, screen lighting up, salon softly blurred behind",
+      "editing_note": "generate the phone with a plain green or black screen, then insert a real screenshot of the TIM DESIGN Instagram page in editing (AI cannot reproduce the page reliably)",
+      "transition_out": "push through the phone screen: the screen fills the whole frame"
+    },
+    {
+      "id": 13,
+      "time": "14.5-16.0s",
+      "scale": "close",
+      "purpose": "instagram call to action",
+      "subject": "the TIM DESIGN Instagram profile filling the frame",
+      "camera": "slow push-in",
+      "motion": "gold text 'ABONNEZ-VOUS' appearing over the screen with a light shimmer",
+      "editing_note": "add the ABONNEZ-VOUS text in editing (Canva / CapCut) in the brand gold, serif capitals",
+      "transition_out": "gold flash, then fade to darker image"
+    },
+    {
+      "id": 14,
+      "time": "16.0-19.0s",
+      "scale": "close",
+      "purpose": "end plate: logo + subscribe",
       "subject": "dark close-up of a gold hair clipper on black leather, very low-key lighting",
       "camera": "almost static, very slow push-in",
       "motion": "faint golden glint along the blade",
-      "notes": "keep the image dark and calm with empty space in the center for the logo added in editing"
+      "editing_note": "keep the image dark and calm with empty space in the center; overlay the TIM DESIGN logo and 'ABONNEZ-VOUS' in brand gold below it"
     }
   ],
-  "negative_prompt": "people, hands, faces, clients, barbers, body parts, reflections of people in mirrors, text, letters, numbers, logos, brand names, product labels, signage, watermark, subtitles, cartoon, illustration, CGI look, plastic textures, oversaturated colors, colors outside the black/gold/cream palette (blue, green, red, pink, cold chrome silver), neon lights, daylight, windows with outdoor views, harsh flat lighting, overexposed or blown-out highlights, blurry or out-of-focus subject, warped or melting objects, deformed tools, extra blades, duplicated objects, clutter, mess, hair on the floor, dirt, flicker artifacts, jitter, shaky handheld camera, fisheye distortion, dutch angle, low resolution, noise, grain artifacts, compression artifacts"
+  "negative_prompt": "people, person, clients, barbers, hands, fingers, arms, faces, body parts, silhouettes, reflections of people in mirrors, any text other than 'TIM DESIGN', misspelled lettering, garbled letters, other brand names or logos, watermark, subtitles, cartoon, illustration, CGI look, plastic textures, oversaturated colors, colors outside the black/gold/cream brand palette (blue, green, red, pink, cold chrome silver), neon lights, daylight, windows with outdoor views, harsh flat lighting, overexposed or blown-out highlights, blurry or out-of-focus subject, warped or melting objects, deformed tools, extra blades, duplicated objects, clutter, mess, hair on the floor, dirt, flicker artifacts, jitter, shaky handheld camera, fisheye distortion, dutch angle, low resolution, noise, compression artifacts"
 }
