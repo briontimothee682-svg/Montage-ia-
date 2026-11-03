@@ -1,6 +1,6 @@
 # Prompt à coller dans l'IA de montage
 
-Colle le texte sous la ligne avec tes 22 vidéos `shot_XX.mp4`, `assets/logo_atelier47.png`, `assets/fiche_tarifs.jpg` et `instagram_screenshot.png`.
+Colle le texte sous la ligne avec tes 23 vidéos `shot_XX.mp4`, `assets/logo_atelier47.png`, `assets/fiche_tarifs.jpg` et `instagram_screenshot.png`.
 
 ---
 
@@ -39,10 +39,11 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
     "cut on the beat; alternate close-ups and wide shots exactly as listed",
     "upscale every clip to 1080x1920 (CapCut: Enhance quality) and trim the first and last 5 frames of each generated clip",
     "speed ramps on every transition: 100% -> 200% in the last 6 frames of the outgoing shot, 200% -> 100% in the first 6 frames of the next",
-    "product close-ups (shots 2-5, 10, 11, 20) slowed to 70-80% with optical-flow interpolation",
+    "product close-ups (shots 3-6, 11, 12, 21) slowed to 70-80% with optical-flow interpolation",
     "keep all text inside the Instagram safe zone: 250px top, 420px bottom, 140px right, 80px left",
     "text only in gold #C9A24B or cream #F3EEE3, font Poppins",
-    "shots 15-16: if the generated Instagram screen is not perfectly readable, pin instagram_screenshot.png onto the phone screen with corner-pin tracking",
+    "shots 16-18 (phone + Instagram + ABONNEZ-VOUS) are MANDATORY: never remove or shorten them",
+    "shots 16-17: key out the green phone screen (Chroma key) and place instagram_screenshot.png on it, scaled and keyframed to follow the screen",
     "the last frame fades to black so the reel loops cleanly into the first shot"
   ],
   "color_grade": {
@@ -59,13 +60,21 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
     {
       "clip": "shot_01.mp4",
       "in": 0.0,
-      "out": 3.5,
+      "out": 2.0,
       "scale": "wide",
-      "content": "Façade Atelier 47 de nuit, puis entrée",
-      "transition_out": "hard cut on the bass drop with a 3-frame camera shake"
+      "content": "Façade Atelier 47 de nuit, en entier",
+      "transition_out": "push-through transition: fast push into the glass door with a warm light flare"
     },
     {
       "clip": "shot_02.mp4",
+      "in": 2.0,
+      "out": 3.5,
+      "scale": "wide",
+      "content": "Juste après la porte : le salon s'ouvre",
+      "transition_out": "hard cut on the bass drop with a 3-frame camera shake"
+    },
+    {
+      "clip": "shot_03.mp4",
       "in": 3.5,
       "out": 3.9,
       "scale": "close",
@@ -73,15 +82,15 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "hard cut on beat with a 2-frame white-gold flash"
     },
     {
-      "clip": "shot_03.mp4",
+      "clip": "shot_04.mp4",
       "in": 3.9,
       "out": 4.3,
       "scale": "close",
-      "content": "Ciseaux dorés",
+      "content": "Goutte d'huile à barbe",
       "transition_out": "hard cut on beat with a 2-frame white-gold flash"
     },
     {
-      "clip": "shot_04.mp4",
+      "clip": "shot_05.mp4",
       "in": 4.3,
       "out": 4.7,
       "scale": "close",
@@ -89,7 +98,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "hard cut on beat with a 2-frame white-gold flash"
     },
     {
-      "clip": "shot_05.mp4",
+      "clip": "shot_06.mp4",
       "in": 4.7,
       "out": 5.1,
       "scale": "close",
@@ -97,7 +106,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "hard cut on beat"
     },
     {
-      "clip": "shot_06.mp4",
+      "clip": "shot_07.mp4",
       "in": 5.1,
       "out": 8.0,
       "scale": "wide",
@@ -105,15 +114,15 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "speed-ramped zoom-in transition (wide to close) with strong motion blur"
     },
     {
-      "clip": "shot_07.mp4",
+      "clip": "shot_08.mp4",
       "in": 8.0,
       "out": 10.0,
       "scale": "close",
-      "content": "Outils vus de dessus",
+      "content": "Outils du barbier à plat, vus de dessus",
       "transition_out": "speed-ramped pull-back transition (close to wide) with motion blur"
     },
     {
-      "clip": "shot_08.mp4",
+      "clip": "shot_09.mp4",
       "in": 10.0,
       "out": 12.5,
       "scale": "wide",
@@ -121,7 +130,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "push-in transition straight into the TV with a soft blur"
     },
     {
-      "clip": "shot_09.mp4",
+      "clip": "shot_10.mp4",
       "in": 12.5,
       "out": 14.0,
       "scale": "close",
@@ -129,7 +138,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "whip-pan transition with motion blur and a gold light leak"
     },
     {
-      "clip": "shot_10.mp4",
+      "clip": "shot_11.mp4",
       "in": 14.0,
       "out": 16.5,
       "scale": "close",
@@ -137,7 +146,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "speed-ramped zoom-in transition onto one bottle"
     },
     {
-      "clip": "shot_11.mp4",
+      "clip": "shot_12.mp4",
       "in": 16.5,
       "out": 18.0,
       "scale": "close",
@@ -145,7 +154,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "speed-ramped pull-back transition (close to wide)"
     },
     {
-      "clip": "shot_12.mp4",
+      "clip": "shot_13.mp4",
       "in": 18.0,
       "out": 20.5,
       "scale": "wide",
@@ -153,7 +162,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "hard cut on the beat"
     },
     {
-      "clip": "shot_13.mp4",
+      "clip": "shot_14.mp4",
       "in": 20.5,
       "out": 22.5,
       "scale": "close",
@@ -169,23 +178,23 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "gold flash transition"
     },
     {
-      "clip": "shot_15.mp4",
+      "clip": "shot_16.mp4",
       "in": 25.5,
       "out": 28.5,
       "scale": "medium",
-      "content": "Le téléphone apparaît devant le salon",
+      "content": "OBLIGATOIRE · Téléphone sur le comptoir",
       "transition_out": "continuous push-in, no cut"
     },
     {
-      "clip": "shot_16.mp4",
+      "clip": "shot_17.mp4",
       "in": 28.5,
       "out": 31.5,
       "scale": "close",
-      "content": "Écran Instagram lisible, ABONNEZ-VOUS",
+      "content": "OBLIGATOIRE · Écran Instagram + ABONNEZ-VOUS",
       "transition_out": "rack focus to the salon behind"
     },
     {
-      "clip": "shot_17.mp4",
+      "clip": "shot_18.mp4",
       "in": 31.5,
       "out": 33.5,
       "scale": "medium",
@@ -193,7 +202,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "whip-pan transition with motion blur"
     },
     {
-      "clip": "shot_18.mp4",
+      "clip": "shot_19.mp4",
       "in": 33.5,
       "out": 35.5,
       "scale": "close",
@@ -201,7 +210,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "speed-ramped pull-back transition (close to wide)"
     },
     {
-      "clip": "shot_19.mp4",
+      "clip": "shot_20.mp4",
       "in": 35.5,
       "out": 38.0,
       "scale": "wide",
@@ -209,7 +218,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "zoom-in transition (wide to close) with a gold light leak"
     },
     {
-      "clip": "shot_20.mp4",
+      "clip": "shot_21.mp4",
       "in": 38.0,
       "out": 40.0,
       "scale": "close",
@@ -217,7 +226,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "blur dissolve"
     },
     {
-      "clip": "shot_21.mp4",
+      "clip": "shot_22.mp4",
       "in": 40.0,
       "out": 42.0,
       "scale": "close",
@@ -225,7 +234,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "speed-ramped pull-back transition"
     },
     {
-      "clip": "shot_22.mp4",
+      "clip": "shot_23.mp4",
       "in": 42.0,
       "out": 44.5,
       "scale": "wide",
@@ -233,7 +242,7 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
       "transition_out": "soft cross-dissolve"
     },
     {
-      "clip": "shot_23.mp4",
+      "clip": "shot_24.mp4",
       "in": 44.5,
       "out": 50.0,
       "scale": "wide",

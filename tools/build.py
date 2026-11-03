@@ -31,8 +31,14 @@ PALETTE = (f"Colors strictly matte black {COLORS['black']}, brushed gold {COLORS
            "colors allowed are the natural green of the plants and the green pitch on the TV.")
 LIGHT = ("Moody low-key lighting, deep blacks, warm 2700K golden highlights from brass pendant lamps, slightly desaturated warm cinematic "
          "grade identical on every shot, subject razor sharp, soft creamy bokeh.")
-SET = ("The ATELIER 47 BARBIER salon in Annecy, an upscale modern barbershop, completely empty of people. Fixed layout, identical in every shot: "
-       "a tall glass entrance door on the street side; the reception and checkout desk just to the right of the entrance; two black leather "
+SCALE = ("Real-world scale, identical outside and inside: the shop is a wide ground-floor commercial unit, about 9 meters wide and 15 meters "
+         "deep with a 3.5-meter ceiling; the façade has two large floor-to-ceiling display windows framing a wide double glass entrance door "
+         "(2.6 m tall, 1.8 m wide, slim black frames, long vertical brass handles), so the salon looks as big from the street as it is inside.")
+PS5 = ("a white PlayStation 5 Pro standing vertically on its stand, exactly like the official product: a tall slim body with two glossy white "
+       "side covers around a glossy black center core, three thin black horizontal stripes across the middle of the white covers, a thin "
+       "blue-white light line; next to it a white DualSense controller with a black center panel, black thumbsticks and black buttons")
+SET = ("The ATELIER 47 BARBIER salon in Annecy, an upscale modern barbershop, completely empty of people. " + SCALE + " Fixed layout, identical in every shot: "
+       "the wide double glass entrance door on the street side; the reception and checkout desk just to the right of the entrance; two black leather "
        "barber chairs with gold details facing round gold-framed mirrors along the left wall; the waiting lounge at the back; a row of brass "
        "pendant lamps along the ceiling. Materials: matte black walls, cream veined marble floor, dark walnut counters. Lots of lush green "
        "plants everywhere: tall monstera and an olive tree in matte black pots, hanging pothos trailing from the ceiling, ferns on the shelves, "
@@ -40,23 +46,26 @@ SET = ("The ATELIER 47 BARBIER salon in Annecy, an upscale modern barbershop, co
        "calendar with gold accents, a black card payment terminal with a glowing screen and a contactless symbol, a black-and-gold framed price "
        f"list titled 'NOS TARIFS', and behind the desk, backlit on the black wall, {LOGO}. Waiting lounge: black leather sofa, two armchairs, a "
        "low marble coffee table with two white game controllers and a few TIM DESIGN grooming products, and a large wall-mounted flat TV above "
-       "a dark walnut TV cabinet on which a white PlayStation 5 console stands upright, its blue-white light glowing softly.")
+       "a dark walnut TV cabinet on which stands " + PS5 + ".")
 REALISM_SHORT = ("Ultra-photorealistic live-action footage, like a real commercial shot on an ARRI Alexa 35 with anamorphic and macro lenses: "
                  "true-to-life materials, physically accurate light, shadows and reflections, natural film grain. No cartoon, 3D render, CGI or AI artifacts.")
-SET_WIDE = ("Setting: the ATELIER 47 BARBIER salon, empty of people, same layout in every shot: glass entrance door, reception desk right of the "
+SET_WIDE = ("Setting: the ATELIER 47 BARBIER salon, empty of people, a large room about 9 m wide and 15 m deep with a 3.5 m ceiling, "
+            "same layout in every shot: wide double glass entrance door, reception desk right of the "
             "entrance, two black leather barber chairs facing round gold-framed mirrors on the left wall, waiting lounge at the back, a row of "
             "brass pendant lamps. Matte black walls, cream veined marble floor, dark walnut, lush green plants everywhere (monstera, olive tree, "
             "hanging pothos, ferns).")
 SET_CLOSE = ("Setting: inside the ATELIER 47 BARBIER salon, empty of people: matte black walls, dark walnut, warm brass pendant lights and "
              "green plants in soft bokeh.")
-TV = ("The TV shows a football video game being played on the PlayStation 5: bright green pitch from the wide broadcast camera angle, small "
-      "game players running, no readable score, no team or channel logos.")
+TV = ("From the first frame to the last, the TV shows only one thing: a football video game being played on the PlayStation 5, bright "
+      "green pitch seen from the wide broadcast camera angle, small game players running; the image never changes to anything else (no "
+      "presenter, no person close-up, no channel change, no menu), no readable score, no team or channel logos.")
 PRODUCTS = "TIM DESIGN is the premium grooming product line sold in the salon: matte black and amber glass bottles and jars with gold caps."
 
 NEGATIVE = ("people in the salon, customers, barbers, hands, fingers, arms, faces, body parts, silhouettes, people reflected in mirrors or "
             "windows (the only people allowed are the small video game players on the TV screen), cartoon, illustration, anime, 3D render, "
             "CGI look, video game look on the real set, plastic textures, AI artifacts, misspelled or garbled letters, {TEXT}, other brand "
-            "names or logos, TV channel logos, watermark, subtitles, colors outside black/gold/cream except plant green and pitch green, "
+            "names or logos, TV channel logos, TV presenter or person close-up on the TV, TV image changing or switching channel, tiny or "
+            "narrow storefront, small door, exterior and interior at different scales, watermark, subtitles, colors outside black/gold/cream except plant green and pitch green, "
             "blue or purple tint, neon lights, daylight, harsh flat lighting, blown-out highlights, blurry or out-of-focus subject, warped "
             "or melting objects, objects changing shape, deformed tools, extra blades, duplicated objects, inconsistent room layout, clutter, "
             "hair on the floor, dirt, flicker, jitter, shaky handheld camera, fisheye distortion, dutch angle, low resolution, noise, "
@@ -70,22 +79,30 @@ def S(a, b, scale, fr, subject, camera, motion, tr, prio=False, gen=True, note="
     return dict(a=a, b=b, scale=scale, fr=fr, subject=subject, camera=camera, motion=motion, tr=tr, prio=prio, gen=gen, note=note)
 
 SHOTS = [
-    S(0.0, 3.5, "wide", "Façade Atelier 47 de nuit, puis entrée",
-      f"Exterior at night in Annecy: the ATELIER 47 BARBIER storefront, matte black façade, above the tall glass door a large backlit sign of {LOGO}; "
-      "tall green plants in matte black planters on both sides of the door, warm golden light from the salon spilling onto the wet cobblestone "
-      "pavement with soft reflections, plants and pendant lamps visible through the window. The camera then glides through the glass door into "
-      "the salon, where the same backlit gold logo on the reception wall comes into focus",
-      "slow steady gimbal push-in, one continuous move from outside to inside, already moving on the very first frame",
-      "light reflections sliding on the glass and the wet pavement", "hard cut on the bass drop with a 3-frame camera shake", prio=True),
+    S(0.0, 2.0, "wide", "Façade Atelier 47 de nuit, en entier",
+      f"Exterior at night in Annecy, the whole storefront visible from across the street: the ATELIER 47 BARBIER shop, a wide matte black "
+      f"façade about 9 meters across with two large floor-to-ceiling display windows framing a wide double glass entrance door (2.6 m tall, "
+      f"slim black frames, long vertical brass handles); above the door a large backlit sign of {LOGO}; tall green plants in matte black "
+      "planters on both sides of the door; through the windows the deep, warmly lit salon with its pendant lamps, chairs and plants; warm "
+      "golden light spilling onto the wet cobblestone pavement with soft reflections",
+      "ultra-wide 20mm lens at eye level from across the street, slow steady gimbal push-in toward the door, already moving on the very first frame",
+      "light reflections sliding on the glass and the wet pavement", "push-through transition: fast push into the glass door with a warm light flare", prio=True),
+    S(2.0, 3.5, "wide", "Juste après la porte : le salon s'ouvre",
+      "View from just inside the wide double glass entrance door looking into the large salon: the full depth of the room visible, the "
+      "reception desk on the right with the backlit gold ATELIER 47 logo on the wall, the two barber chairs and round mirrors on the left, "
+      "the row of brass pendant lamps leading to the waiting lounge at the back, plants everywhere",
+      "ultra-wide 20mm lens at chest height, smooth forward glide continuing the movement of the previous shot",
+      "pendant lamps passing overhead, dust in the light beams", "hard cut on the bass drop with a 3-frame camera shake", prio=True),
     S(3.5, 3.9, "close", "Pot de cire TIM DESIGN",
-      "Extreme macro of a matte black pomade jar with a brushed-gold lid finely engraved 'TIM DESIGN', on dark walnut",
+      "Extreme macro of a matte black pomade jar with a brushed-gold lid finely engraved 'TIM DESIGN', on dark walnut; only the jar in frame",
       "fast rack focus from a blurred foreground to the engraved lid", "a sharp glint of golden light crossing the lid",
       "hard cut on beat with a 2-frame white-gold flash"),
-    S(3.9, 4.3, "close", "Ciseaux dorés",
-      "Extreme macro of polished gold barber scissors opening on black leather", "locked-off macro",
-      "blades opening, light flashing along the edge", "hard cut on beat with a 2-frame white-gold flash"),
+    S(3.9, 4.3, "close", "Goutte d'huile à barbe",
+      "Extreme macro of an amber glass beard oil bottle with a gold dropper cap labelled 'TIM DESIGN'; a single golden drop of oil falls from "
+      "the dropper in slow motion; only this bottle in frame, no scissors, no razor", "locked-off macro",
+      "the drop falling and catching the warm light", "hard cut on beat with a 2-frame white-gold flash"),
     S(4.3, 4.7, "close", "Rasoir qui s'ouvre",
-      "Extreme macro of a gold straight razor opening on a folded cream towel", "locked-off macro",
+      "Extreme macro of a gold straight razor opening on a folded cream towel; only the razor in frame, no scissors", "locked-off macro",
       "blade catching a flash of golden light", "hard cut on beat with a 2-frame white-gold flash"),
     S(4.7, 5.1, "close", "Enseigne de barbier",
       "Vintage barber pole with black and gold spiral stripes and a glowing cream-white globe on a matte black wall, a hanging pothos beside it",
@@ -93,24 +110,29 @@ SHOTS = [
     S(5.1, 8.0, "wide", "Vue d'ensemble du salon",
       "Wide establishing shot of the whole empty salon: the two black leather barber chairs, round gold-framed mirrors, the row of brass pendant "
       "lamps, lush plants everywhere (monstera, olive tree, hanging pothos), and the reception desk with the glowing gold ATELIER 47 logo in the background",
-      "slow smooth dolly-in at chest height", "dust particles drifting in the warm light beams",
+      "ultra-wide 18mm lens from the far corner, the entire room visible from floor to ceiling, slow smooth dolly-in at chest height",
+      "dust particles drifting in the warm light beams",
       "speed-ramped zoom-in transition (wide to close) with strong motion blur"),
-    S(8.0, 10.0, "close", "Outils vus de dessus",
-      "Top-down view of a dark walnut barber station: straight razor, black combs, gold scissors, shaving brush and a folded cream towel, "
-      "perfectly aligned with equal spacing, a small potted fern at the edge of the frame",
-      "slow lateral slide", "warm light reflections moving across the metal",
+    S(8.0, 10.0, "close", "Outils du barbier à plat, vus de dessus",
+      "Overhead flat lay shot straight down at 90 degrees: on a black leather mat placed on dark walnut, exactly five barber tools laid out "
+      "in one clean horizontal row with equal spacing, from left to right: a closed gold straight razor, a black fine-tooth comb, a pair of "
+      "closed gold barber scissors, a shaving brush with a black handle and cream bristles, and a neatly folded cream towel; every tool "
+      "complete, correctly shaped, perfectly parallel and razor sharp; a small potted fern in the top corner",
+      "camera pointing straight down, slow lateral slide from left to right along the row", "a warm light reflection gliding across the metal of each tool",
       "speed-ramped pull-back transition (close to wide) with motion blur"),
     S(10.0, 12.5, "wide", "Salle d'attente, TV, PS5 et plantes",
       "Wide view of the waiting lounge: black leather sofa and two armchairs, low marble coffee table with two white game controllers and a few "
       "TIM DESIGN products, monstera, olive tree and hanging pothos, and the large wall-mounted TV above a dark walnut cabinet with a white "
-      f"PlayStation 5 standing upright, its light glowing. {TV}",
-      "slow lateral tracking", "the game moving on the TV, leaves catching the warm light",
-      "push-in transition straight into the TV with a soft blur", prio=True),
+      f"PlayStation 5 Pro standing upright. {TV}",
+      "ultra-wide 20mm lens, the whole lounge and the full TV wall in frame, slow lateral tracking", "the game moving on the TV, leaves catching the warm light",
+      "push-in transition straight into the TV with a soft blur", prio=True,
+      note="La télé doit montrer uniquement le match du jeu, du début à la fin. Si elle change d'image (présentateur, autre chaîne), relance la génération."),
     S(12.5, 14.0, "close", "La PS5 et la manette",
-      "Close-up of the white PlayStation 5 standing upright on the dark walnut cabinet under the TV, its light glowing, a white game controller "
-      "sharp in the foreground on the marble coffee table, the football video game softly visible on the TV above",
+      f"Close-up of {PS5}, on the dark walnut cabinet under the TV; the controller lies sharp in the foreground on the marble coffee table; "
+      "the football video game softly visible on the TV above (same game image, nothing else on the screen)",
       "slow rack focus from the controller to the console and the TV", "the TV light flickering softly on the console",
-      "whip-pan transition with motion blur and a gold light leak"),
+      "whip-pan transition with motion blur and a gold light leak", prio=True,
+      note="Pour une PS5 fidèle : utilise le mode « image vers vidéo » (ou « image de référence ») avec ta photo de la PS5 Pro, assets/ps5_reference.jpg."),
     S(14.0, 16.5, "close", "Étagère de produits TIM DESIGN",
       "Floating dark walnut shelves lined with matte black and amber glass bottles and jars with gold caps, every label printed 'TIM DESIGN' "
       "in brushed-gold capitals, perfectly aligned, small ferns between the products, visible glass texture and clean reflections",
@@ -124,7 +146,7 @@ SHOTS = [
       "Wide view of the reception and checkout desk in dark walnut: the slim black all-in-one computer showing a dark booking calendar, the black "
       "card payment terminal with its screen glowing, the black-and-gold framed 'NOS TARIFS' price list standing on the counter, and behind it, "
       f"backlit on the black wall, {LOGO}; tall plants on both sides of the desk, the salon softly lit in the background",
-      "slow push-in", "the logo glowing softly, screens lit", "hard cut on the beat", prio=True),
+      "wide 24mm lens showing the whole desk and wall, slow push-in", "the logo glowing softly, screens lit", "hard cut on the beat", prio=True),
     S(20.5, 22.5, "close", "TPE et ordinateur, puis fiche tarifs",
       "Close-up of the checkout counter: the black card payment terminal with a glowing screen and a contactless symbol next to the computer "
       "keyboard; the focus then moves to the black-and-gold framed 'NOS TARIFS' price list standing beside it",
@@ -134,21 +156,19 @@ SHOTS = [
       f"Full-screen view of the real ATELIER 47 price list: {PRICES}",
       "slow push-in 100% to 106%", "a soft gold light sweep across the title", "gold flash transition", gen=False,
       note="Ne pas générer : place ta vraie image assets/fiche_tarifs.jpg en plein écran au montage, pour que les prix soient parfaitement lisibles."),
-    S(25.5, 28.5, "medium", "Le téléphone apparaît devant le salon",
-      "A matte black smartphone rises upright by itself from the reception counter into the foreground, nobody holding it; the whole salon stays "
-      "visible and softly blurred behind it. Its screen lights up with the ATELIER 47 BARBIER Instagram profile: the round gold-and-black logo "
-      "as avatar, the name 'atelier47barbier', a grid of nine black-and-gold photos of the salon and products, and a gold 'S'abonner' button",
-      "low angle, slow push-in until the phone screen fills about 70% of the frame height", "phone sliding up smoothly, screen lighting up",
-      "continuous push-in, no cut", prio=True),
-    S(28.5, 31.5, "close", "Écran Instagram lisible, ABONNEZ-VOUS",
-      "The smartphone screen held perfectly still and flat to the camera, filling about 70% of the frame height, bright and razor sharp, every "
-      "element of the ATELIER 47 BARBIER Instagram profile clearly readable; the gold 'S'abonner' button glows and switches to 'Abonné'; "
-      "the salon stays softly blurred around the phone",
-      "locked-off, no motion blur, very slow push-in", "the button glowing and changing state",
+    S(25.5, 28.5, "medium", "OBLIGATOIRE · Téléphone sur le comptoir",
+      "A matte black smartphone standing upright on a small brushed-gold stand on the walnut reception counter, screen facing the camera, "
+      "nobody holding it; the large salon softly blurred behind it with its pendant lamps and plants. SCREEN",
+      "slow push-in until the phone screen fills about 70% of the frame height", "the screen glowing, warm reflections on the phone edges",
+      "continuous push-in, no cut", prio=True,
+      note="Plan obligatoire, à ne jamais supprimer. L'écran est vert pour que tu colles ta vraie capture Instagram dessus (Chroma key dans CapCut)."),
+    S(28.5, 31.5, "close", "OBLIGATOIRE · Écran Instagram + ABONNEZ-VOUS",
+      "The same smartphone on its gold stand, held perfectly still and flat to the camera, filling about 70% of the frame height, razor sharp. SCREEN",
+      "locked-off, no motion blur, very slow push-in", "nothing moves except a soft glow on the phone edges",
       "rack focus to the salon behind", prio=True,
-      note="Le texte doit être parfaitement lisible : si l'écran généré est flou, colle ta vraie capture Instagram dessus au montage."),
+      note="Plan obligatoire. C'est ici que « ABONNEZ-VOUS » et @atelier47barbier s'affichent par-dessus ta capture Instagram."),
     S(31.5, 33.5, "medium", "Le téléphone s'efface, retour au salon",
-      "The same smartphone in the foreground in front of the salon; the focus pulls from the phone to the salon behind it, then the phone slides "
+      "The same smartphone on its gold stand in the foreground in front of the salon, screen dark; the focus pulls from the phone to the salon behind it, then the phone slides "
       "down out of frame and the salon is sharp again", "rack focus from foreground to background, then very slow push-in",
       "phone gliding down out of frame", "whip-pan transition with motion blur"),
     S(33.5, 35.5, "close", "Fauteuil en cuir",
@@ -156,7 +176,7 @@ SHOTS = [
       "slow sideways tracking", "warm reflections gliding on the leather", "speed-ramped pull-back transition (close to wide)"),
     S(35.5, 38.0, "wide", "Miroir qui reflète le salon",
       "A round gold-framed mirror reflecting the whole empty salon, the plants and the warm pendant lamps, no person in the reflection",
-      "slow push-in toward the mirror", "reflections shifting softly", "zoom-in transition (wide to close) with a gold light leak"),
+      "wide 24mm lens, slow push-in toward the mirror", "reflections shifting softly", "zoom-in transition (wide to close) with a gold light leak"),
     S(38.0, 40.0, "close", "Tondeuse dorée en macro",
       "Macro of a professional gold hair clipper resting on black leather", "slow lateral slide along the blade",
       "sharp highlights running across the gold teeth", "blur dissolve"),
@@ -164,9 +184,9 @@ SHOTS = [
       "A large monstera leaf sharp in the foreground, real leaf texture and veins, then the focus moves to the barber chairs and pendant lamps behind it",
       "slow rack focus from the leaf to the salon", "the leaf moving very slightly", "speed-ramped pull-back transition"),
     S(42.0, 44.5, "wide", "Le salon vers la porte d'entrée",
-      "Wide view from the back of the salon toward the glass entrance door, the reception desk with the glowing logo on the right, plants "
+      "Wide view from the back of the salon toward the wide double glass entrance door between the two large display windows, the reception desk with the glowing logo on the right, plants "
       "along the way, the night street of Annecy softly visible through the glass",
-      "slow dolly-out", "warm light glowing, faint reflections on the glass", "soft cross-dissolve"),
+      "ultra-wide 18mm lens, the full depth of the room and the wide double door visible, slow dolly-out", "warm light glowing, faint reflections on the glass", "soft cross-dissolve"),
     S(44.5, 50.0, "wide", "Fin : mur du logo Atelier 47",
       f"Calm, simple shot of the reception wall with {LOGO} backlit, plants framing both sides, the area below the logo left dark and empty",
       "almost static, very slow push-in", "a single soft gold light sweep across the logo, lights dimming slightly",
@@ -210,6 +230,7 @@ PRODUCTION = [
     "2-frame white-gold flashes, warm gold light leaks, a 3-frame camera shake on the bass drop, blur dissolves.",
     "Product close-ups are the highlight: perfect focus, controlled reflections, premium macro quality, slowed to 70-80% with optical-flow smoothing.",
     "One identical color grade on every shot.",
+    "The phone and Instagram sequence (shots 16-18) is mandatory and must never be cut or shortened.",
     "The Instagram moment is perfectly clear: the phone screen is large, steady and sharp, ABONNEZ-VOUS stays readable for the whole 5.5 seconds.",
     "The ending fades to black and loops seamlessly back to the night façade of the first shot.",
 ]
@@ -229,15 +250,24 @@ def tfr(x):
 def ts(x):
     return f"{x:.1f}s"
 
+IG_SCREEN = ("Its screen shows the ATELIER 47 BARBIER Instagram profile: the round gold-and-black logo as avatar, the name "
+             "'atelier47barbier', a grid of nine black-and-gold photos of the salon and products, and a gold 'S'abonner' button that glows and "
+             "switches to 'Abonné'; every element clearly readable")
+GREEN_SCREEN = ("Its screen is a uniform, evenly lit pure green (#00FF00) chroma-key screen with no image, no text and no reflection, "
+                "so a real screenshot can be keyed onto it in editing (this green is allowed in this shot only)")
+
+def subj(s, master=False):
+    return s["subject"].replace("SCREEN", IG_SCREEN if master else GREEN_SCREEN)
+
 def shot_prompt(s):
     extra = ""
     if s["a"] == SHOTS[-1]["a"]:
         extra = " Keep the area below the logo dark and empty for text added in editing."
-    if "smartphone" in s["subject"]:
-        extra = " The only readable words on the screen are 'atelier47barbier', 'S'abonner' or 'Abonné'."
     setting = SET_WIDE if s["scale"] == "wide" else SET_CLOSE
     prod = f" {PRODUCTS}" if "TIM DESIGN" in s["subject"] else ""
-    return (f"{s['subject'].rstrip('.')}. Camera: {s['camera']}. Motion: {s['motion']}.{extra} Vertical 9:16. "
+    if "PlayStation" in s["subject"] and TV not in s["subject"]:
+        prod += " " + TV
+    return (f"{subj(s).rstrip('.')}. Camera: {s['camera']}. Motion: {s['motion']}.{extra} Vertical 9:16. "
             f"{REALISM_SHORT} {PALETTE} {LIGHT} {setting}{prod}")
 
 def master_prompt():
@@ -250,7 +280,7 @@ def master_prompt():
          "PRODUCTION RULES:"] + [f"- {r}" for r in PRODUCTION] + ["", "SHOT LIST:"]
     for i, s in enumerate(SHOTS, 1):
         ins = " (insert the real image fiche_tarifs.jpg here, do not generate it)" if not s["gen"] else ""
-        L.append(f"{i}. {ts(s['a'])}-{ts(s['b'])} [{s['scale'].upper()}] {s['subject'].rstrip('.')}{ins}. Camera: {s['camera']}. "
+        L.append(f"{i}. {ts(s['a'])}-{ts(s['b'])} [{s['scale'].upper()}] {subj(s, True).rstrip('.')}{ins}. Camera: {s['camera']}. "
                  f"Motion: {s['motion']}. Transition out: {s['tr']}.")
     L += ["", "ON-SCREEN TEXT AND EFFECTS:"]
     for o in OVERLAYS:
@@ -307,10 +337,11 @@ def write_files():
             "cut on the beat; alternate close-ups and wide shots exactly as listed",
             "upscale every clip to 1080x1920 (CapCut: Enhance quality) and trim the first and last 5 frames of each generated clip",
             "speed ramps on every transition: 100% -> 200% in the last 6 frames of the outgoing shot, 200% -> 100% in the first 6 frames of the next",
-            "product close-ups (shots 2-5, 10, 11, 20) slowed to 70-80% with optical-flow interpolation",
+            "product close-ups (shots 3-6, 11, 12, 21) slowed to 70-80% with optical-flow interpolation",
             "keep all text inside the Instagram safe zone: 250px top, 420px bottom, 140px right, 80px left",
             f"text only in gold {GOLD} or cream {CREAM}, font {FONT}",
-            "shots 15-16: if the generated Instagram screen is not perfectly readable, pin instagram_screenshot.png onto the phone screen with corner-pin tracking",
+            "shots 16-18 (phone + Instagram + ABONNEZ-VOUS) are MANDATORY: never remove or shorten them",
+            "shots 16-17: key out the green phone screen (Chroma key) and place instagram_screenshot.png on it, scaled and keyframed to follow the screen",
             "the last frame fades to black so the reel loops cleanly into the first shot",
         ],
         "color_grade": {"apply_to": "all clips identically (grade one clip, copy the settings to all)", "contrast": "+15",
