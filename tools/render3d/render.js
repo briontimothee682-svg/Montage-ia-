@@ -24,7 +24,7 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/pn
   await page.evaluate(() => window.__ready);
   const shot = async (t, file) => {
     const fi = Math.round(t * FPS);
-    const scr = (PAGE === 'scene' && t >= 17 && t < 25) ? `/exports/screen/s${String(fi).padStart(4, '0')}.png` : null;
+    const scr = (PAGE === 'scene' && t >= 17 && t < 30.5) ? `/exports/screen/s${String(fi).padStart(4, '0')}.png` : null;
     await page.evaluate(([t, s]) => window.renderAt(t, s), [t, scr]);
     await page.screenshot({ path: file, type: 'png', clip: { x: 0, y: 0, width: 1080, height: 1920 } });
   };

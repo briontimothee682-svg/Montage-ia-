@@ -119,9 +119,9 @@ def music(dur, drops=(3.5,), breaks=((17.0, 20.25),), outro=33.0):
             continue
         brk = in_break(bt)
         if not brk or (bt % 1.0) < 1e-3:
-            add(drums, kick(), bt, 0.72 if not brk else 0.45)
+            add(drums, kick(), bt, 0.6 if not brk else 0.38)
         if i % 2 == 1 and not brk:
-            add(drums, clap(), bt, 0.7)
+            add(drums, clap(), bt, 0.42)
         for sub in (0.0, 0.25, 0.5, 0.75):
             v = 0.45 if sub == 0.5 else 0.3 + 0.1 * rng.random()
             if sub == 0.5 and not brk:
@@ -166,8 +166,8 @@ def music(dur, drops=(3.5,), breaks=((17.0, 20.25),), outro=33.0):
         noise = rng.normal(0, 1, len(x)) * np.exp(-x * 6) * 0.35
         return np.tanh((boom + noise) * 1.3)
     for dp in list(drops) + [b for _, b in breaks]:
-        add(fx, riser(2.0), dp - 2.0, 0.22)
-        add(fx, impact(), dp, 0.5)
+        add(fx, riser(2.0), dp - 2.0, 0.15)
+        add(fx, impact(), dp, 0.34)
     # bus processing
     music_mono = pad * side * 1.0 + bassbus * side + fx
     L = music_mono + plL + drums * 0.9

@@ -645,18 +645,21 @@ async function setScreen(O, url) {
 }
 
 function place(obj, v) { obj.position.copy(v); }
+// phone sequence lasts 13.5 s: the camera push-in and the Reel are slowed down, the interactions keep a calm pace
+const warp5 = x => (x < 18 ? x : x < 22.5 ? 18 + (x - 18) / 4.5 : 19 + (x - 22.5) * 0.75);
 
 // ------------------------------------------------------------ timeline
 window.renderAt = async (t, screen) => {
   const O = await ready;
+  const __t = t;
   for (const k of Object.keys(O)) if (O[k] && O[k].isObject3D) O[k].visible = false;
   O.arcs.forEach(a => { a.visible = false; });
   sweep.intensity = 0; amber.intensity = 0; cool.intensity = 0; bloom.strength = 0.32; dof.enabled = false;
-  { const ss = ((t >= 7.5 && t < 12.0) || (t >= 17.0 && t < 25.0)) ? 2 : 1;   // supersampling on the detailed scenes
+  { const ss = (t >= 7.5 && t < 12.0) ? 2 : (t >= 17.0 && t < 30.5) ? 1.5 : 1;   // supersampling on the detailed scenes
     if (renderer.getPixelRatio() !== ss) { renderer.setPixelRatio(ss); composer.setPixelRatio(ss); composer.setSize(W, H); } }
 
   // camera: slow handheld drift + push on every beat
-  const bp = beat(t, 3.5) * (t < 36.0 ? 1 : 0);
+  const bp = beat(t, 3.5) * (t < 41.5 ? 1 : 0);
   camera.position.set(18 * Math.sin(t * 0.7), 14 * Math.sin(t * 0.9 + 1), CAM_Z - 60 * bp);
   camera.lookAt(0, 0, 0);
   camera.rotation.z = 0.004 * Math.sin(t * 0.6);
@@ -669,11 +672,11 @@ window.renderAt = async (t, screen) => {
   // S1 hook 0-3.5: particles assemble the medallion, shockwave, light arcs, coloured halo
   if (t < 3.5) {
     const m = O.medal;
-    const q = easeInOut(prog(t, 0.0, 0.62));
+    const q = easeInOut(prog(t, 0.0, 0.38));
     const C = P(540, 740);
-    const lp = O.lp; lp.visible = t < 1.4; place(lp, C);
+    const lp = O.lp; lp.visible = t < 1.1; place(lp, C);
     { const { start, target, NP } = lp.userData, pos = lp.geometry.attributes.position.array;
-      const scatter = easeOut(prog(t, 0.62, 1.4)), sw = (1 - q) * Math.PI * 1.6;
+      const scatter = easeOut(prog(t, 0.38, 1.1)), sw = (1 - q) * Math.PI * 1.6;
       for (let i = 0; i < NP; i++) {
         const sx = start[i * 3], sy = start[i * 3 + 1];
         const rx = sx * Math.cos(sw) - sy * Math.sin(sw), ry = sx * Math.sin(sw) + sy * Math.cos(sw);
@@ -683,16 +686,16 @@ window.renderAt = async (t, screen) => {
       }
       lp.geometry.attributes.position.needsUpdate = true;
       lp.material.opacity = q < 1 ? 0.95 : clamp(1 - scatter * 1.3); }
-    const reveal = easeBack(prog(t, 0.55, 0.95), 1.8);
-    m.visible = t >= 0.55;
+    const reveal = easeBack(prog(t, 0.33, 0.68), 1.8);
+    m.visible = t >= 0.33;
     place(m, P(540, 740, 0));
-    m.rotation.set(0.1 * Math.sin(t * 0.9), lerp(0.7, 0, easeOut(prog(t, 0.55, 1.2))) + 0.18 * Math.sin(t * 1.3), 0.03 * Math.sin(t));
+    m.rotation.set(0.1 * Math.sin(t * 0.9), lerp(0.7, 0, easeOut(prog(t, 0.33, 1.0))) + 0.18 * Math.sin(t * 1.3), 0.03 * Math.sin(t));
     m.scale.setScalar(Math.max(0.01, reveal) * 1.02);
-    const sh = prog(t, 0.58, 1.15); O.shock.visible = sh > 0 && sh < 1; place(O.shock, C);
+    const sh = prog(t, 0.36, 0.95); O.shock.visible = sh > 0 && sh < 1; place(O.shock, C);
     O.shock.scale.setScalar(lerp(300, 1150, easeOut(sh))); O.shock.material.opacity = (1 - sh) * 0.9;
-    O.arcs.forEach((a, i) => { a.visible = t > 0.4; place(a, C); a.position.z = 30; a.rotation.set(0.25 * Math.sin(t + i), 0.2 * Math.cos(t * 0.8 + i), t * (2.2 + i * 0.7) * (i % 2 ? -1 : 1)); a.material.opacity = clamp((t - 0.4) / 0.4) * 0.8; });
-    O.halo.visible = true; place(O.halo, P(540, 740, -300)); O.halo.scale.setScalar(lerp(0.4, 1, easeOut(prog(t, 0.5, 1.2))) * (1 + 0.06 * beat(t, 0)));
-    O.halo.material.opacity = clamp((t - 0.45) / 0.4);
+    O.arcs.forEach((a, i) => { a.visible = t > 0.25; place(a, C); a.position.z = 30; a.rotation.set(0.25 * Math.sin(t + i), 0.2 * Math.cos(t * 0.8 + i), t * (2.2 + i * 0.7) * (i % 2 ? -1 : 1)); a.material.opacity = clamp((t - 0.25) / 0.3) * 0.8; });
+    O.halo.visible = true; place(O.halo, P(540, 740, -300)); O.halo.scale.setScalar(lerp(0.4, 1, easeOut(prog(t, 0.3, 0.9))) * (1 + 0.06 * beat(t, 0)));
+    O.halo.material.opacity = clamp((t - 0.28) / 0.3);
     const sp = prog(t, 1.3, 2.3);
     if (sp > 0 && sp < 1) { sweep.intensity = 3.5 * Math.sin(sp * Math.PI); sweep.position.set(lerp(-700, 700, sp), 960 - 740 + 300, 400); }
   }
@@ -764,7 +767,8 @@ window.renderAt = async (t, screen) => {
 
   // S5 instagram 17-25: iPhone on its stand; the salon's post plays (likes, comments), then the profile
   // (followers counting up); sections rise out of the screen as 3D cards; posts build a wall.
-  if (t >= 17.0 && t < 25.0) {
+  if (__t >= 17.0 && __t < 30.5) {
+    const t = warp5(__t);
     const G = O.s5, ph = O.phone, L = O.IGL;
     G.visible = true; ph.visible = true; O.env.visible = true;
     if (screen) await setScreen(O, screen);
@@ -775,7 +779,7 @@ window.renderAt = async (t, screen) => {
     G.scale.setScalar(1 + 0.32 * zin);
     const p = easeOut(prog(t, 17.0, 17.95));
     const s = Math.max(0, t - 17.95);
-    const bt = beat(t, 18.0);
+    const bt = beat(__t, 18.0);
     const tapT = [19.35, 20.12, L.profileAt, 20.92, ...O.N.slice(1).map(n => n.tap)];
     const taps = tapT.map(x => Math.sin(Math.PI * prog(t, x - 0.05, x + 0.15))).reduce((a, b) => Math.max(a, b), 0);
     const spin = Math.PI * 2 * easeInOut(prog(t, 23.4, 23.85));
@@ -915,42 +919,42 @@ window.renderAt = async (t, screen) => {
     a.visible = ap > 0;
     place(a, P(540, 330, lerp(1500, 0, easeOut(ap))));
     a.rotation.set(lerp(-1.2, 0, easeBack(ap, 1.3)) + 0.05 * Math.sin(t * 2), 0.12 * Math.sin((t - 20.25) * 1.3), 0);
-    a.scale.setScalar(1 + 0.04 * beat(t, 20.5));
+    a.scale.setScalar(1 + 0.04 * beat(__t, 18.0));
     const spq = ((t - 21.0) % 1.6) / 1.6;
     if (t > 21.0) { sweep.intensity = 2.5 * Math.sin(spq * Math.PI); sweep.position.set(lerp(-700, 700, spq), 960 - 330 + 160, 260); }
   }
 
-  // S6 hours 25-28.5: pocket watch + 3D title
-  if (t >= 25 && t < 28.5) {
+  // S6 hours 30.5-34: pocket watch + 3D title
+  if (t >= 30.5 && t < 34) {
     const w = O.watch; w.visible = true;
-    const p = easeBack(prog(t, 25, 25.5));
-    place(w, P(540, 420, lerp(-1500, 0, easeOut(prog(t, 25, 25.5)))));
+    const p = easeBack(prog(t, 30.5, 31));
+    place(w, P(540, 420, lerp(-1500, 0, easeOut(prog(t, 30.5, 31)))));
     w.scale.setScalar(Math.max(0.01, p));
     w.rotation.set(0.15 * Math.sin(t * 1.1), 0.5 * Math.sin((t - 23) * 1.2), 0);
-    w.userData.setTime(lerp(0, Math.PI * 2 * 1.5, easeOut(prog(t, 25, 26.4))) + 0.25);
-    const h = O.horaires; const hp = prog(t, 25.15, 25.6);
+    w.userData.setTime(lerp(0, Math.PI * 2 * 1.5, easeOut(prog(t, 30.5, 31.9))) + 0.25);
+    const h = O.horaires; const hp = prog(t, 30.65, 31.1);
     h.visible = hp > 0;
     place(h, P(540, 625, lerp(1400, 0, easeOut(hp))));
     h.rotation.set(lerp(-1.1, 0, easeBack(hp, 1.3)), 0.12 * Math.sin((t - 23) * 1.3), 0);
   }
 
-  // S6b business card 28.5-33: flies in, flips recto/verso, the QR code rises out in 3D and gets scanned
-  if (t >= 28.5 && t < 33) {
+  // S6b business card 34-38.5: flies in, flips recto/verso, the QR code rises out in 3D and gets scanned
+  if (t >= 34 && t < 38.5) {
     const cd = O.card; cd.visible = true;
-    const fin = easeOut(prog(t, 28.5, 29.3));
-    const flip = easeInOut(prog(t, 29.6, 30.15));
-    const up = easeInOut(prog(t, 30.75, 31.35));
+    const fin = easeOut(prog(t, 34, 34.8));
+    const flip = easeInOut(prog(t, 35.1, 35.65));
+    const up = easeInOut(prog(t, 36.25, 36.85));
     place(cd, P(540, lerp(840, 700, up), lerp(-2600, 0, fin) + 160 * Math.sin(Math.PI * flip)));
-    cd.rotation.set(lerp(0.7, 0.12, fin) - 0.32 * up + 0.04 * Math.sin(t * 1.3), lerp(-Math.PI * 4, 0, fin) + Math.PI * flip + 0.1 * Math.sin((t - 29.3) * 1.1) * fin, lerp(-0.4, 0, fin) + 0.03 * Math.sin(t));
+    cd.rotation.set(lerp(0.7, 0.12, fin) - 0.32 * up + 0.04 * Math.sin(t * 1.3), lerp(-Math.PI * 4, 0, fin) + Math.PI * flip + 0.1 * Math.sin((t - 34.8) * 1.1) * fin, lerp(-0.4, 0, fin) + 0.03 * Math.sin(t));
     cd.scale.setScalar(1 + 0.015 * beat(t, 29));
-    const sp1 = prog(t, 29.25, 29.85), sp2 = prog(t, 30.2, 30.8);
+    const sp1 = prog(t, 34.75, 35.35), sp2 = prog(t, 35.7, 36.3);
     const spv = sp1 > 0 && sp1 < 1 ? sp1 : sp2 > 0 && sp2 < 1 ? sp2 : -1;
     if (spv >= 0) { sweep.intensity = 2.2 * Math.sin(spv * Math.PI); sweep.position.set(lerp(-800, 800, spv), 960 - 800 + 250, 450); }
     amber.intensity = 1.1 * fin; cool.intensity = 0.6 * fin;
-    const la = (t - 28.5) * 1.3;
+    const la = (t - 34) * 1.3;
     amber.position.set(Math.cos(la) * 800, 960 - 820 + Math.sin(la) * 400, 600); cool.position.set(-Math.cos(la) * 800, 960 - 820 - Math.sin(la) * 400, 500);
     // QR code
-    const rise = prog(t, 30.15, 30.75);
+    const rise = prog(t, 35.65, 36.25);
     const q = O.qr; q.visible = rise > 0;
     if (q.visible) {
       cd.updateMatrixWorld(true);
@@ -961,7 +965,7 @@ window.renderAt = async (t, screen) => {
       q.position.z += Math.sin(Math.PI * up) * 220;
       const tq = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.05 * Math.sin(t * 1.4), 0.12 * Math.sin(t * 0.9), 0));
       q.quaternion.copy(cq.clone().slerp(tq, up));
-      q.scale.setScalar(lerp(1, 1.45, up) * (1 + 0.02 * beat(t, 31.5)));
+      q.scale.setScalar(lerp(1, 1.45, up) * (1 + 0.02 * beat(t, 37)));
       const { modMesh, mods, maxD, dummy } = O.qrMods;
       mods.forEach(([x, y], i) => {
         const delay = Math.hypot(x, y) / maxD * 0.45;
@@ -971,39 +975,39 @@ window.renderAt = async (t, screen) => {
         dummy.updateMatrix(); modMesh.setMatrixAt(i, dummy.matrix);
       });
       modMesh.instanceMatrix.needsUpdate = true;
-      const sc = prog(t, 31.35, 32.55);
+      const sc = prog(t, 36.85, 38.05);
       O.laser.visible = sc > 0 && sc < 1;
       O.laser.position.y = (O.qr.children[0].geometry.parameters.height / 2) * Math.cos(sc * Math.PI * 2);
-      O.brackets.forEach((b, i) => { const bp = easeBack(prog(t, 31.3 + i * 0.05, 31.6 + i * 0.05)); b.visible = bp > 0; b.scale.setScalar(Math.max(0.01, bp) * (1 + 0.06 * beat(t, 31.5))); });
+      O.brackets.forEach((b, i) => { const bp = easeBack(prog(t, 36.8 + i * 0.05, 37.1 + i * 0.05)); b.visible = bp > 0; b.scale.setScalar(Math.max(0.01, bp) * (1 + 0.06 * beat(t, 37))); });
     }
     bloom.strength = 0.22 + 0.1 * beat(t, 29);
   }
 
-  // S7 end 33-36.5: medallion + orbiting tools + 3D title
-  if (t >= 33) {
+  // S7 end 38.5-42: medallion + orbiting tools + 3D title
+  if (t >= 38.5) {
     const m = O.medal; m.visible = true;
-    const p = easeOut(prog(t, 33, 33.9));
+    const p = easeOut(prog(t, 38.5, 39.4));
     place(m, P(540, 700, lerp(-2600, 0, p)));
     m.rotation.set(0.1 * Math.sin(t), lerp(-Math.PI * 3, 0, p) + 0.2 * Math.sin(t * 1.2) * p, 0);
     m.scale.setScalar(0.92);
     const og = O.orbitG; og.visible = true; place(og, P(540, 700));
     og.rotation.set(1.22, 0, 0.12);
-    const op = easeOut(prog(t, 33.3, 34.1));
+    const op = easeOut(prog(t, 38.8, 39.6));
     O.orbit.forEach((o, i) => {
       o.visible = true;
-      const a = i / O.orbit.length * Math.PI * 2 + (t - 33) * 0.9;
+      const a = i / O.orbit.length * Math.PI * 2 + (t - 38.5) * 0.9;
       const r = lerp(150, 470, op);
       o.position.set(Math.cos(a) * r, Math.sin(a) * r, 0);
-      o.rotation.set(-1.22 + 0.3 * Math.sin(t + i), (t - 33) * 1.5 + i, 0.4 * Math.sin(t * 0.8 + i));
+      o.rotation.set(-1.22 + 0.3 * Math.sin(t + i), (t - 38.5) * 1.5 + i, 0.4 * Math.sin(t * 0.8 + i));
       o.scale.setScalar(0.42 * op);
       if (o.userData.setOpen) o.userData.setOpen(i === 0 ? 30 : 0.9);
     });
-    const a2 = O.abo2; const ap = prog(t, 33.6, 34.05);
+    const a2 = O.abo2; const ap = prog(t, 39.1, 39.55);
     a2.visible = ap > 0;
     place(a2, P(540, 1100, lerp(1400, 0, easeOut(ap))));
-    a2.rotation.set(lerp(-1.1, 0, easeBack(ap, 1.3)) + 0.04 * Math.sin(t * 2), 0.1 * Math.sin((t - 33.5) * 1.2), 0);
+    a2.rotation.set(lerp(-1.1, 0, easeBack(ap, 1.3)) + 0.04 * Math.sin(t * 2), 0.1 * Math.sin((t - 39) * 1.2), 0);
     a2.scale.setScalar(1 + 0.035 * beat(t, 32));
-    const sp = prog(t, 34.1, 35.1);
+    const sp = prog(t, 39.6, 40.6);
     if (sp > 0 && sp < 1) { sweep.intensity = 3.5 * Math.sin(sp * Math.PI); sweep.position.set(lerp(-700, 700, sp), 960 - 700 + 300, 420); }
   }
 

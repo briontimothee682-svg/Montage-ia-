@@ -237,44 +237,48 @@ composer.addPass(bokeh);
 composer.addPass(new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), 0.26, 0.6, 0.92));
 composer.addPass(new OutputPass());
 
-const CUTS = [0.6, 1.25, 1.8, 2.35];
+// 6 s film, every cut on the 120 BPM beat (0.5 s): A hero · B drop macro · C liquid · D label · F oil orbit · E line-up + title
+const CUTS = [1.0, 2.0, 2.5, 3.5, 4.5];
 window.renderAt = async t => {
   await ready;
-  const shot = CUTS.filter(c => t >= c).length;  // 0..4
+  const shot = CUTS.filter(c => t >= c).length;  // 0..5
   const look = (px, py, pz, tx, ty, tz, aperture) => { camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); bokeh.uniforms.focus.value = camera.position.distanceTo(new THREE.Vector3(tx, ty, tz)); bokeh.uniforms.aperture.value = aperture; };
-  // dropper rises, a golden drop forms at the tip and falls
-  A.dropG.position.y = 210 + 520 * easeOut(prog(t, 0.0, 0.7)) * (t < 2.35 ? 1 : 0);
-  const form = easeOut(prog(t, 0.65, 0.95)), fall = prog(t, 0.95, 1.25);
-  A.drop.visible = t > 0.65 && fall < 1;
+  // dropper rises out of the oil during the first two shots, a golden drop forms and falls, then it is back in the bottle
+  A.dropG.position.y = 210 + 520 * easeOut(prog(t, 0.0, 0.9)) * (t < 2.5 ? 1 : 0);
+  const form = easeOut(prog(t, 1.15, 1.45)), fall = prog(t, 1.45, 1.9);
+  A.drop.visible = t > 1.15 && t < 2.0 && fall < 1;
   A.drop.position.set(0, A.dropG.position.y - 246 - fall * fall * 330, 0);
   A.drop.scale.set(Math.max(0.01, form), Math.max(0.01, form) * (1.2 + fall * 0.5), Math.max(0.01, form));
   A.liq.visible = shot === 2;
   A.sun.intensity = 3.2 * (0.92 + 0.08 * Math.sin(t * 5));
-  A.sun.position.set(A.sunBase.x + 140 * Math.sin(t * 1.7), A.sunBase.y + 60 * Math.cos(t * 1.3), A.sunBase.z);   // leaves moving in the wind
-  A.nicheLight.intensity = 2.2 * (0.85 + 0.15 * Math.sin(t * 2.4));
-  A.plants.forEach((g, i) => { g.rotation.y = 0.05 * Math.sin(t * 1.1 + i); });
-  const sv = [prog(t, 0.05, 0.6), prog(t, 2.4, 3.0)].find(q => q > 0 && q < 1);
+  A.sun.position.set(A.sunBase.x + 140 * Math.sin(t * 1.2), A.sunBase.y + 60 * Math.cos(t * 0.9), A.sunBase.z);   // leaves moving in the wind
+  A.nicheLight.intensity = 2.2 * (0.85 + 0.15 * Math.sin(t * 1.8));
+  A.plants.forEach((g, i) => { g.rotation.y = 0.05 * Math.sin(t * 0.9 + i); });
+  const sv = [prog(t, 0.05, 0.95), prog(t, 3.6, 4.4), prog(t, 4.9, 5.9)].find(q => q > 0 && q < 1);
   A.sweep.intensity = sv !== undefined ? 5 * Math.sin(sv * Math.PI) : 0; A.sweep.position.set(lerp(-900, 900, sv || 0), 700, 900);
-  A.title.visible = shot === 4;
-  if (shot === 4) { const q = easeOut(prog(t, 2.45, 2.85)); A.title.position.y = lerp(900, 1060, q); A.title.scale.setScalar(lerp(0.85, 1, q)); A.title.rotation.y = 0.08 * Math.sin(t * 2); }
+  A.title.visible = shot === 5;
   A.oil.rotation.y = 0.2;
-  if (shot === 0) {            // A: hero bottle, slow push-in
-    const p = ease(prog(t, 0, 0.6));
+  if (shot === 0) {            // A: hero bottle, slow push-in, the dropper rises
+    const p = ease(prog(t, 0, 1.0));
     look(lerp(-260, -120, p), lerp(620, 560, p), lerp(2500, 2050, p), 0, 470, 0, 0.00022);
   } else if (shot === 1) {     // B: macro on the dropper tip and the falling drop
-    const p = prog(t, 0.6, 1.25), ty = 330 + A.dropG.position.y - 246 + lerp(40, -200, ease(p));
+    const p = prog(t, 1.0, 2.0), ty = 330 + A.dropG.position.y - 246 + lerp(40, -200, ease(p));
     look(lerp(170, 110, p), ty + 30, lerp(640, 560, p), 0, ty, 0, 0.0009);
   } else if (shot === 2) {     // C: macro golden liquid with rising bubbles
     drawLiquid(t);
     A.bubbles.forEach(b => { const u = b.userData; b.scale.setScalar(u.r); b.position.set(u.x + 30 * Math.sin(t * 2 + u.ph), ((u.y0 + u.v * t + 1300) % 2600) - 1300, u.z); });
-    const p = prog(t, 1.25, 1.8);
+    const p = prog(t, 2.0, 2.5);
     look(20000 + lerp(-60, 60, p), lerp(-80, 80, p), 1500, 20000, 0, 0, 0.0005);
   } else if (shot === 3) {     // D: label close-up pan
-    const p = ease(prog(t, 1.8, 2.35));
+    const p = ease(prog(t, 2.5, 3.5));
     A.oil.rotation.y = 0.2 + lerp(-0.5, 0.4, p);
     look(lerp(-180, 160, p), 320, 520, 0, 310, 0, 0.0006);
-  } else {                     // E: hero line-up, slow pull-out
-    const p = ease(prog(t, 2.35, 3.0));
+  } else if (shot === 4) {     // F: low orbit around the beard oil, light sweep on the glass
+    const p = ease(prog(t, 3.5, 4.5)), a = lerp(-0.7, 0.7, p), r = lerp(1250, 1050, p);
+    look(Math.sin(a) * r, lerp(360, 420, p), Math.cos(a) * r, 0, 420, 0, 0.0004);
+  } else {                     // E: line-up and the TIM DESIGN title, slow pull-out
+    const p = ease(prog(t, 4.5, 6.0));
+    const q = easeOut(prog(t, 4.6, 5.1)); A.title.position.y = lerp(900, 1060, q); A.title.scale.setScalar(lerp(0.85, 1, q)); A.title.rotation.y = 0.06 * Math.sin(t * 1.5);
     look(lerp(150, 0, p), lerp(760, 820, p), lerp(3500, 4100, p), 0, 560, 0, 0.00012);
   }
   composer.render();

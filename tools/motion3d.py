@@ -22,9 +22,16 @@ from motion import (W, H, FPS, DUR, CUTS, GOLD, CREAM, MUTED, PANEL, ADDRESS, CI
 ROOT = m.ROOT
 m.GOLD_LIGHT, m.GOLD, m.GOLD_DARK = (252, 232, 168), (230, 192, 100), (198, 156, 66)
 GOLD = m.GOLD
-DUR = 36.5                       # 8 s Instagram phone sequence + 4.5 s business-card scene
-CUTS = [3.5, 7.5, 12.0, 17.0, 25.0, 28.5, 33.0]
-END_T = 33.0
+DUR = 42.0                       # 13.5 s Instagram phone sequence + 4.5 s business-card scene
+CUTS = [3.5, 7.5, 12.0, 17.0, 30.5, 34.0, 38.5]   # every cut on the 120 BPM beat grid
+END_T = 38.5
+
+def warp5(x):
+    """real time -> choreography time of the phone sequence (camera push-in and Reel slowed down)"""
+    return x if x < 18 else 18 + (x - 18) / 4.5 if x < 22.5 else 19 + (x - 22.5) * 0.75
+
+def unwarp5(y):
+    return y if y < 18 else 18 + (y - 18) * 4.5 if y < 19 else 22.5 + (y - 19) / 0.75
 m.DUR, m.END_T = DUR, END_T
 OUT = m.OUT
 F3D = OUT / "frames3d"
@@ -99,8 +106,7 @@ def o_hook(c, t):
 
 def o_kinetic(c, t):
     tag(c, "ATELIER 47", "SemiBold", 40, W / 2, 300, CREAM, TEAL, reveal=prog(t, 3.55, 3.85), tracking=10)
-    if t >= 5.5:
-        tag(c, "COUPE NETTE · BARBE SOIGNÉE", "Bold", 34, W / 2, 1392, INK, AMBER, reveal=prog(t, 6.5, 6.9), tracking=4)
+
 
 @lru_cache(maxsize=None)
 def small_card():
@@ -108,7 +114,7 @@ def small_card():
 
 def o_salon(c, t):
     tag(c, "LE SALON", "Bold", 40, W / 2, 292, INK, GOLD, reveal=prog(t, 7.55, 7.85), tracking=12)
-    tag(c, "Pensé pour vous", "SemiBold", 58, W / 2, 400, CREAM, TEAL, reveal=prog(t, 7.75, 8.15))
+
     for i, (ic, title, sub) in enumerate(FEATURES):
         st = 8.4 + i * 0.5
         p = ease_out(prog(t, st, st + 0.45))
@@ -121,8 +127,7 @@ def o_salon(c, t):
         paste(c, bar_img(10, 120, AMBER, 5), 108 + dx, y, alpha=a)
         pul = 1 + 0.07 * beat_pulse(t, st)
         paste(c, icon(ic, 72, AMBER, 6), 195 + dx, y, alpha=a, scale=pul)
-        text(c, title, "SemiBold", 42, 285 + dx, y - 28, CREAM, alpha=a, anchor="left")
-        text(c, sub, "Medium", 31, 285 + dx, y + 32, MUTED, alpha=a, anchor="left")
+        text(c, title, "SemiBold", 42, 285 + dx, y, CREAM, alpha=a, anchor="left")
 
 @lru_cache(maxsize=None)
 def price_panel2():
@@ -163,15 +168,15 @@ def o_prices(c, t):
             row += 1
 
 def o_instagram(c, t):
-    if t > 20.7:
+    if t > unwarp5(20.7):
         for (x, y, r, ph) in SPARKS:
-            a = max(0, math.sin((t - 20.7) * 3 + ph)) ** 3
+            a = max(0, math.sin((t - unwarp5(20.7)) * 3 + ph)) ** 3
             star(c, x, y - 20, r * (0.6 + 0.4 * a), a * 0.7)
 
 def o_hours(c, t):
-    plate(c, W / 2, 968, 940, 560, prog(t, 25.4, 25.7))
+    plate(c, W / 2, 968, 940, 560, prog(t, 30.9, 31.2))
     for i, (day, hours) in enumerate(HOURS):
-        st = 25.5 + i * 0.5
+        st = 31 + i * 0.5
         p = ease_out(prog(t, st, st + 0.4))
         if p <= 0:
             continue
@@ -185,32 +190,32 @@ def o_hours(c, t):
             tag(c, hours, "ExtraBold", 46, 930 + dx, y, INK, AMBER, alpha=p, reveal=prog(t, st + 0.1, st + 0.45), anchor="right")
         if i < len(HOURS) - 1:
             hline(c, W / 2, y + 82, 780, ease_in_out(prog(t, st + 0.15, st + 0.55)), width=2, alpha=0.35, color=CREAM)
-    ap = ease_out(prog(t, 27, 27.4))
+    ap = ease_out(prog(t, 32.5, 32.9))
     if ap > 0:
         paste(c, icon("pin", 52, AMBER, 6), W / 2, 1330, alpha=ap)
-        tag(c, f"{ADDRESS} · 74000 Annecy", "SemiBold", 36, W / 2, 1408, CREAM, TEAL, reveal=prog(t, 27, 27.4))
+        tag(c, f"{ADDRESS} · 74000 Annecy", "SemiBold", 36, W / 2, 1408, CREAM, TEAL, reveal=prog(t, 32.5, 32.9))
 
 def o_card(c, t):
-    out = ease_in_out(prog(t, 31.1, 31.35))
+    out = ease_in_out(prog(t, 36.6, 36.85))
     if out < 1:
-        tag(c, "NOTRE CARTE", "Bold", 42, W / 2, 300, INK, GOLD, alpha=1 - out, reveal=prog(t, 28.6, 28.95), tracking=12)
-    cp = ease_back(prog(t, 31.35, 31.75))
+        tag(c, "NOTRE CARTE", "Bold", 42, W / 2, 300, INK, GOLD, alpha=1 - out, reveal=prog(t, 34.1, 34.45), tracking=12)
+    cp = ease_back(prog(t, 36.85, 37.25))
     if cp > 0:
-        tag(c, "SCANNE · ABONNE-TOI", "ExtraBold", 46, W / 2, 300, CREAM, TEAL, alpha=clamp(cp), reveal=prog(t, 31.35, 31.7), tracking=4)
+        tag(c, "SCANNE · ABONNE-TOI", "ExtraBold", 46, W / 2, 300, CREAM, TEAL, alpha=clamp(cp), reveal=prog(t, 36.85, 37.2), tracking=4)
 
 def o_end(c, t):
-    tag(c, HANDLE, "SemiBold", 48, W / 2, 1210, CREAM, TEAL, reveal=prog(t, 34.1, 34.45))
-    ap = ease_out(prog(t, 34.4, 34.8))
-    text(c, f"{ADDRESS} · 74000 Annecy", "Medium", 34, W / 2, 1296, CREAM, alpha=ap)
-    tag(c, "ENREGISTRE · PARTAGE À UN POTE", "Bold", 32, W / 2, 1376, INK, AMBER, reveal=prog(t, 34.5, 34.9), tracking=3)
-    sp = ease_out(prog(t, 34.8, 35.3))
-    text(c, "TIM DESIGN", "Light", 26, W / 2, 1468, CREAM, alpha=sp * 0.7, tracking=16)
+    tag(c, HANDLE, "SemiBold", 48, W / 2, 1210, CREAM, TEAL, reveal=prog(t, 39.6, 39.95))
+    ap = ease_out(prog(t, 39.9, 40.3))
+    text(c, f"{ADDRESS} · 74000 Annecy", "Medium", 39.5, W / 2, 1296, CREAM, alpha=ap)
+    tag(c, "ENREGISTRE · PARTAGE À UN POTE", "Bold", 37.5, W / 2, 1376, INK, AMBER, reveal=prog(t, 40, 40.4), tracking=3)
+    sp = ease_out(prog(t, 40.3, 40.8))
+    text(c, "TIM DESIGN", "Light", 31.5, W / 2, 1468, CREAM, alpha=sp * 0.7, tracking=16)
 
 OVERLAYS = [(0.0, 3.5, o_hook), (3.5, 7.5, o_kinetic), (7.5, 12.0, o_salon), (12.0, 17.0, o_prices),
-            (17.0, 25, o_instagram), (25, 28.5, o_hours), (28.5, 33, o_card), (33, DUR, o_end)]
+            (17.0, 30.5, o_instagram), (30.5, 34, o_hours), (34, 38.5, o_card), (38.5, DUR, o_end)]
 
 # ------------------------------------------------------------------ light-line transitions (like the reference reel)
-TRAIL_EVENTS = [(0.5, (540, 740))] + [(c_, (540, 940)) for c_ in CUTS]
+TRAIL_EVENTS = [(0.35, (540, 740))] + [(c_, (540, 940)) for c_ in CUTS]
 
 def light_trails(arr, t):
     from PIL import ImageDraw, ImageFilter
@@ -493,7 +498,7 @@ def profile_screen(t, lifted):
     nav_bar(scr)
     return scr
 
-def app_screen(t):
+def app_screen(t, media_t=None):
     wake = ease_out(prog(t, 17.95, 18.25))
     if wake <= 0:
         return Image.new("RGB", (1120, 2400), (0, 0, 0))
@@ -527,13 +532,13 @@ def app_screen(t):
     big = scr.resize((1120, 2400), Image.LANCZOS)
     bg = Image.new("RGBA", big.size, (0, 0, 0, 255))
     if t < PROFILE_AT:
-        bg.paste(post_media_2x(t), (0, 0))
+        bg.paste(post_media_2x(t if media_t is None else media_t), (0, 0))
     bg.alpha_composite(big)
     arr = np.asarray(bg.convert("RGB")).astype(np.float32) * wake
     return Image.fromarray(arr.astype(np.uint8), "RGB")
 
 def post_media_2x(t):
-    fi = int(min(89, max(0, (t - POST_START) * FPS * 1.2)))
+    fi = int(min(179, max(0, (t - POST_START) * FPS)))
     f = OUT / "postvid" / f"f{fi:04d}.png"
     if not f.exists():
         return Image.new("RGB", (1120, 2400), (14, 18, 40))
@@ -541,8 +546,9 @@ def post_media_2x(t):
 
 def screens():
     (OUT / "screen").mkdir(parents=True, exist_ok=True)
-    for fi in range(int(17 * FPS), int(25 * FPS)):
-        app_screen(fi / FPS).save(OUT / "screen" / f"s{fi:04d}.png")
+    for fi in range(int(17 * FPS), int(30.5 * FPS)):
+        t = fi / FPS
+        app_screen(warp5(t), media_t=t).save(OUT / "screen" / f"s{fi:04d}.png")
     # the JS side needs the 3D source positions of what leaves the screen
     import json
     (OUT / "holo").mkdir(parents=True, exist_ok=True)
@@ -624,7 +630,7 @@ def synth_audio_3d(path):
     import wave
     import music as mu
     sr = mu.SR
-    base = mu.music(DUR, drops=(3.5,), breaks=((17.0, PROFILE_AT),), outro=END_T)
+    base = mu.music(DUR, drops=(3.5,), breaks=((17.0, 24.0),), outro=END_T)
     n = len(base)
     out = base * 0.85
     r = np.random.default_rng(3)
@@ -676,36 +682,33 @@ def synth_audio_3d(path):
 
     for k in range(4):                       # scissors closing on the beat
         add(snip(), 3.75 + k * 0.5, 0.35)
-    add(shing(), 5.7, 0.3)                   # razor
-    add(buzz(1.8), 7.8, 0.16)                # clipper arriving in the tool showcase
     def chime():  # soft two-tone notification
         x = np.arange(int(0.5 * sr)) / sr
         e = np.exp(-x * 7) * np.minimum(1, x / 0.004)
         return (np.sin(2 * np.pi * 1318.5 * x) * (x < 0.12) + np.sin(2 * np.pi * 1760 * x) * (x >= 0.1)) * e * 0.6
 
+    U = unwarp5
     for ap, tap, _, _ in NOTIFS:
-        add(chime(), ap, 0.22)               # notification arrives
-        add(click(), tap, 0.55)              # tapped
-        add(pop(), tap + 0.08, 0.25)         # section rises out of the phone
-    add(suck(0.4), 17.95, 0.15)              # camera pushes in on the post
-    add(click(), LIKE_AT, 0.55)              # cursor clicks the heart
+        add(chime(), U(ap), 0.2)             # notification arrives
+        add(click(), U(tap), 0.5)            # tapped
+        add(pop(), U(tap) + 0.08, 0.22)      # section rises out of the phone
+    add(suck(0.6), 17.95, 0.12)              # camera pushes in on the post
+    add(click(), U(LIKE_AT), 0.5)            # cursor clicks the heart
     for k in range(18):                      # hearts flying out
-        add(pop(), LIKE_AT + 0.02 + k * 0.05, 0.06)
+        add(pop(), U(LIKE_AT) + 0.02 + k * 0.06, 0.05)
     for k in range(5):                       # comment bubbles
-        add(pop(), 19.6 + k * 0.12, 0.12)
-    add(click(), FOLLOW_CLICK, 0.55)         # cursor clicks follow -> profile
-    add(click(), 20.92, 0.6)                 # follow pressed on the card
-    add(chime(), 21.0, 0.18)                 # new follower
+        add(pop(), U(19.6) + k * 0.16, 0.1)
+    add(click(), U(FOLLOW_CLICK), 0.5)       # cursor clicks follow -> profile
+    add(click(), U(20.92), 0.55)             # follow pressed on the card
+    add(chime(), U(21.0), 0.16)              # new follower
     for k in range(9):                       # posts flying to the wall
-        add(pop(), TILES_OUT + k * 0.05, 0.1)
-    add(shing(0.5), 23.4, 0.22)              # phone 360 spin
-    add(suck(), 24.45, 0.25)                 # everything returns into the screen
-    add(snip(), 33.4, 0.25)
-    add(shing(0.9), 28.6, 0.2)               # business card spinning in
-    add(suck(0.35), 29.6, 0.18)              # card flip
+        add(pop(), U(TILES_OUT) + k * 0.06, 0.08)
+    add(suck(), U(24.45), 0.22)              # everything returns into the screen
+    add(snip(), 38.9, 0.22)
+    add(suck(0.35), 35.1, 0.16)              # card flip
     for k in range(6):                       # QR modules rising
-        add(click(), 30.2 + k * 0.08, 0.25)
-    add(chime(), 31.35, 0.2)                 # scan
+        add(click(), 35.7 + k * 0.08, 0.22)
+    add(chime(), 36.85, 0.18)                # scan
     out /= max(1e-6, np.abs(out).max()) / 0.89
     with wave.open(str(path), "wb") as wf:
         wf.setnchannels(2)
@@ -757,7 +760,7 @@ def main():
                     "-movflags", "+faststart", str(final)], check=True)
     wav.unlink()
     # 17 s version for A/B testing (hook + kinetic + phone + end), cut on the beat
-    short_cut(final, OUT / "atelier47_motion_3d_court.mp4", [(0.0, 3.5), (17.0, 25.0), (28.5, DUR)])
+    short_cut(final, OUT / "atelier47_motion_3d_court.mp4", [(0.0, 3.5), (17.0, 30.5), (38.5, DUR)])
     print("done", final)
 
 if __name__ == "__main__":
