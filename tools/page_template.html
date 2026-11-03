@@ -50,25 +50,26 @@ h3 { font-size: 18px; }
 .box { display: block; width: 26px; height: 26px; border: 1.5px solid var(--gold-soft); border-radius: 50%; }
 .done input:checked + .box { background: var(--gold); border-color: var(--gold); box-shadow: inset 0 0 0 5px var(--black); }
 .shot.is-done h3 { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--gold-soft); }
+.note { margin: 0; font-size: 14px; color: var(--cream); border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 @media (prefers-reduced-motion: reduce) { .copy { transition: none; } }
 </style>
 <main class="wrap">
   <section class="intro">
-    <p class="brand">TIM DESIGN</p>
+    <p class="brand">ATELIER 47 · TIM DESIGN</p>
     <h1>Les prompts de ton reel</h1>
-    <p>Reel de {{DURATION}} secondes : la façade et l'adresse, l'accueil, la salle d'attente avec le match, les produits en gros plan, le téléphone avec ta page Instagram au milieu, et une fin simple sur le logo.</p>
+    <p>Reel de {{DURATION}} secondes : la façade Atelier 47 avec l'adresse, le salon plein de plantes, la salle d'attente avec la télé et la PS5, les produits TIM DESIGN en gros plan, le comptoir avec l'ordinateur, le TPE et la fiche tarifs, le téléphone avec ta page Instagram au milieu, puis une fin sur le logo avec les horaires.</p>
     <ul class="chips">
       <li>Format <b>9:16</b></li>
       <li>Durée <b>{{DURATION}} s</b></li>
-      <li><b>{{COUNT}}</b> plans</li>
+      <li><b>{{GEN}}</b> vidéos à générer</li>
     </ul>
   </section>
 
   <section class="block">
     <h2>Le prompt complet</h2>
     <p>Tout le reel en un seul texte, déjà rempli avec tes infos :</p>
-    <div class="fill"><code>12 rue de la République</code><code>Annecy</code><code>@timdesign</code><code>Poppins</code></div>
+    <div class="fill">{{FILL}}</div>
     <pre class="prompt tall" id="p-master">{{MASTER}}</pre>
     <button class="copy" type="button" data-target="p-master">Copier le prompt complet</button>
   </section>

@@ -1,24 +1,24 @@
 # Prompt à coller dans l'IA de montage
 
-Colle le texte sous la ligne avec tes fichiers `shot_01.mp4` à `shot_17.mp4`, `logo_tim_design.png` et `instagram_screenshot.png`.
+Colle le texte sous la ligne avec tes 22 vidéos `shot_XX.mp4`, `assets/logo_atelier47.png`, `assets/fiche_tarifs.jpg` et `instagram_screenshot.png`.
 
 ---
 
-Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe pour Instagram. Monte un Reel vertical de 30 secondes pour le salon de barbier TIM DESIGN en suivant EXACTEMENT la fiche JSON ci-dessous : ordre, durées, transitions, étalonnage, textes, police, couleurs, son et export. Aucune personne dans le salon. Coupe sur le temps. Signale tout plan défectueux au lieu de le garder.
+Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe pour Instagram. Monte un Reel vertical de 50 secondes pour le salon ATELIER 47 BARBIER (Annecy) en suivant EXACTEMENT la fiche JSON ci-dessous : ordre, durées, transitions et leurs effets, rampes de vitesse, étalonnage, textes et leurs animations, police, couleurs, son et export. Aucune personne dans le salon. Coupe sur le temps. Signale tout plan défectueux au lieu de le garder.
 
 ```json
 {
   "project": {
-    "name": "TIM DESIGN - Reel salon",
+    "name": "ATELIER 47 BARBIER - Reel",
     "resolution": "1080x1920",
     "fps": 30,
-    "duration_seconds": 30.0,
+    "duration_seconds": 50.0,
     "export": {
       "container": "mp4",
       "video_codec": "H.264 High",
       "bitrate_mbps": 20,
       "audio": "AAC 320 kbps",
-      "file_name": "tim_design_reel.mp4"
+      "file_name": "atelier47_reel.mp4"
     }
   },
   "brand": {
@@ -29,19 +29,24 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
     },
     "font": "Poppins",
     "assets": {
-      "logo": "logo_tim_design.png (transparent background)",
-      "instagram_screenshot": "instagram_screenshot.png (real screenshot of the TIM DESIGN Instagram profile)"
+      "logo": "assets/logo_atelier47.png (black background: use the Screen blend mode or remove the black)",
+      "price_list": "assets/fiche_tarifs.jpg (shot 14, full screen)",
+      "instagram_screenshot": "instagram_screenshot.png (real screenshot of the @atelier47barbier profile)"
     }
   },
   "global_rules": [
-    "never show a person in the salon; reject any clip with a person, hand or face (tiny players on the TV are fine)",
+    "never show a person in the salon; reject any clip with a person, hand or face (game players on the TV are fine)",
     "cut on the beat; alternate close-ups and wide shots exactly as listed",
+    "upscale every clip to 1080x1920 (CapCut: Enhance quality) and trim the first and last 5 frames of each generated clip",
+    "speed ramps on every transition: 100% -> 200% in the last 6 frames of the outgoing shot, 200% -> 100% in the first 6 frames of the next",
+    "product close-ups (shots 2-5, 10, 11, 20) slowed to 70-80% with optical-flow interpolation",
     "keep all text inside the Instagram safe zone: 250px top, 420px bottom, 140px right, 80px left",
-    "text only in gold #C9A24B (main) or cream #F3EEE3 (secondary), font Poppins",
-    "if the Instagram page generated on the phone (shots 12-13) has garbled text, pin instagram_screenshot.png onto the phone screen with corner-pin tracking"
+    "text only in gold #C9A24B or cream #F3EEE3, font Poppins",
+    "shots 15-16: if the generated Instagram screen is not perfectly readable, pin instagram_screenshot.png onto the phone screen with corner-pin tracking",
+    "the last frame fades to black so the reel loops cleanly into the first shot"
   ],
   "color_grade": {
-    "apply_to": "all clips identically",
+    "apply_to": "all clips identically (grade one clip, copy the settings to all)",
     "contrast": "+15",
     "saturation": "-10 (keep plant and pitch greens natural)",
     "temperature": "+8 warm",
@@ -54,262 +59,367 @@ Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe 
     {
       "clip": "shot_01.mp4",
       "in": 0.0,
-      "out": 3.0,
+      "out": 3.5,
       "scale": "wide",
-      "content": "Façade de nuit puis entrée dans le salon",
-      "transition_out": "hard cut on the beat drop"
+      "content": "Façade Atelier 47 de nuit, puis entrée",
+      "transition_out": "hard cut on the bass drop with a 3-frame camera shake"
     },
     {
       "clip": "shot_02.mp4",
-      "in": 3.0,
-      "out": 3.4,
+      "in": 3.5,
+      "out": 3.9,
       "scale": "close",
       "content": "Pot de cire TIM DESIGN",
-      "transition_out": "hard cut on beat"
+      "transition_out": "hard cut on beat with a 2-frame white-gold flash"
     },
     {
       "clip": "shot_03.mp4",
-      "in": 3.4,
-      "out": 3.8,
+      "in": 3.9,
+      "out": 4.3,
       "scale": "close",
       "content": "Ciseaux dorés",
-      "transition_out": "hard cut on beat"
+      "transition_out": "hard cut on beat with a 2-frame white-gold flash"
     },
     {
       "clip": "shot_04.mp4",
-      "in": 3.8,
-      "out": 4.2,
+      "in": 4.3,
+      "out": 4.7,
       "scale": "close",
       "content": "Rasoir qui s'ouvre",
-      "transition_out": "hard cut on beat"
+      "transition_out": "hard cut on beat with a 2-frame white-gold flash"
     },
     {
       "clip": "shot_05.mp4",
-      "in": 4.2,
-      "out": 4.6,
+      "in": 4.7,
+      "out": 5.1,
       "scale": "close",
       "content": "Enseigne de barbier",
       "transition_out": "hard cut on beat"
     },
     {
       "clip": "shot_06.mp4",
-      "in": 4.6,
-      "out": 7.0,
+      "in": 5.1,
+      "out": 8.0,
       "scale": "wide",
       "content": "Vue d'ensemble du salon",
-      "transition_out": "fast zoom-in transition (wide to close) with motion blur"
+      "transition_out": "speed-ramped zoom-in transition (wide to close) with strong motion blur"
     },
     {
       "clip": "shot_07.mp4",
-      "in": 7.0,
-      "out": 9.0,
+      "in": 8.0,
+      "out": 10.0,
       "scale": "close",
       "content": "Outils vus de dessus",
-      "transition_out": "fast pull-back transition (close to wide) with motion blur"
+      "transition_out": "speed-ramped pull-back transition (close to wide) with motion blur"
     },
     {
       "clip": "shot_08.mp4",
-      "in": 9.0,
-      "out": 11.5,
+      "in": 10.0,
+      "out": 12.5,
       "scale": "wide",
-      "content": "Salle d'attente, plantes et match à la télé",
-      "transition_out": "whip-pan transition with motion blur"
+      "content": "Salle d'attente, TV, PS5 et plantes",
+      "transition_out": "push-in transition straight into the TV with a soft blur"
     },
     {
       "clip": "shot_09.mp4",
-      "in": 11.5,
-      "out": 13.5,
+      "in": 12.5,
+      "out": 14.0,
       "scale": "close",
-      "content": "Étagère de produits TIM DESIGN",
-      "transition_out": "fast zoom-in transition onto one bottle"
+      "content": "La PS5 et la manette",
+      "transition_out": "whip-pan transition with motion blur and a gold light leak"
     },
     {
       "clip": "shot_10.mp4",
-      "in": 13.5,
-      "out": 14.5,
+      "in": 14.0,
+      "out": 16.5,
       "scale": "close",
-      "content": "Bouteille TIM DESIGN en macro",
-      "transition_out": "fast pull-back transition (close to wide)"
+      "content": "Étagère de produits TIM DESIGN",
+      "transition_out": "speed-ramped zoom-in transition onto one bottle"
     },
     {
       "clip": "shot_11.mp4",
-      "in": 14.5,
-      "out": 16.0,
-      "scale": "wide",
-      "content": "Accueil avec le logo",
-      "transition_out": "hard cut on the beat"
+      "in": 16.5,
+      "out": 18.0,
+      "scale": "close",
+      "content": "Bouteille TIM DESIGN en macro",
+      "transition_out": "speed-ramped pull-back transition (close to wide)"
     },
     {
       "clip": "shot_12.mp4",
-      "in": 16.0,
-      "out": 18.5,
-      "scale": "medium",
-      "content": "Téléphone devant le salon avec Instagram",
-      "transition_out": "slow push-in toward the screen"
+      "in": 18.0,
+      "out": 20.5,
+      "scale": "wide",
+      "content": "Comptoir d'accueil complet",
+      "transition_out": "hard cut on the beat"
     },
     {
       "clip": "shot_13.mp4",
-      "in": 18.5,
-      "out": 20.5,
-      "scale": "medium",
-      "content": "Le téléphone s'efface, retour au salon",
-      "transition_out": "hard cut"
-    },
-    {
-      "clip": "shot_14.mp4",
       "in": 20.5,
       "out": 22.5,
       "scale": "close",
-      "content": "Fauteuil en cuir",
-      "transition_out": "fast pull-back transition (close to wide)"
+      "content": "TPE et ordinateur, puis fiche tarifs",
+      "transition_out": "push-in transition into the price list frame"
+    },
+    {
+      "clip": "assets/fiche_tarifs.jpg",
+      "in": 22.5,
+      "out": 25.5,
+      "scale": "close",
+      "content": "Fiche tarifs (ta vraie image)",
+      "transition_out": "gold flash transition"
     },
     {
       "clip": "shot_15.mp4",
-      "in": 22.5,
-      "out": 24.5,
-      "scale": "wide",
-      "content": "Miroir qui reflète le salon",
-      "transition_out": "zoom-in transition (wide to close)"
+      "in": 25.5,
+      "out": 28.5,
+      "scale": "medium",
+      "content": "Le téléphone apparaît devant le salon",
+      "transition_out": "continuous push-in, no cut"
     },
     {
       "clip": "shot_16.mp4",
-      "in": 24.5,
-      "out": 26.5,
+      "in": 28.5,
+      "out": 31.5,
       "scale": "close",
-      "content": "Tondeuse dorée en macro",
-      "transition_out": "soft cross-dissolve"
+      "content": "Écran Instagram lisible, ABONNEZ-VOUS",
+      "transition_out": "rack focus to the salon behind"
     },
     {
       "clip": "shot_17.mp4",
-      "in": 26.5,
-      "out": 30.0,
+      "in": 31.5,
+      "out": 33.5,
+      "scale": "medium",
+      "content": "Le téléphone s'efface, retour au salon",
+      "transition_out": "whip-pan transition with motion blur"
+    },
+    {
+      "clip": "shot_18.mp4",
+      "in": 33.5,
+      "out": 35.5,
+      "scale": "close",
+      "content": "Fauteuil en cuir",
+      "transition_out": "speed-ramped pull-back transition (close to wide)"
+    },
+    {
+      "clip": "shot_19.mp4",
+      "in": 35.5,
+      "out": 38.0,
       "scale": "wide",
-      "content": "Fin : mur du logo",
-      "transition_out": "gentle fade to black #111111"
+      "content": "Miroir qui reflète le salon",
+      "transition_out": "zoom-in transition (wide to close) with a gold light leak"
+    },
+    {
+      "clip": "shot_20.mp4",
+      "in": 38.0,
+      "out": 40.0,
+      "scale": "close",
+      "content": "Tondeuse dorée en macro",
+      "transition_out": "blur dissolve"
+    },
+    {
+      "clip": "shot_21.mp4",
+      "in": 40.0,
+      "out": 42.0,
+      "scale": "close",
+      "content": "Feuille de plante, puis salon",
+      "transition_out": "speed-ramped pull-back transition"
+    },
+    {
+      "clip": "shot_22.mp4",
+      "in": 42.0,
+      "out": 44.5,
+      "scale": "wide",
+      "content": "Le salon vers la porte d'entrée",
+      "transition_out": "soft cross-dissolve"
+    },
+    {
+      "clip": "shot_23.mp4",
+      "in": 44.5,
+      "out": 50.0,
+      "scale": "wide",
+      "content": "Fin : mur du logo Atelier 47",
+      "transition_out": "gentle fade to black #111111 that loops back to the first shot"
     }
   ],
   "text_overlays": [
     {
-      "in": 0.2,
-      "out": 3.0,
-      "what": "TIM DESIGN logo",
-      "style": "gold, top center, 520px wide",
-      "anim": "fade in + scale 95%->100% over 0.5s, dissolve out at 3.0s"
+      "a": 0.0,
+      "b": 3.5,
+      "what": "logo_atelier47.png",
+      "style": "top center, 420px wide",
+      "effect": "visible from the very first frame, scale 105% to 100%, one gold shimmer sweep at 1.0s, dissolve out at 3.5s"
     },
     {
-      "in": 0.5,
-      "out": 3.0,
-      "what": "location pin icon + '12 rue de la République · Annecy'",
-      "style": "Poppins, cream #F3EEE3, 44px, below the logo",
-      "anim": "slide up 20px + fade in 0.4s"
+      "a": 0.4,
+      "b": 3.5,
+      "what": "location pin icon + '12 RUE DE LA RÉPUBLIQUE'",
+      "style": "Poppins SemiBold, cream #F3EEE3, 46px, letter spacing +80, below the logo",
+      "effect": "slide up 20px + fade in over 0.4s, letter spacing expanding slightly"
     },
     {
-      "in": 16.6,
-      "out": 20.3,
+      "a": 0.7,
+      "b": 3.5,
+      "what": "74000 ANNECY",
+      "style": "Poppins Bold, gold #C9A24B, 60px, letter spacing +120, under the street",
+      "effect": "fade in with a gold underline drawing itself from left to right under the city, soft glow"
+    },
+    {
+      "a": 18.3,
+      "b": 20.5,
+      "what": "OUVERT DU MARDI AU SAMEDI",
+      "style": "Poppins Medium, cream #F3EEE3, 40px, letter spacing +100, lower third",
+      "effect": "slide in from the left with a thin gold line, fade out on the cut"
+    },
+    {
+      "a": 26.0,
+      "b": 31.5,
       "what": "ABONNEZ-VOUS",
-      "style": "Poppins, gold #C9A24B, 96px, wide letter spacing, centered above the phone",
-      "anim": "letters reveal left to right over 0.4s with a gold shimmer, ding sound"
+      "style": "Poppins Bold, gold gradient #C9A24B to a lighter gold highlight, 104px, letter spacing +60, centered above the phone",
+      "effect": "letters pop in one by one (scale 120% to 100%, 0.05s apart) on the beat, then a bright gold light sweep across the word, soft outer glow, a few fine gold sparkle particles, a thin gold underline drawing itself, and a subtle pulse (100% to 104%) on every beat; no motion blur, always readable"
     },
     {
-      "in": 17.0,
-      "out": 20.3,
-      "what": "@timdesign",
-      "style": "Poppins, cream #F3EEE3, 44px, under ABONNEZ-VOUS",
-      "anim": "fade in 0.3s"
+      "a": 26.6,
+      "b": 31.5,
+      "what": "@atelier47barbier",
+      "style": "Poppins Medium, cream #F3EEE3, 46px, under ABONNEZ-VOUS",
+      "effect": "typewriter reveal over 0.5s, then steady"
     },
     {
-      "in": 27.0,
-      "out": 30.0,
-      "what": "TIM DESIGN logo",
-      "style": "gold, exact center, 600px wide",
-      "anim": "fade in 0.6s, fade out with the final fade"
+      "a": 45.0,
+      "b": 50.0,
+      "what": "logo_atelier47.png",
+      "style": "exact center, 560px wide",
+      "effect": "fade in + scale 95% to 100% over 0.6s, one gold shimmer sweep at 46.0s"
     },
     {
-      "in": 27.5,
-      "out": 30.0,
+      "a": 45.6,
+      "b": 50.0,
       "what": "ABONNEZ-VOUS",
-      "style": "Poppins, gold #C9A24B, 64px, 160px below the logo",
-      "anim": "fade in 0.4s"
+      "style": "Poppins Bold, gold #C9A24B, 72px, 150px below the logo",
+      "effect": "letters pop in one by one with a gold light sweep and soft glow, gentle pulse on the beat"
     },
     {
-      "in": 27.9,
-      "out": 30.0,
-      "what": "@timdesign · 12 rue de la République, Annecy",
-      "style": "Poppins, cream #F3EEE3, 38px, under ABONNEZ-VOUS",
-      "anim": "fade in 0.4s"
+      "a": 46.0,
+      "b": 50.0,
+      "what": "@atelier47barbier",
+      "style": "Poppins Medium, cream #F3EEE3, 40px, under ABONNEZ-VOUS",
+      "effect": "fade in 0.4s"
+    },
+    {
+      "a": 46.4,
+      "b": 50.0,
+      "what": "12 rue de la République, 74000 Annecy",
+      "style": "Poppins Regular, cream #F3EEE3, 36px",
+      "effect": "fade in 0.4s"
+    },
+    {
+      "a": 46.8,
+      "b": 50.0,
+      "what": "MARDI – VENDREDI · 9H – 19H / SAMEDI · 9H – 18H / FERMÉ DIMANCHE ET LUNDI",
+      "style": "Poppins Medium, gold #C9A24B, 32px, three centered lines",
+      "effect": "lines fade in one after another, 0.2s apart"
+    },
+    {
+      "a": 47.4,
+      "b": 50.0,
+      "what": "TIM DESIGN",
+      "style": "Poppins Light, cream #F3EEE3 at 70% opacity, 24px, letter spacing +200, just above the bottom safe zone",
+      "effect": "fade in 0.5s, discreet signature"
     }
   ],
   "audio": {
-    "music": "dark luxury deep-house instrumental, no vocals, bass drop at 3.0s, fade out over the last 1.5s, -14 LUFS",
+    "music": "dark luxury deep-house instrumental, no vocals, bass drop at 3.5s, fade out over the last 2s, -14 LUFS",
     "sfx": [
       [
         0.0,
         "night street ambience + door opening"
       ],
       [
-        3.0,
+        3.5,
         "deep impact on the drop"
       ],
       [
-        3.0,
+        3.5,
         "metallic click"
       ],
       [
-        3.8,
+        4.3,
         "razor ring"
       ],
       [
-        6.9,
+        7.9,
         "whoosh"
       ],
       [
-        8.9,
+        9.9,
         "reverse whoosh"
       ],
       [
-        9.0,
-        "muffled stadium crowd from the TV, low"
+        10.0,
+        "muffled stadium crowd + game sounds from the TV, low"
       ],
       [
-        11.4,
+        12.4,
+        "whoosh into the TV"
+      ],
+      [
+        13.9,
         "whip-pan whoosh"
       ],
       [
-        13.4,
+        15.9,
         "whoosh"
       ],
       [
-        14.4,
+        17.9,
         "reverse whoosh"
       ],
       [
-        16.0,
-        "smooth mechanical slide"
-      ],
-      [
-        16.6,
-        "notification ding"
-      ],
-      [
-        20.4,
-        "reverse whoosh"
+        20.8,
+        "card terminal beep"
       ],
       [
         22.4,
-        "whoosh"
+        "whoosh into the frame"
       ],
       [
-        26.5,
+        25.4,
+        "gold flash shimmer"
+      ],
+      [
+        25.5,
+        "smooth mechanical slide"
+      ],
+      [
+        26.0,
+        "notification ding"
+      ],
+      [
+        33.4,
+        "whip-pan whoosh"
+      ],
+      [
+        35.4,
+        "reverse whoosh"
+      ],
+      [
+        41.9,
+        "reverse whoosh"
+      ],
+      [
+        44.5,
         "warm low boom"
       ]
     ]
   },
   "final_checks": [
-    "duration 30.0s",
+    "duration 50.0s",
     "no person in the salon",
-    "TIM DESIGN spelled correctly everywhere",
-    "address, ABONNEZ-VOUS and handle readable and inside the safe zone",
-    "cuts on the beat"
+    "ATELIER 47 and TIM DESIGN spelled correctly everywhere",
+    "prices, address, hours, ABONNEZ-VOUS and handle readable and inside the safe zone",
+    "cuts on the beat",
+    "same salon layout in every wide shot",
+    "the ending loops cleanly into the start"
   ]
 }
 ```

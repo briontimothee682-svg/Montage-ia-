@@ -3,266 +3,415 @@
     "aspect_ratio": "9:16",
     "resolution": "1080x1920",
     "fps": 30,
-    "duration_seconds": 30.0,
-    "use": "Instagram Reel for the luxury barbershop TIM DESIGN"
+    "duration_seconds": 50.0,
+    "use": "Instagram Reel for ATELIER 47 BARBIER, Annecy"
   },
   "brand": {
-    "name": "TIM DESIGN",
+    "salon": "ATELIER 47 BARBIER",
+    "logo": "the ATELIER 47 BARBIER logo: a circular badge made of two thin concentric brushed-gold rings on matte black; at the top a pair of open gold scissors; the word 'ATELIER' in cream condensed capitals with wide letter spacing; a large bold gold '47' below it; a thin horizontal gold line; 'BARBIER' in cream spaced capitals; and the small gold tagline 'COUPE NETTE · BARBE SOIGNÉE'",
+    "logo_file": "assets/logo_atelier47.png",
+    "product_line": "TIM DESIGN",
     "colors": {
       "black": "#111111",
       "gold": "#C9A24B",
       "cream": "#F3EEE3"
     },
     "font": "Poppins",
-    "address": "12 rue de la République, Annecy",
-    "instagram": "@timdesign"
+    "address": "12 rue de la République, 74000 Annecy",
+    "instagram": "@atelier47barbier",
+    "hours": [
+      "MARDI – VENDREDI · 9H – 19H",
+      "SAMEDI · 9H – 18H",
+      "FERMÉ DIMANCHE ET LUNDI"
+    ],
+    "price_list_file": "assets/fiche_tarifs.jpg",
+    "price_list": "NOS TARIFS — Coupe: Coupe Homme 22€, Dégradé/Fade 25€, Coupe étudiant 20€, Enfant (-12 ans) 15€. Barbe + soins: Barbe 15€, Shampooing 5€, Coupe + barbe + shampoing 38€. @atelier47barbier"
   },
   "global_style": {
-    "realism": "Photorealistic live-action footage, as if shot on an ARRI Alexa 35 with anamorphic 35mm and 100mm macro lenses: true-to-life materials (leather grain and stitching, brushed metal with micro-scratches, veined marble, real glass, real plant leaves), physically accurate light and reflections, natural film grain. Absolutely no cartoon, illustration, 3D render or CGI look.",
-    "palette": "Colors strictly matte black #111111, brushed gold #C9A24B and warm cream #F3EEE3; the only other color allowed is the natural green of the plants and of the football pitch on the TV.",
-    "lighting_and_grade": "Moody low-key lighting, deep blacks, warm 2700K golden highlights from brass pendant lamps, slightly desaturated warm cinematic grade, subject razor sharp, soft creamy bokeh.",
-    "set": "An upscale modern barbershop called TIM DESIGN, completely empty of people: matte black walls, cream veined marble floor, dark walnut counters, brass pendant lamps, two black leather barber chairs with gold details, round gold-framed mirrors, lush green plants (monstera, olive tree, hanging pothos) in matte black pots, a dark walnut reception desk with the brushed-gold TIM DESIGN logo backlit on the black wall behind it, and a waiting lounge with a black leather sofa, two armchairs, a low marble coffee table and a wall-mounted flat TV playing a live football match.",
-    "tv": "The TV shows a live football match from the wide broadcast camera: bright green pitch, players tiny and distant, no readable score, no team or channel logos."
+    "realism": "Ultra-photorealistic live-action footage, indistinguishable from a real commercial shot on an ARRI Alexa 35 with anamorphic 35mm and 100mm macro lenses: true-to-life materials (leather grain and stitching, brushed metal with micro-scratches, veined marble, real glass, real plant leaves with natural imperfections), physically accurate light, shadows and reflections, real-world physics and natural camera inertia, subtle lens breathing, soft halation on highlights, natural film grain. Absolutely no cartoon, illustration, 3D render, CGI or AI-looking artifacts.",
+    "palette": "Colors strictly matte black #111111, brushed gold #C9A24B and warm cream #F3EEE3; the only other colors allowed are the natural green of the plants and the green pitch on the TV.",
+    "lighting_and_grade": "Moody low-key lighting, deep blacks, warm 2700K golden highlights from brass pendant lamps, slightly desaturated warm cinematic grade identical on every shot, subject razor sharp, soft creamy bokeh.",
+    "set": "The ATELIER 47 BARBIER salon in Annecy, an upscale modern barbershop, completely empty of people. Fixed layout, identical in every shot: a tall glass entrance door on the street side; the reception and checkout desk just to the right of the entrance; two black leather barber chairs with gold details facing round gold-framed mirrors along the left wall; the waiting lounge at the back; a row of brass pendant lamps along the ceiling. Materials: matte black walls, cream veined marble floor, dark walnut counters. Lots of lush green plants everywhere: tall monstera and an olive tree in matte black pots, hanging pothos trailing from the ceiling, ferns on the shelves, small plants on the counters. Reception desk in dark walnut: a slim black all-in-one computer whose screen shows a dark booking calendar with gold accents, a black card payment terminal with a glowing screen and a contactless symbol, a black-and-gold framed price list titled 'NOS TARIFS', and behind the desk, backlit on the black wall, the ATELIER 47 BARBIER logo: a circular badge made of two thin concentric brushed-gold rings on matte black; at the top a pair of open gold scissors; the word 'ATELIER' in cream condensed capitals with wide letter spacing; a large bold gold '47' below it; a thin horizontal gold line; 'BARBIER' in cream spaced capitals; and the small gold tagline 'COUPE NETTE · BARBE SOIGNÉE'. Waiting lounge: black leather sofa, two armchairs, a low marble coffee table with two white game controllers and a few TIM DESIGN grooming products, and a large wall-mounted flat TV above a dark walnut TV cabinet on which a white PlayStation 5 console stands upright, its blue-white light glowing softly.",
+    "tv": "The TV shows a football video game being played on the PlayStation 5: bright green pitch from the wide broadcast camera angle, small game players running, no readable score, no team or channel logos.",
+    "products": "TIM DESIGN is the premium grooming product line sold in the salon: matte black and amber glass bottles and jars with gold caps."
   },
+  "production_rules": [
+    "Same salon in every shot: identical layout, materials, plants and light (generate the wide shots from one reference image of the salon).",
+    "The first frame is already moving with the logo visible: no black or still opening.",
+    "Every cut lands exactly on a beat of the music.",
+    "Speed ramps on every transition: the shot accelerates just before the cut (100% to 200%) and slows down at the start of the next one.",
+    "Transition effects: zoom-in and pull-back with strong motion blur, whip-pans, push-ins through the TV, the price list frame and the phone, 2-frame white-gold flashes, warm gold light leaks, a 3-frame camera shake on the bass drop, blur dissolves.",
+    "Product close-ups are the highlight: perfect focus, controlled reflections, premium macro quality, slowed to 70-80% with optical-flow smoothing.",
+    "One identical color grade on every shot.",
+    "The Instagram moment is perfectly clear: the phone screen is large, steady and sharp, ABONNEZ-VOUS stays readable for the whole 5.5 seconds.",
+    "The ending fades to black and loops seamlessly back to the night façade of the first shot."
+  ],
   "shots": [
     {
       "id": 1,
       "file": "shot_01.mp4",
-      "time": "0.0-3.0s",
+      "time": "0.0-3.5s",
       "scale": "wide",
-      "label_fr": "Façade de nuit puis entrée dans le salon",
-      "subject": "Exterior at night: the TIM DESIGN storefront, matte black façade, a backlit brushed-gold 'TIM DESIGN' sign above a tall glass door, warm golden light from the salon spilling onto wet pavement with soft reflections, plants visible through the window. The camera then glides through the glass door into the salon, where the gold TIM DESIGN logo glowing on the reception wall comes into focus",
-      "camera": "slow steady push-in on a gimbal, continuous single move from outside to inside",
+      "label_fr": "Façade Atelier 47 de nuit, puis entrée",
+      "subject": "Exterior at night in Annecy: the ATELIER 47 BARBIER storefront, matte black façade, above the tall glass door a large backlit sign of the ATELIER 47 BARBIER logo: a circular badge made of two thin concentric brushed-gold rings on matte black; at the top a pair of open gold scissors; the word 'ATELIER' in cream condensed capitals with wide letter spacing; a large bold gold '47' below it; a thin horizontal gold line; 'BARBIER' in cream spaced capitals; and the small gold tagline 'COUPE NETTE · BARBE SOIGNÉE'; tall green plants in matte black planters on both sides of the door, warm golden light from the salon spilling onto the wet cobblestone pavement with soft reflections, plants and pendant lamps visible through the window. The camera then glides through the glass door into the salon, where the same backlit gold logo on the reception wall comes into focus",
+      "camera": "slow steady gimbal push-in, one continuous move from outside to inside, already moving on the very first frame",
       "motion": "light reflections sliding on the glass and the wet pavement",
-      "transition_out": "hard cut on the beat drop"
+      "transition_out": "hard cut on the bass drop with a 3-frame camera shake",
+      "generate": true
     },
     {
       "id": 2,
       "file": "shot_02.mp4",
-      "time": "3.0-3.4s",
+      "time": "3.5-3.9s",
       "scale": "close",
       "label_fr": "Pot de cire TIM DESIGN",
       "subject": "Extreme macro of a matte black pomade jar with a brushed-gold lid finely engraved 'TIM DESIGN', on dark walnut",
       "camera": "fast rack focus from a blurred foreground to the engraved lid",
       "motion": "a sharp glint of golden light crossing the lid",
-      "transition_out": "hard cut on beat"
+      "transition_out": "hard cut on beat with a 2-frame white-gold flash",
+      "generate": true
     },
     {
       "id": 3,
       "file": "shot_03.mp4",
-      "time": "3.4-3.8s",
+      "time": "3.9-4.3s",
       "scale": "close",
       "label_fr": "Ciseaux dorés",
       "subject": "Extreme macro of polished gold barber scissors opening on black leather",
       "camera": "locked-off macro",
       "motion": "blades opening, light flashing along the edge",
-      "transition_out": "hard cut on beat"
+      "transition_out": "hard cut on beat with a 2-frame white-gold flash",
+      "generate": true
     },
     {
       "id": 4,
       "file": "shot_04.mp4",
-      "time": "3.8-4.2s",
+      "time": "4.3-4.7s",
       "scale": "close",
       "label_fr": "Rasoir qui s'ouvre",
       "subject": "Extreme macro of a gold straight razor opening on a folded cream towel",
       "camera": "locked-off macro",
       "motion": "blade catching a flash of golden light",
-      "transition_out": "hard cut on beat"
+      "transition_out": "hard cut on beat with a 2-frame white-gold flash",
+      "generate": true
     },
     {
       "id": 5,
       "file": "shot_05.mp4",
-      "time": "4.2-4.6s",
+      "time": "4.7-5.1s",
       "scale": "close",
       "label_fr": "Enseigne de barbier",
-      "subject": "Vintage barber pole with black and gold spiral stripes and a glowing cream-white globe on a matte black wall",
+      "subject": "Vintage barber pole with black and gold spiral stripes and a glowing cream-white globe on a matte black wall, a hanging pothos beside it",
       "camera": "low angle close-up, quick upward tilt",
       "motion": "spiral rotating",
-      "transition_out": "hard cut on beat"
+      "transition_out": "hard cut on beat",
+      "generate": true
     },
     {
       "id": 6,
       "file": "shot_06.mp4",
-      "time": "4.6-7.0s",
+      "time": "5.1-8.0s",
       "scale": "wide",
       "label_fr": "Vue d'ensemble du salon",
-      "subject": "Wide establishing shot of the whole empty salon: the two black leather barber chairs, round gold-framed mirrors, brass pendant lamps, green plants, and the reception desk with the glowing gold logo in the background",
+      "subject": "Wide establishing shot of the whole empty salon: the two black leather barber chairs, round gold-framed mirrors, the row of brass pendant lamps, lush plants everywhere (monstera, olive tree, hanging pothos), and the reception desk with the glowing gold ATELIER 47 logo in the background",
       "camera": "slow smooth dolly-in at chest height",
       "motion": "dust particles drifting in the warm light beams",
-      "transition_out": "fast zoom-in transition (wide to close) with motion blur"
+      "transition_out": "speed-ramped zoom-in transition (wide to close) with strong motion blur",
+      "generate": true
     },
     {
       "id": 7,
       "file": "shot_07.mp4",
-      "time": "7.0-9.0s",
+      "time": "8.0-10.0s",
       "scale": "close",
       "label_fr": "Outils vus de dessus",
-      "subject": "Top-down view of a dark walnut barber station: straight razor, black combs, gold scissors, shaving brush and a folded cream towel, perfectly aligned with equal spacing",
+      "subject": "Top-down view of a dark walnut barber station: straight razor, black combs, gold scissors, shaving brush and a folded cream towel, perfectly aligned with equal spacing, a small potted fern at the edge of the frame",
       "camera": "slow lateral slide",
       "motion": "warm light reflections moving across the metal",
-      "transition_out": "fast pull-back transition (close to wide) with motion blur"
+      "transition_out": "speed-ramped pull-back transition (close to wide) with motion blur",
+      "generate": true
     },
     {
       "id": 8,
       "file": "shot_08.mp4",
-      "time": "9.0-11.5s",
+      "time": "10.0-12.5s",
       "scale": "wide",
-      "label_fr": "Salle d'attente, plantes et match à la télé",
-      "subject": "Wide view of the waiting lounge: black leather sofa and two armchairs, low marble coffee table with a few TIM DESIGN products on it, monstera and olive tree in black pots, and the wall-mounted flat TV playing a live football match, its green pitch glowing in the dark room. The TV shows a live football match from the wide broadcast camera: bright green pitch, players tiny and distant, no readable score, no team or channel logos.",
+      "label_fr": "Salle d'attente, TV, PS5 et plantes",
+      "subject": "Wide view of the waiting lounge: black leather sofa and two armchairs, low marble coffee table with two white game controllers and a few TIM DESIGN products, monstera, olive tree and hanging pothos, and the large wall-mounted TV above a dark walnut cabinet with a white PlayStation 5 standing upright, its light glowing. The TV shows a football video game being played on the PlayStation 5: bright green pitch from the wide broadcast camera angle, small game players running, no readable score, no team or channel logos.",
       "camera": "slow lateral tracking",
-      "motion": "the TV image moving, leaves catching the warm light",
-      "transition_out": "whip-pan transition with motion blur"
+      "motion": "the game moving on the TV, leaves catching the warm light",
+      "transition_out": "push-in transition straight into the TV with a soft blur",
+      "generate": true
     },
     {
       "id": 9,
       "file": "shot_09.mp4",
-      "time": "11.5-13.5s",
+      "time": "12.5-14.0s",
       "scale": "close",
-      "label_fr": "Étagère de produits TIM DESIGN",
-      "subject": "Floating dark walnut shelves lined with matte black and amber glass bottles and jars with gold caps, every label printed 'TIM DESIGN' in brushed-gold capitals, perfectly aligned, visible glass texture and clean reflections",
-      "camera": "macro slider moving slowly along the shelf, very shallow depth of field",
-      "motion": "a thin line of warm light sweeping across the gold labels",
-      "transition_out": "fast zoom-in transition onto one bottle"
+      "label_fr": "La PS5 et la manette",
+      "subject": "Close-up of the white PlayStation 5 standing upright on the dark walnut cabinet under the TV, its light glowing, a white game controller sharp in the foreground on the marble coffee table, the football video game softly visible on the TV above",
+      "camera": "slow rack focus from the controller to the console and the TV",
+      "motion": "the TV light flickering softly on the console",
+      "transition_out": "whip-pan transition with motion blur and a gold light leak",
+      "generate": true
     },
     {
       "id": 10,
       "file": "shot_10.mp4",
-      "time": "13.5-14.5s",
+      "time": "14.0-16.5s",
+      "scale": "close",
+      "label_fr": "Étagère de produits TIM DESIGN",
+      "subject": "Floating dark walnut shelves lined with matte black and amber glass bottles and jars with gold caps, every label printed 'TIM DESIGN' in brushed-gold capitals, perfectly aligned, small ferns between the products, visible glass texture and clean reflections",
+      "camera": "macro slider moving slowly along the shelf, very shallow depth of field",
+      "motion": "a thin line of warm light sweeping across the gold labels",
+      "transition_out": "speed-ramped zoom-in transition onto one bottle",
+      "generate": true
+    },
+    {
+      "id": 11,
+      "file": "shot_11.mp4",
+      "time": "16.5-18.0s",
       "scale": "close",
       "label_fr": "Bouteille TIM DESIGN en macro",
       "subject": "Macro of a single matte black TIM DESIGN bottle with a gold cap standing on a black marble plinth, the gold 'TIM DESIGN' lettering razor sharp and centered",
       "camera": "slow orbit around the bottle",
       "motion": "gold rim light tracing the edges of the bottle",
-      "transition_out": "fast pull-back transition (close to wide)"
-    },
-    {
-      "id": 11,
-      "file": "shot_11.mp4",
-      "time": "14.5-16.0s",
-      "scale": "wide",
-      "label_fr": "Accueil avec le logo",
-      "subject": "Wide view of the reception area: dark walnut desk, the brushed-gold TIM DESIGN logo backlit on the black wall behind it, tall green plants on both sides, the salon softly lit in the background",
-      "camera": "slow push-in",
-      "motion": "the logo glowing softly",
-      "transition_out": "hard cut on the beat"
+      "transition_out": "speed-ramped pull-back transition (close to wide)",
+      "generate": true
     },
     {
       "id": 12,
       "file": "shot_12.mp4",
-      "time": "16.0-18.5s",
-      "scale": "medium",
-      "label_fr": "Téléphone devant le salon avec Instagram",
-      "subject": "A matte black smartphone rises upright by itself from the reception counter into the foreground, nobody holding it; the whole salon stays visible and softly blurred behind it. Its screen lights up with the TIM DESIGN Instagram profile: round gold logo avatar, the name 'TIM DESIGN', a grid of nine black-and-gold photos of the salon and products, and a gold 'S'abonner' button",
-      "camera": "low angle, slow push-in toward the screen",
-      "motion": "phone sliding up smoothly, screen lighting up",
-      "transition_out": "slow push-in toward the screen"
+      "time": "18.0-20.5s",
+      "scale": "wide",
+      "label_fr": "Comptoir d'accueil complet",
+      "subject": "Wide view of the reception and checkout desk in dark walnut: the slim black all-in-one computer showing a dark booking calendar, the black card payment terminal with its screen glowing, the black-and-gold framed 'NOS TARIFS' price list standing on the counter, and behind it, backlit on the black wall, the ATELIER 47 BARBIER logo: a circular badge made of two thin concentric brushed-gold rings on matte black; at the top a pair of open gold scissors; the word 'ATELIER' in cream condensed capitals with wide letter spacing; a large bold gold '47' below it; a thin horizontal gold line; 'BARBIER' in cream spaced capitals; and the small gold tagline 'COUPE NETTE · BARBE SOIGNÉE'; tall plants on both sides of the desk, the salon softly lit in the background",
+      "camera": "slow push-in",
+      "motion": "the logo glowing softly, screens lit",
+      "transition_out": "hard cut on the beat",
+      "generate": true
     },
     {
       "id": 13,
       "file": "shot_13.mp4",
-      "time": "18.5-20.5s",
-      "scale": "medium",
-      "label_fr": "Le téléphone s'efface, retour au salon",
-      "subject": "The same smartphone in the foreground, screen on, in front of the salon; the focus pulls from the phone to the salon behind it, then the phone slides down out of frame and the salon is sharp again",
-      "camera": "rack focus from foreground to background, then very slow push-in",
-      "motion": "phone gliding down out of frame",
-      "transition_out": "hard cut"
+      "time": "20.5-22.5s",
+      "scale": "close",
+      "label_fr": "TPE et ordinateur, puis fiche tarifs",
+      "subject": "Close-up of the checkout counter: the black card payment terminal with a glowing screen and a contactless symbol next to the computer keyboard; the focus then moves to the black-and-gold framed 'NOS TARIFS' price list standing beside it",
+      "camera": "slow lateral slide, then rack focus onto the price list frame",
+      "motion": "screen light reflecting on the walnut",
+      "transition_out": "push-in transition into the price list frame",
+      "generate": true
     },
     {
       "id": 14,
-      "file": "shot_14.mp4",
-      "time": "20.5-22.5s",
+      "file": "assets/fiche_tarifs.jpg",
+      "time": "22.5-25.5s",
+      "scale": "close",
+      "label_fr": "Fiche tarifs (ta vraie image)",
+      "subject": "Full-screen view of the real ATELIER 47 price list: NOS TARIFS — Coupe: Coupe Homme 22€, Dégradé/Fade 25€, Coupe étudiant 20€, Enfant (-12 ans) 15€. Barbe + soins: Barbe 15€, Shampooing 5€, Coupe + barbe + shampoing 38€. @atelier47barbier",
+      "camera": "slow push-in 100% to 106%",
+      "motion": "a soft gold light sweep across the title",
+      "transition_out": "gold flash transition",
+      "generate": false,
+      "note_fr": "Ne pas générer : place ta vraie image assets/fiche_tarifs.jpg en plein écran au montage, pour que les prix soient parfaitement lisibles."
+    },
+    {
+      "id": 15,
+      "file": "shot_15.mp4",
+      "time": "25.5-28.5s",
+      "scale": "medium",
+      "label_fr": "Le téléphone apparaît devant le salon",
+      "subject": "A matte black smartphone rises upright by itself from the reception counter into the foreground, nobody holding it; the whole salon stays visible and softly blurred behind it. Its screen lights up with the ATELIER 47 BARBIER Instagram profile: the round gold-and-black logo as avatar, the name 'atelier47barbier', a grid of nine black-and-gold photos of the salon and products, and a gold 'S'abonner' button",
+      "camera": "low angle, slow push-in until the phone screen fills about 70% of the frame height",
+      "motion": "phone sliding up smoothly, screen lighting up",
+      "transition_out": "continuous push-in, no cut",
+      "generate": true
+    },
+    {
+      "id": 16,
+      "file": "shot_16.mp4",
+      "time": "28.5-31.5s",
+      "scale": "close",
+      "label_fr": "Écran Instagram lisible, ABONNEZ-VOUS",
+      "subject": "The smartphone screen held perfectly still and flat to the camera, filling about 70% of the frame height, bright and razor sharp, every element of the ATELIER 47 BARBIER Instagram profile clearly readable; the gold 'S'abonner' button glows and switches to 'Abonné'; the salon stays softly blurred around the phone",
+      "camera": "locked-off, no motion blur, very slow push-in",
+      "motion": "the button glowing and changing state",
+      "transition_out": "rack focus to the salon behind",
+      "generate": true,
+      "note_fr": "Le texte doit être parfaitement lisible : si l'écran généré est flou, colle ta vraie capture Instagram dessus au montage."
+    },
+    {
+      "id": 17,
+      "file": "shot_17.mp4",
+      "time": "31.5-33.5s",
+      "scale": "medium",
+      "label_fr": "Le téléphone s'efface, retour au salon",
+      "subject": "The same smartphone in the foreground in front of the salon; the focus pulls from the phone to the salon behind it, then the phone slides down out of frame and the salon is sharp again",
+      "camera": "rack focus from foreground to background, then very slow push-in",
+      "motion": "phone gliding down out of frame",
+      "transition_out": "whip-pan transition with motion blur",
+      "generate": true
+    },
+    {
+      "id": 18,
+      "file": "shot_18.mp4",
+      "time": "33.5-35.5s",
       "scale": "close",
       "label_fr": "Fauteuil en cuir",
       "subject": "Close-up of a black leather barber chair headrest and polished gold armrest, leather grain and stitching clearly visible",
       "camera": "slow sideways tracking",
       "motion": "warm reflections gliding on the leather",
-      "transition_out": "fast pull-back transition (close to wide)"
+      "transition_out": "speed-ramped pull-back transition (close to wide)",
+      "generate": true
     },
     {
-      "id": 15,
-      "file": "shot_15.mp4",
-      "time": "22.5-24.5s",
+      "id": 19,
+      "file": "shot_19.mp4",
+      "time": "35.5-38.0s",
       "scale": "wide",
       "label_fr": "Miroir qui reflète le salon",
       "subject": "A round gold-framed mirror reflecting the whole empty salon, the plants and the warm pendant lamps, no person in the reflection",
       "camera": "slow push-in toward the mirror",
       "motion": "reflections shifting softly",
-      "transition_out": "zoom-in transition (wide to close)"
+      "transition_out": "zoom-in transition (wide to close) with a gold light leak",
+      "generate": true
     },
     {
-      "id": 16,
-      "file": "shot_16.mp4",
-      "time": "24.5-26.5s",
+      "id": 20,
+      "file": "shot_20.mp4",
+      "time": "38.0-40.0s",
       "scale": "close",
       "label_fr": "Tondeuse dorée en macro",
       "subject": "Macro of a professional gold hair clipper resting on black leather",
       "camera": "slow lateral slide along the blade",
       "motion": "sharp highlights running across the gold teeth",
-      "transition_out": "soft cross-dissolve"
+      "transition_out": "blur dissolve",
+      "generate": true
     },
     {
-      "id": 17,
-      "file": "shot_17.mp4",
-      "time": "26.5-30.0s",
+      "id": 21,
+      "file": "shot_21.mp4",
+      "time": "40.0-42.0s",
+      "scale": "close",
+      "label_fr": "Feuille de plante, puis salon",
+      "subject": "A large monstera leaf sharp in the foreground, real leaf texture and veins, then the focus moves to the barber chairs and pendant lamps behind it",
+      "camera": "slow rack focus from the leaf to the salon",
+      "motion": "the leaf moving very slightly",
+      "transition_out": "speed-ramped pull-back transition",
+      "generate": true
+    },
+    {
+      "id": 22,
+      "file": "shot_22.mp4",
+      "time": "42.0-44.5s",
       "scale": "wide",
-      "label_fr": "Fin : mur du logo",
-      "subject": "Calm, simple shot of the reception wall with the backlit brushed-gold TIM DESIGN logo, plants framing both sides, the area below the logo left dark and empty",
+      "label_fr": "Le salon vers la porte d'entrée",
+      "subject": "Wide view from the back of the salon toward the glass entrance door, the reception desk with the glowing logo on the right, plants along the way, the night street of Annecy softly visible through the glass",
+      "camera": "slow dolly-out",
+      "motion": "warm light glowing, faint reflections on the glass",
+      "transition_out": "soft cross-dissolve",
+      "generate": true
+    },
+    {
+      "id": 23,
+      "file": "shot_23.mp4",
+      "time": "44.5-50.0s",
+      "scale": "wide",
+      "label_fr": "Fin : mur du logo Atelier 47",
+      "subject": "Calm, simple shot of the reception wall with the ATELIER 47 BARBIER logo: a circular badge made of two thin concentric brushed-gold rings on matte black; at the top a pair of open gold scissors; the word 'ATELIER' in cream condensed capitals with wide letter spacing; a large bold gold '47' below it; a thin horizontal gold line; 'BARBIER' in cream spaced capitals; and the small gold tagline 'COUPE NETTE · BARBE SOIGNÉE' backlit, plants framing both sides, the area below the logo left dark and empty",
       "camera": "almost static, very slow push-in",
       "motion": "a single soft gold light sweep across the logo, lights dimming slightly",
-      "transition_out": "gentle fade to black #111111"
+      "transition_out": "gentle fade to black #111111 that loops back to the first shot",
+      "generate": true
     }
   ],
   "on_screen_text": [
     {
-      "in": 0.2,
-      "out": 3.0,
-      "what": "TIM DESIGN logo",
-      "style": "gold, top center, 520px wide",
-      "anim": "fade in + scale 95%->100% over 0.5s, dissolve out at 3.0s"
+      "a": 0.0,
+      "b": 3.5,
+      "what": "logo_atelier47.png",
+      "style": "top center, 420px wide",
+      "effect": "visible from the very first frame, scale 105% to 100%, one gold shimmer sweep at 1.0s, dissolve out at 3.5s"
     },
     {
-      "in": 0.5,
-      "out": 3.0,
-      "what": "location pin icon + '12 rue de la République · Annecy'",
-      "style": "Poppins, cream #F3EEE3, 44px, below the logo",
-      "anim": "slide up 20px + fade in 0.4s"
+      "a": 0.4,
+      "b": 3.5,
+      "what": "location pin icon + '12 RUE DE LA RÉPUBLIQUE'",
+      "style": "Poppins SemiBold, cream #F3EEE3, 46px, letter spacing +80, below the logo",
+      "effect": "slide up 20px + fade in over 0.4s, letter spacing expanding slightly"
     },
     {
-      "in": 16.6,
-      "out": 20.3,
+      "a": 0.7,
+      "b": 3.5,
+      "what": "74000 ANNECY",
+      "style": "Poppins Bold, gold #C9A24B, 60px, letter spacing +120, under the street",
+      "effect": "fade in with a gold underline drawing itself from left to right under the city, soft glow"
+    },
+    {
+      "a": 18.3,
+      "b": 20.5,
+      "what": "OUVERT DU MARDI AU SAMEDI",
+      "style": "Poppins Medium, cream #F3EEE3, 40px, letter spacing +100, lower third",
+      "effect": "slide in from the left with a thin gold line, fade out on the cut"
+    },
+    {
+      "a": 26.0,
+      "b": 31.5,
       "what": "ABONNEZ-VOUS",
-      "style": "Poppins, gold #C9A24B, 96px, wide letter spacing, centered above the phone",
-      "anim": "letters reveal left to right over 0.4s with a gold shimmer, ding sound"
+      "style": "Poppins Bold, gold gradient #C9A24B to a lighter gold highlight, 104px, letter spacing +60, centered above the phone",
+      "effect": "letters pop in one by one (scale 120% to 100%, 0.05s apart) on the beat, then a bright gold light sweep across the word, soft outer glow, a few fine gold sparkle particles, a thin gold underline drawing itself, and a subtle pulse (100% to 104%) on every beat; no motion blur, always readable"
     },
     {
-      "in": 17.0,
-      "out": 20.3,
-      "what": "@timdesign",
-      "style": "Poppins, cream #F3EEE3, 44px, under ABONNEZ-VOUS",
-      "anim": "fade in 0.3s"
+      "a": 26.6,
+      "b": 31.5,
+      "what": "@atelier47barbier",
+      "style": "Poppins Medium, cream #F3EEE3, 46px, under ABONNEZ-VOUS",
+      "effect": "typewriter reveal over 0.5s, then steady"
     },
     {
-      "in": 27.0,
-      "out": 30.0,
-      "what": "TIM DESIGN logo",
-      "style": "gold, exact center, 600px wide",
-      "anim": "fade in 0.6s, fade out with the final fade"
+      "a": 45.0,
+      "b": 50.0,
+      "what": "logo_atelier47.png",
+      "style": "exact center, 560px wide",
+      "effect": "fade in + scale 95% to 100% over 0.6s, one gold shimmer sweep at 46.0s"
     },
     {
-      "in": 27.5,
-      "out": 30.0,
+      "a": 45.6,
+      "b": 50.0,
       "what": "ABONNEZ-VOUS",
-      "style": "Poppins, gold #C9A24B, 64px, 160px below the logo",
-      "anim": "fade in 0.4s"
+      "style": "Poppins Bold, gold #C9A24B, 72px, 150px below the logo",
+      "effect": "letters pop in one by one with a gold light sweep and soft glow, gentle pulse on the beat"
     },
     {
-      "in": 27.9,
-      "out": 30.0,
-      "what": "@timdesign · 12 rue de la République, Annecy",
-      "style": "Poppins, cream #F3EEE3, 38px, under ABONNEZ-VOUS",
-      "anim": "fade in 0.4s"
+      "a": 46.0,
+      "b": 50.0,
+      "what": "@atelier47barbier",
+      "style": "Poppins Medium, cream #F3EEE3, 40px, under ABONNEZ-VOUS",
+      "effect": "fade in 0.4s"
+    },
+    {
+      "a": 46.4,
+      "b": 50.0,
+      "what": "12 rue de la République, 74000 Annecy",
+      "style": "Poppins Regular, cream #F3EEE3, 36px",
+      "effect": "fade in 0.4s"
+    },
+    {
+      "a": 46.8,
+      "b": 50.0,
+      "what": "MARDI – VENDREDI · 9H – 19H / SAMEDI · 9H – 18H / FERMÉ DIMANCHE ET LUNDI",
+      "style": "Poppins Medium, gold #C9A24B, 32px, three centered lines",
+      "effect": "lines fade in one after another, 0.2s apart"
+    },
+    {
+      "a": 47.4,
+      "b": 50.0,
+      "what": "TIM DESIGN",
+      "style": "Poppins Light, cream #F3EEE3 at 70% opacity, 24px, letter spacing +200, just above the bottom safe zone",
+      "effect": "fade in 0.5s, discreet signature"
     }
   ],
-  "negative_prompt": "people in the salon, customers, barbers, hands, fingers, arms, faces, body parts, silhouettes, people reflected in mirrors (the only people allowed are tiny distant football players on the TV screen), cartoon, illustration, anime, 3D render, CGI look, video game look, plastic textures, misspelled or garbled letters, any text other than TIM DESIGN, other brand names or logos, TV channel logos, watermark, subtitles, colors outside black/gold/cream except plant green and pitch green, blue or purple tint, neon lights, daylight, harsh flat lighting, blown-out highlights, blurry or out-of-focus subject, warped or melting objects, deformed tools, extra blades, duplicated objects, clutter, hair on the floor, dirt, flicker, jitter, shaky handheld camera, fisheye distortion, dutch angle, low resolution, noise, compression artifacts"
+  "audio": "Dark luxury deep-house instrumental, no vocals, heavy bass drop at 3.5s, fade out over the last 2 seconds. Layered sound design: night street ambience and the door opening, a deep impact on the drop, metallic clicks on the product flashes, the razor ring, a whoosh on every zoom, pull-back and whip-pan, muffled stadium crowd and game sounds from the TV in the lounge shots, a soft beep from the card terminal, a smooth slide when the phone rises, a bright notification ding when ABONNEZ-VOUS appears, a warm low boom under the final logo.",
+  "negative_prompt": "people in the salon, customers, barbers, hands, fingers, arms, faces, body parts, silhouettes, people reflected in mirrors or windows (the only people allowed are the small video game players on the TV screen), cartoon, illustration, anime, 3D render, CGI look, video game look on the real set, plastic textures, AI artifacts, misspelled or garbled letters, any text other than ATELIER 47 BARBIER and TIM DESIGN, other brand names or logos, TV channel logos, watermark, subtitles, colors outside black/gold/cream except plant green and pitch green, blue or purple tint, neon lights, daylight, harsh flat lighting, blown-out highlights, blurry or out-of-focus subject, warped or melting objects, objects changing shape, deformed tools, extra blades, duplicated objects, inconsistent room layout, clutter, hair on the floor, dirt, flicker, jitter, shaky handheld camera, fisheye distortion, dutch angle, low resolution, noise, compression artifacts"
 }
