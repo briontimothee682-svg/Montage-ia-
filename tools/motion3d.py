@@ -20,9 +20,9 @@ from motion import (W, H, FPS, DUR, CUTS, GOLD, CREAM, MUTED, PANEL, ADDRESS, CI
                     panel, star, beat_pulse, SPARKS, FEATURES)
 
 ROOT = m.ROOT
-DUR = 34.5                       # the 3D reel adds a 4.5 s business-card scene before the end
-CUTS = CUTS + [31.0]
-END_T = 31.0
+DUR = 36.5                       # 8 s Instagram phone sequence + 4.5 s business-card scene
+CUTS = [3.5, 7.5, 12.0, 17.0, 25.0, 28.5, 33.0]
+END_T = 33.0
 m.DUR, m.END_T = DUR, END_T
 OUT = m.OUT
 F3D = OUT / "frames3d"
@@ -141,16 +141,16 @@ def o_prices(c, t):
             row += 1
 
 def o_instagram(c, t):
-    hline(c, W / 2, 415, 560, ease_in_out(prog(t, 18.9, 19.3)), width=3)
-    if t > 19.0:
+    hline(c, W / 2, 415, 560, ease_in_out(prog(t, 20.6, 21.0)), width=3)
+    if t > 20.7:
         for (x, y, r, ph) in SPARKS:
-            a = max(0, math.sin((t - 19.0) * 3 + ph)) ** 3
+            a = max(0, math.sin((t - 20.7) * 3 + ph)) ** 3
             star(c, x, y - 20, r * (0.6 + 0.4 * a), a * 0.9)
 
 def o_hours(c, t):
-    plate(c, W / 2, 968, 940, 560, prog(t, 23.4, 23.7))
+    plate(c, W / 2, 968, 940, 560, prog(t, 25.4, 25.7))
     for i, (day, hours) in enumerate(HOURS):
-        st = 23.5 + i * 0.5
+        st = 25.5 + i * 0.5
         p = ease_out(prog(t, st, st + 0.4))
         if p <= 0:
             continue
@@ -162,39 +162,39 @@ def o_hours(c, t):
              scale=1 + 0.03 * beat_pulse(t, st + 0.5))
         if i < len(HOURS) - 1:
             hline(c, W / 2, y + 82, 780, ease_in_out(prog(t, st + 0.15, st + 0.55)), width=2, alpha=0.5)
-    ap = ease_out(prog(t, 25.0, 25.4))
+    ap = ease_out(prog(t, 27, 27.4))
     if ap > 0:
         plate(c, W / 2, 1378, 940, 170, ap)
         paste(c, icon("pin", 52), W / 2, 1340, alpha=ap)
         text(c, f"{ADDRESS} · 74000 Annecy", "SemiBold", 38, W / 2, 1408, CREAM, alpha=ap)
 
 def o_card(c, t):
-    plate(c, W / 2, 304, 820, 108, prog(t, 26.6, 26.85))
-    out = ease_in_out(prog(t, 29.1, 29.35))
+    plate(c, W / 2, 304, 820, 108, prog(t, 28.6, 28.85))
+    out = ease_in_out(prog(t, 31.1, 31.35))
     if out < 1:  # "NOTRE CARTE" first, then the scan call-to-action takes its place above the card
-        if t < 29.1:
-            letters(c, "NOTRE CARTE", "Bold", 44, W / 2, 300, t, 26.6, GOLD, tracking=20, stagger=0.03)
+        if t < 31.1:
+            letters(c, "NOTRE CARTE", "Bold", 44, W / 2, 300, t, 28.6, GOLD, tracking=20, stagger=0.03)
         else:
             text(c, "NOTRE CARTE", "Bold", 44, W / 2, 300, GOLD, alpha=1 - out, tracking=20)
-    cp = ease_back(prog(t, 29.35, 29.75))
+    cp = ease_back(prog(t, 31.35, 31.75))
     if cp > 0:
         text(c, "SCANNE · ABONNE-TOI", "ExtraBold", 48, W / 2, 300, CREAM, alpha=clamp(cp), tracking=8,
-             scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 29.5)))
+             scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 31.5)))
 
 def o_end(c, t):
-    plate(c, W / 2, 1300, 940, 300, prog(t, 32.0, 32.3))
-    letters(c, HANDLE, "SemiBold", 50, W / 2, 1210, t, 32.1, CREAM, stagger=0.015, dur=0.3)
-    ap = ease_out(prog(t, 32.4, 32.8))
+    plate(c, W / 2, 1300, 940, 300, prog(t, 34, 34.3))
+    letters(c, HANDLE, "SemiBold", 50, W / 2, 1210, t, 34.1, CREAM, stagger=0.015, dur=0.3)
+    ap = ease_out(prog(t, 34.4, 34.8))
     text(c, f"{ADDRESS} · 74000 Annecy", "Medium", 36, W / 2, 1288, CREAM, alpha=ap)
-    cp = ease_back(prog(t, 32.5, 32.9))
+    cp = ease_back(prog(t, 34.5, 34.9))
     if cp > 0:
-        text(c, "ENREGISTRE · PARTAGE À UN POTE", "Bold", 34, W / 2, 1370, GOLD, alpha=clamp(cp), tracking=6,
-             scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 33)))
-    sp = ease_out(prog(t, 32.8, 33.3))
+        text(c, "ENREGISTRE · PARTAGE À UN POTE", "Bold", 36, W / 2, 1370, GOLD, alpha=clamp(cp), tracking=6,
+             scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 35)))
+    sp = ease_out(prog(t, 34.8, 35.3))
     text(c, "TIM DESIGN", "Light", 26, W / 2, 1468, CREAM, alpha=sp * 0.7, tracking=16)
 
 OVERLAYS = [(0.0, 3.5, o_hook), (3.5, 7.5, o_kinetic), (7.5, 12.0, o_salon), (12.0, 17.0, o_prices),
-            (17.0, 23.0, o_instagram), (23.0, 26.5, o_hours), (26.5, 31.0, o_card), (31.0, DUR, o_end)]
+            (17.0, 25, o_instagram), (25, 28.5, o_hours), (28.5, 33, o_card), (33, DUR, o_end)]
 
 # ------------------------------------------------------------------ light-line transitions (like the reference reel)
 TRAIL_EVENTS = [(0.5, (540, 740))] + [(c_, (540, 940)) for c_ in CUTS]
@@ -288,12 +288,19 @@ def composite(fi):
     return np.clip(arr, 0, 255).astype(np.uint8)
 
 
-# notifications on the black lock screen: (appears, tapped, title, body)
-NOTIFS = [(18.2, 18.6, "atelier47barbier", "Nouveau : abonne-toi !"),
-          (19.75, 20.05, "Nos tarifs", "Coupe Homme 22 € · Barbe 15 €"),
-          (20.45, 20.75, "Atelier 47 Barbier", "12 rue de la République, Annecy"),
-          (21.1, 21.4, "atelier47barbier", "9 nouvelles publications")]
-BANNER_Y = 400   # banner centre on the 560x1200 screen
+# ------------------------------------------------------------------ Instagram-style phone screens (post that plays, then profile)
+# Counters are illustrative: replace with the real figures of the account before publishing.
+IG = {"posts": 47, "followers": (1230, 1316), "following": 180, "likes": (318, 542), "comments": (24, 61)}
+NOTIFS = [(20.9, 21.3, "Nos tarifs", "Coupe Homme 22 € · Barbe 15 €"),
+          (21.6, 22.0, "Atelier 47 Barbier", "12 rue de la République, Annecy")]
+BANNER_Y = 130          # banner centre on the 560x1200 screen (top, over the app)
+FOLLOW_PILL = (470, 118)
+HEART_ICON, COMMENT_ICON = (40, 770), (100, 770)
+POST_START, PROFILE_AT, TILES_OUT = 18.0, 20.25, 22.3
+GRID_Y, GRID_T = 580, 172
+
+def fr_num(n):
+    return f"{n:,}".replace(",", " ")
 
 @lru_cache(maxsize=None)
 def banner(i, S=1):
@@ -307,21 +314,151 @@ def banner(i, S=1):
     text(im, "maintenant", "Regular", 18 * S, w - 22 * S, h / 2 - 22 * S, MUTED, anchor="right")
     return im
 
-@lru_cache(maxsize=None)
-def lock_bg():
-    im = Image.new("RGBA", (560, 1200), (0, 0, 0, 255))
-    lg = m.logo(170).copy()
-    lg.putalpha(lg.getchannel("A").point(lambda v: int(v * 0.16)))
-    im.alpha_composite(lg, ((560 - 170) // 2, 860))
-    return im
+def _heart_pts(cx, cy, s):
+    pts = []
+    for k in range(60):
+        a = k / 60 * 2 * math.pi
+        x = 16 * math.sin(a) ** 3
+        y = 13 * math.cos(a) - 5 * math.cos(2 * a) - 2 * math.cos(3 * a) - math.cos(4 * a)
+        pts.append((cx + x * s, cy - y * s))
+    return pts
 
-def lock_screen(t):
+@lru_cache(maxsize=None)
+def ig_icon(name, filled=False, size=44):
+    from PIL import ImageDraw
+    S3 = 3
+    im = Image.new("RGBA", (size * S3, size * S3), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    c, s, w = size * S3 / 2, size * S3, int(3.2 * S3)
+    col = (243, 238, 227, 255)
+    if name == "heart":
+        pts = _heart_pts(c, c + s * 0.02, s / 38)
+        if filled:
+            d.polygon(pts, fill=(255, 48, 84, 255))
+        else:
+            d.line(pts + [pts[0]], fill=col, width=w, joint="curve")
+    elif name == "comment":
+        d.ellipse((s * 0.12, s * 0.12, s * 0.88, s * 0.86), outline=col, width=w)
+        d.polygon([(s * 0.2, s * 0.72), (s * 0.12, s * 0.92), (s * 0.38, s * 0.82)], fill=col)
+    elif name == "share":
+        d.line([(s * 0.1, s * 0.45), (s * 0.9, s * 0.12), (s * 0.62, s * 0.9), (s * 0.45, s * 0.55), (s * 0.1, s * 0.45)], fill=col, width=w, joint="curve")
+        d.line([(s * 0.45, s * 0.55), (s * 0.9, s * 0.12)], fill=col, width=w)
+    elif name == "save":
+        d.line([(s * 0.22, s * 0.1), (s * 0.78, s * 0.1), (s * 0.78, s * 0.9), (s * 0.5, s * 0.66), (s * 0.22, s * 0.9), (s * 0.22, s * 0.1)], fill=col, width=w, joint="curve")
+    elif name == "home":
+        d.line([(s * 0.12, s * 0.5), (s * 0.5, s * 0.14), (s * 0.88, s * 0.5), (s * 0.88, s * 0.88), (s * 0.12, s * 0.88), (s * 0.12, s * 0.5)], fill=col, width=w, joint="curve")
+    elif name == "search":
+        d.ellipse((s * 0.12, s * 0.12, s * 0.7, s * 0.7), outline=col, width=w); d.line([(s * 0.62, s * 0.62), (s * 0.9, s * 0.9)], fill=col, width=w)
+    elif name == "reels":
+        d.rounded_rectangle((s * 0.12, s * 0.12, s * 0.88, s * 0.88), radius=s * 0.2, outline=col, width=w)
+        d.polygon([(s * 0.42, s * 0.38), (s * 0.42, s * 0.68), (s * 0.66, s * 0.53)], fill=col)
+    elif name == "plus":
+        d.rounded_rectangle((s * 0.12, s * 0.12, s * 0.88, s * 0.88), radius=s * 0.2, outline=col, width=w)
+        d.line([(s * 0.5, s * 0.3), (s * 0.5, s * 0.7)], fill=col, width=w); d.line([(s * 0.3, s * 0.5), (s * 0.7, s * 0.5)], fill=col, width=w)
+    return im.resize((size, size), Image.LANCZOS)
+
+def post_media(t):
+    """The post 'video' is the 3D tool showcase of the reel itself."""
+    fi = int(min(355, 238 + (t - POST_START) * FPS))
+    f = F3D / f"f{fi:04d}.png"
+    if not f.exists():
+        return Image.new("RGB", (560, 560), (20, 18, 14))
+    im = Image.open(f).convert("RGB").crop((140, 320, 940, 1120)).resize((560, 560), Image.LANCZOS)
+    arr = np.asarray(im).astype(np.float32) * 1.25 + np.array([10, 8, 4], np.float32)
+    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB")
+
+def nav_bar(scr):
+    for i, n in enumerate(["home", "search", "plus", "reels"]):
+        paste(scr, ig_icon(n, size=40), 70 + i * 140, 1150)
+    paste(scr, m.avatar(40), 70 + 3.85 * 140, 1150)
+
+def post_screen(t):
+    scr = Image.new("RGBA", (560, 1200), (0, 0, 0, 255))
+    text(scr, "Pour toi", "Bold", 28, 280, 55, CREAM)
+    scr.alpha_composite(m.avatar(56), (20, 90))
+    text(scr, "atelier47barbier", "SemiBold", 22, 88, 108, CREAM, anchor="left")
+    text(scr, "Annecy", "Regular", 17, 88, 134, MUTED, anchor="left")
+    followed = t >= PROFILE_AT
+    pill = panel(120, 40, radius=12, fill=GOLD if not followed else (40, 38, 34), border_a=0 if not followed else 160, bw=1)
+    paste(scr, pill, *FOLLOW_PILL)
+    text(scr, "Abonné" if followed else "S'abonner", "SemiBold", 18, FOLLOW_PILL[0], FOLLOW_PILL[1], m.BLACK if not followed else CREAM)
+    scr.paste(post_media(t), (0, 170))
+    pr = clamp((t - POST_START) / 2.2)
+    bar = Image.new("RGBA", (int(540 * pr) + 1, 4), (243, 238, 227, 200)); paste(scr, bar, 10, 726, anchor="left")
+    big = prog(t, 18.42, 18.95)                       # double-tap heart on the media
+    if 0 < big < 1:
+        sc = ease_back(clamp(big * 2.2), 2.0) * (1 - 0.15 * big)
+        h = ig_icon("heart", True, 180)
+        paste(scr, h, 280, 450, alpha=clamp((1 - big) * 2.5), scale=max(0.01, sc))
+    liked = t >= 18.45
+    paste(scr, ig_icon("heart", liked, 44), *HEART_ICON, scale=1 + 0.35 * math.sin(math.pi * prog(t, 18.45, 18.7)))
+    paste(scr, ig_icon("comment", size=42), *COMMENT_ICON)
+    paste(scr, ig_icon("share", size=42), 160, 770)
+    paste(scr, ig_icon("save", size=42), 520, 770)
+    lk = int(lerp(IG["likes"][0], IG["likes"][1], ease_in_out(prog(t, 18.45, 20.1))))
+    cm = int(lerp(IG["comments"][0], IG["comments"][1], ease_in_out(prog(t, 18.9, 20.1))))
+    text(scr, f"{fr_num(lk)} J'aime", "Bold", 22, 22, 820, CREAM, anchor="left")
+    text(scr, "atelier47barbier", "Bold", 20, 22, 856, CREAM, anchor="left")
+    text(scr, "Coupe nette, barbe soignée.", "Regular", 20, 200, 856, CREAM, anchor="left")
+    text(scr, f"Voir les {cm} commentaires", "Regular", 19, 22, 892, MUTED, anchor="left")
+    text(scr, "12 rue de la République · Annecy", "Regular", 17, 22, 926, MUTED, anchor="left")
+    nav_bar(scr)
+    return scr
+
+def profile_screen(t, lifted):
+    scr = Image.new("RGBA", (560, 1200), (0, 0, 0, 255))
+    text(scr, "atelier47barbier", "Bold", 28, 30, 70, CREAM, anchor="left")
+    scr.alpha_composite(m.avatar(150), (24, 120))
+    rc = m.ring_img(80, 3, GOLD, 255, 1000)
+    scr.alpha_composite(rc, (24 + 75 - rc.width // 2, 120 + 75 - rc.height // 2))
+    fo = int(lerp(IG["followers"][0], IG["followers"][1], ease_in_out(prog(t, 21.0, 23.2))))
+    if t >= 20.95:
+        fo = max(fo, IG["followers"][0] + 1)
+    bump = 1 + 0.12 * math.sin(math.pi * ((t * 6) % 1)) * (21.0 < t < 23.2)
+    for x, val, lab, sc in [(270, fr_num(IG["posts"]), "publications", 1), (385, fr_num(fo), "abonnés", bump), (500, fr_num(IG["following"]), "abonnements", 1)]:
+        text(scr, val, "Bold", 30, x, 175, CREAM if lab != "abonnés" else (255, 236, 190), scale=sc)
+        text(scr, lab, "Regular", 16, x, 212, MUTED)
+    text(scr, "Atelier 47 Barbier", "SemiBold", 24, 30, 315, CREAM, anchor="left")
+    text(scr, "Barbier · Annecy", "Regular", 20, 30, 350, MUTED, anchor="left")
+    text(scr, "Coupe nette · Barbe soignée", "Regular", 20, 30, 380, CREAM, anchor="left")
+    text(scr, "12 rue de la République", "Regular", 20, 30, 410, CREAM, anchor="left")
+    followed = t >= 20.95
+    for x, lab, gold_ in [(146, "Abonné" if followed else "S'abonner", not followed), (414, "Message", False)]:
+        b = panel(248, 54, radius=14, fill=GOLD if gold_ else (38, 36, 32), border_a=0, bw=1)
+        paste(scr, b, x, 490)
+        text(scr, lab, "SemiBold", 21, x, 490, m.BLACK if gold_ else CREAM)
+    tl, T = m.tiles()
+    for i, tile in enumerate(tl):
+        r, col = divmod(i, 3)
+        x, y = 6 + col * (GRID_T + 4), GRID_Y + r * (GRID_T + 4)
+        if lifted:
+            scr.alpha_composite(panel(GRID_T, GRID_T, radius=6, fill=(20, 19, 16), border_a=70, bw=1), (x, y))
+        else:
+            scr.alpha_composite(tile.resize((GRID_T, GRID_T), Image.LANCZOS), (x, y))
+    nav_bar(scr)
+    return scr
+
+def app_screen(t):
     wake = ease_out(prog(t, 17.95, 18.25))
     if wake <= 0:
         return Image.new("RGB", (560, 1200), (0, 0, 0))
-    scr = lock_bg().copy()
-    text(scr, "18:47", "Light", 128, 280, 205, CREAM, alpha=wake)
-    text(scr, "ATELIER 47 BARBIER", "Medium", 20, 280, 105, MUTED, alpha=wake, tracking=6)
+    if t < PROFILE_AT:
+        scr = post_screen(t)
+    else:
+        sl = ease_in_out(prog(t, PROFILE_AT, PROFILE_AT + 0.3))   # profile slides in from the right
+        lifted = TILES_OUT + 0.05 <= t < 24.75
+        prof = profile_screen(t, lifted)
+        if sl < 1:
+            scr = Image.new("RGBA", (560, 1200), (0, 0, 0, 255))
+            scr.alpha_composite(post_screen(t), (int(-560 * sl * 0.35), 0))
+            scr.alpha_composite(prof, (int(560 * (1 - sl)), 0))
+        else:
+            scr = prof
+    # taps (ripples) and notification banners over the app
+    for tx, ty, tt in [(280, 450, 18.42), (FOLLOW_PILL[0], FOLLOW_PILL[1], PROFILE_AT), (146, 490, 20.92)]:
+        q = prog(t, tt - 0.03, tt + 0.3)
+        if 0 < q < 1:
+            paste(scr, m.ring_img(int(lerp(8, 90, ease_out(q))), 3, CREAM, 255, 1000), tx, ty, alpha=1 - q)
     for i, (ap, tap, _, _) in enumerate(NOTIFS):
         if not (ap <= t < tap + 0.08):
             continue
@@ -334,12 +471,22 @@ def lock_screen(t):
             paste(scr, m.ring_img(int(lerp(10, 120, ease_out(q))), 3, CREAM, 255, 1000), 280, y, alpha=1 - q)
     bg = Image.new("RGBA", scr.size, (0, 0, 0, 255))
     bg.alpha_composite(scr)
-    return bg.convert("RGB")
+    arr = np.asarray(bg.convert("RGB")).astype(np.float32) * wake
+    return Image.fromarray(arr.astype(np.uint8), "RGB")
 
 def screens():
     (OUT / "screen").mkdir(parents=True, exist_ok=True)
-    for fi in range(int(17 * FPS), int(23 * FPS)):
-        lock_screen(fi / FPS).save(OUT / "screen" / f"s{fi:04d}.png")
+    for fi in range(int(17 * FPS), int(25 * FPS)):
+        app_screen(fi / FPS).save(OUT / "screen" / f"s{fi:04d}.png")
+    # the JS side needs the 3D source positions of what leaves the screen
+    import json
+    (OUT / "holo").mkdir(parents=True, exist_ok=True)
+    loc = lambda x, y: [x - 280, 600 - y]
+    (OUT / "holo" / "ig_layout.json").write_text(json.dumps({
+        "follow": loc(*FOLLOW_PILL), "banner": loc(280, BANNER_Y), "heart": loc(*HEART_ICON), "comment": loc(*COMMENT_ICON),
+        "grid": [loc(6 + (i % 3) * (GRID_T + 4) + GRID_T / 2, GRID_Y + (i // 3) * (GRID_T + 4) + GRID_T / 2) for i in range(9)],
+        "gridT": GRID_T, "notifs": [[a, b] for a, b, _, _ in NOTIFS], "profileAt": PROFILE_AT, "tilesOut": TILES_OUT,
+        "followers": list(IG["followers"])}))
 
 def holo_assets():
     """Textures for the 3D sections that rise out of the phone."""
@@ -471,17 +618,25 @@ def synth_audio_3d(path):
         add(chime(), ap, 0.22)               # notification arrives
         add(click(), tap, 0.55)              # tapped
         add(pop(), tap + 0.08, 0.25)         # section rises out of the phone
-    add(click(), 19.5, 0.6)                  # follow button pressed
+    add(suck(0.4), 17.95, 0.15)              # camera pushes in on the post
+    add(click(), 18.42, 0.5)                 # double tap
+    for k in range(18):                      # hearts flying out
+        add(pop(), 18.45 + k * 0.075, 0.06)
+    for k in range(5):                       # comment bubbles
+        add(pop(), 18.9 + k * 0.2, 0.12)
+    add(click(), PROFILE_AT, 0.55)           # follow tapped -> profile
+    add(click(), 20.92, 0.6)                 # follow pressed on the card
+    add(chime(), 21.0, 0.18)                 # new follower
     for k in range(9):                       # posts flying to the wall
-        add(pop(), 21.45 + k * 0.05, 0.1)
-    add(shing(0.5), 21.95, 0.22)             # phone 360 spin
-    add(suck(), 22.45, 0.25)                 # everything returns into the screen
-    add(snip(), 31.4, 0.25)
-    add(shing(0.9), 26.6, 0.2)               # business card spinning in
-    add(suck(0.35), 27.6, 0.18)              # card flip
+        add(pop(), TILES_OUT + k * 0.05, 0.1)
+    add(shing(0.5), 23.4, 0.22)              # phone 360 spin
+    add(suck(), 24.45, 0.25)                 # everything returns into the screen
+    add(snip(), 33.4, 0.25)
+    add(shing(0.9), 28.6, 0.2)               # business card spinning in
+    add(suck(0.35), 29.6, 0.18)              # card flip
     for k in range(6):                       # QR modules rising
-        add(click(), 28.2 + k * 0.08, 0.25)
-    add(chime(), 29.35, 0.2)                 # scan
+        add(click(), 30.2 + k * 0.08, 0.25)
+    add(chime(), 31.35, 0.2)                 # scan
     out /= max(1e-6, np.abs(out).max()) / 0.89
     with wave.open(str(path), "wb") as wf:
         wf.setnchannels(1)
@@ -533,7 +688,7 @@ def main():
                     "-movflags", "+faststart", str(final)], check=True)
     wav.unlink()
     # 17 s version for A/B testing (hook + kinetic + phone + end), cut on the beat
-    short_cut(final, OUT / "atelier47_motion_3d_court.mp4", [(0.0, 3.5), (17.0, 23.0), (26.5, DUR)])
+    short_cut(final, OUT / "atelier47_motion_3d_court.mp4", [(0.0, 3.5), (17.0, 25.0), (28.5, DUR)])
     print("done", final)
 
 if __name__ == "__main__":

@@ -382,20 +382,22 @@ const ready = (async () => {
   const H5 = '/exports/holo/';
   const [tilesT, banT, follA, follB, pricesT, addrT] = await Promise.all([
     Promise.all([...Array(9).keys()].map(i => tex(`${H5}tile${i}.png`))),
-    Promise.all([...Array(4).keys()].map(i => tex(`${H5}banner${i}.png`))),
+    Promise.all([...Array(2).keys()].map(i => tex(`${H5}banner${i}.png`))),
     tex(`${H5}card_follow.png`), tex(`${H5}card_followed.png`), tex(`${H5}card_prices.png`), tex(`${H5}card_address.png`)]);
   O.s5 = new THREE.Group();
   O.s5.add(O.phone);
   O.tiles = tilesT.map(tx => { const p = holoPanel(tx, 176, 176, 8); O.s5.add(p); return p; });
+  const IGL = await (await fetch(`${H5}ig_layout.json`)).json();
   const notifDefs = [
-    { tap: 18.6, tex: follA, texB: follB, w: 820, h: 260, to: [0, 540, 380], scale: 0.82, yaw: 0 },
-    { tap: 20.05, tex: pricesT, w: 560, h: 340, to: [-250, -20, 360], scale: 0.8, yaw: 0.2 },
-    { tap: 20.75, tex: addrT, w: 560, h: 230, to: [250, -330, 400], scale: 0.8, yaw: -0.2 },
-    { tap: 21.4, tex: null, w: 520, h: 130, to: [0, 200, 120], scale: 1, yaw: 0 },
+    { tap: IGL.profileAt, from: IGL.follow, banner: false, tex: follA, texB: follB, swapAt: 20.95, w: 820, h: 260, to: [0, 540, 380], scale: 0.82, yaw: 0 },
+    { tap: IGL.notifs[0][1], from: IGL.banner, banner: true, bi: 0, tex: pricesT, w: 560, h: 340, to: [-250, -20, 360], scale: 0.8, yaw: 0.2 },
+    { tap: IGL.notifs[1][1], from: IGL.banner, banner: true, bi: 1, tex: addrT, w: 560, h: 230, to: [205, -330, 400], scale: 0.8, yaw: -0.2 },
   ];
+  O.IGL = IGL; O.IGF = IGL.followers;
   O.N = notifDefs.map((d, i) => {
     const g = new THREE.Group();
-    const banner = new THREE.Mesh(new THREE.PlaneGeometry(520, 130), new THREE.MeshBasicMaterial({ map: banT[i], transparent: true, toneMapped: false, depthWrite: false }));
+    const banner = new THREE.Mesh(new THREE.PlaneGeometry(520, 130), new THREE.MeshBasicMaterial({ map: d.banner ? banT[d.bi] : null, transparent: true, toneMapped: false, depthWrite: false, opacity: d.banner ? 1 : 0 }));
+    banner.visible = d.banner;
     g.add(banner);
     let card = null;
     if (d.tex) { card = holoPanel(d.tex, d.w, d.h, 10, true); card.children.forEach(c => { c.material.transparent = true; c.material.depthWrite = false; }); g.add(card); }
@@ -403,6 +405,39 @@ const ready = (async () => {
     O.s5.add(g);
     return { ...d, g, texA: d.tex };
   });
+  // big follower counter card (number redrawn every frame)
+  try { const ff = new FontFace('PoppinsB', 'url(/assets/fonts/Poppins-Bold.ttf)'); await ff.load(); document.fonts.add(ff); } catch (e) {}
+  const cc = document.createElement('canvas'); cc.width = 840; cc.height = 340;
+  O.counterCtx = cc.getContext('2d'); O.counterTex = new THREE.CanvasTexture(cc); O.counterTex.colorSpace = THREE.SRGBColorSpace;
+  O.counter = new THREE.Mesh(new THREE.PlaneGeometry(420, 170), new THREE.MeshBasicMaterial({ map: O.counterTex, transparent: true, toneMapped: false, depthWrite: false }));
+  O.s5.add(O.counter);
+  O.drawCounter = (n, plus) => {
+    const x = O.counterCtx, w = 840, h = 340;
+    x.clearRect(0, 0, w, h);
+    x.fillStyle = 'rgba(16,15,13,0.96)'; x.strokeStyle = 'rgba(216,176,100,1)'; x.lineWidth = 6;
+    x.beginPath(); x.roundRect(6, 6, w - 12, h - 12, 56); x.fill(); x.stroke();
+    x.fillStyle = '#d8b064'; x.font = '600 50px PoppinsB, sans-serif'; x.textAlign = 'left'; x.textBaseline = 'middle';
+    x.fillText('ABONNÉS', 60, 82);
+    x.fillStyle = '#f3eee3'; x.font = '700 150px PoppinsB, sans-serif'; x.fillText(String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '), 54, 222);
+    if (plus > 0) { x.fillStyle = `rgba(120,230,140,${Math.min(1, plus)})`; x.font = '700 64px PoppinsB, sans-serif'; x.textAlign = 'right'; x.fillText('▲', w - 60, 82); }
+    O.counterTex.needsUpdate = true;
+  };
+  // 3D hearts flying out of the like button, comment bubbles out of the comment button
+  const hs = new THREE.Shape();
+  hs.moveTo(0, -18); hs.bezierCurveTo(-4, -14, -26, -2, -26, 12); hs.bezierCurveTo(-26, 24, -12, 30, 0, 18); hs.bezierCurveTo(12, 30, 26, 24, 26, 12); hs.bezierCurveTo(26, -2, 4, -14, 0, -18);
+  const heartGeo = new THREE.ExtrudeGeometry(hs, { depth: 8, bevelEnabled: true, bevelThickness: 4, bevelSize: 3, bevelSegments: 6, curveSegments: 24 }); heartGeo.center();
+  O.hearts = [...Array(18).keys()].map(i => { const h = new THREE.Mesh(heartGeo, new THREE.MeshPhysicalMaterial({ color: i % 5 === 4 ? 0xd8b064 : 0xff2d55, metalness: i % 5 === 4 ? 1 : 0.1, roughness: 0.25, clearcoat: 1, emissive: i % 5 === 4 ? 0x000000 : 0x5a0010, transparent: true })); O.s5.add(h); return h; });
+  const bubbleTex = kind => canvasTex2(256, 160, (x, w, h) => {
+    x.fillStyle = 'rgba(28,26,22,0.96)'; x.strokeStyle = 'rgba(201,162,75,0.9)'; x.lineWidth = 5;
+    x.beginPath(); x.roundRect(8, 8, w - 16, h - 40, 34); x.fill(); x.stroke();
+    x.beginPath(); x.moveTo(50, h - 34); x.lineTo(36, h - 8); x.lineTo(80, h - 34); x.closePath(); x.fill();
+    x.translate(w / 2, (h - 32) / 2);
+    if (kind === 0) { x.fillStyle = '#ff2d55'; x.beginPath(); x.moveTo(0, 26); x.bezierCurveTo(-40, 0, -24, -30, 0, -12); x.bezierCurveTo(24, -30, 40, 0, 0, 26); x.fill(); }
+    if (kind === 1) { x.fillStyle = '#ff8a1e'; x.beginPath(); x.moveTo(0, -34); x.bezierCurveTo(26, -6, 28, 24, 0, 30); x.bezierCurveTo(-28, 24, -22, -4, -8, -14); x.bezierCurveTo(-6, 2, 4, 4, 0, -34); x.fill(); x.fillStyle = '#ffd36a'; x.beginPath(); x.arc(0, 14, 11, 0, Math.PI * 2); x.fill(); }
+    if (kind === 2) { x.strokeStyle = '#d8b064'; x.lineWidth = 7; x.beginPath(); x.arc(-16, 18, 11, 0, Math.PI * 2); x.stroke(); x.beginPath(); x.arc(16, 18, 11, 0, Math.PI * 2); x.stroke(); x.beginPath(); x.moveTo(-9, 9); x.lineTo(18, -30); x.moveTo(9, 9); x.lineTo(-18, -30); x.stroke(); }
+    if (kind === 3) { x.fillStyle = '#d8b064'; x.font = 'bold 54px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('47', 0, 2); }
+  });
+  O.bubbles = [0, 1, 2, 3, 1].map(k => { const b = new THREE.Mesh(new THREE.PlaneGeometry(128, 80), new THREE.MeshBasicMaterial({ map: bubbleTex(k), transparent: true, toneMapped: false, depthWrite: false })); O.s5.add(b); return b; });
   // ---- business card + QR code
   const linTex = async url => { const t = await texLoader.loadAsync(url); t.colorSpace = THREE.NoColorSpace; t.anisotropy = 8; return t; };
   const [rectoC, rectoMe, rectoRo, rectoBu, versoC, versoMe, versoRo, versoBu] = await Promise.all([
@@ -558,7 +593,7 @@ window.renderAt = async (t, screen) => {
   sweep.intensity = 0; amber.intensity = 0; cool.intensity = 0; bloom.strength = 0.32;
 
   // camera: slow handheld drift + push on every beat
-  const bp = beat(t, 3.5) * (t < 34.0 ? 1 : 0);
+  const bp = beat(t, 3.5) * (t < 36.0 ? 1 : 0);
   camera.position.set(18 * Math.sin(t * 0.7), 14 * Math.sin(t * 0.9 + 1), CAM_Z - 60 * bp);
   camera.lookAt(0, 0, 0);
   camera.rotation.z = 0.004 * Math.sin(t * 0.6);
@@ -630,156 +665,195 @@ window.renderAt = async (t, screen) => {
     if (sp > 0 && sp < 1) { sweep.intensity = 3 * Math.sin(sp * Math.PI); sweep.position.set(lerp(-600, 600, sp), 960 - 320 + 150, 300); }
   }
 
-  // S5 instagram 17-23: all-black phone; notifications arrive, are tapped and rise out of it as 3D sections
-  if (t >= 17.0 && t < 23.0) {
-    const G = O.s5, ph = O.phone;
-    G.visible = true; ph.visible = true;
+  // S5 instagram 17-25: iPhone on its stand; the salon's post plays (likes, comments), then the profile
+  // (followers counting up); sections rise out of the screen as 3D cards; posts build a wall.
+  if (t >= 17.0 && t < 25.0) {
+    const G = O.s5, ph = O.phone, L = O.IGL;
+    G.visible = true; ph.visible = true; O.env.visible = true;
     if (screen) await setScreen(O, screen);
-    G.position.copy(P(540, 1185));
-    G.rotation.set(0.05 + 0.03 * Math.sin((t - 17) * 0.8), 0.2 * Math.sin((t - 18.2) * 0.55), 0);
-    O.env.visible = true;
+    // camera: angled close-up on the post (like the reference), then back to a frontal view
+    const zin = easeInOut(prog(t, 18.0, 18.5)) * (1 - easeInOut(prog(t, 19.95, 20.35)));
+    G.position.copy(P(540, 1185 - 230 * zin, 0));
+    G.rotation.set(0.05 + 0.03 * Math.sin((t - 17) * 0.8) + 0.1 * zin, 0.2 * Math.sin((t - 18.2) * 0.55) * (1 - zin) - 0.5 * zin, 0.04 * zin);
+    G.scale.setScalar(1 + 0.32 * zin);
     const p = easeOut(prog(t, 17.0, 17.95));
     const s = Math.max(0, t - 17.95);
     const bt = beat(t, 18.0);
-    const taps = O.N.map(n => Math.sin(Math.PI * prog(t, n.tap - 0.05, n.tap + 0.15))).reduce((a, b) => Math.max(a, b), 0);
-    const spin = Math.PI * 2 * easeInOut(prog(t, 21.95, 22.4));
-    const exit = easeIn3(prog(t, 22.82, 23.0));
-    const land = Math.exp(-s * 7) * Math.sin(s * 22) * 18 * (s > 0 ? 1 : 0), lift = 110 * Math.sin(Math.PI * prog(t, 21.9, 22.45));
+    const tapT = [18.42, L.profileAt, 20.92, ...O.N.slice(1).map(n => n.tap)];
+    const taps = tapT.map(x => Math.sin(Math.PI * prog(t, x - 0.05, x + 0.15))).reduce((a, b) => Math.max(a, b), 0);
+    const spin = Math.PI * 2 * easeInOut(prog(t, 23.4, 23.85));
+    const exit = easeIn3(prog(t, 24.82, 25.0));
+    const land = Math.exp(-s * 7) * Math.sin(s * 22) * 18 * (s > 0 ? 1 : 0), lift = 110 * Math.sin(Math.PI * prog(t, 23.35, 23.9));
     ph.position.set(lerp(260, 0, p), lerp(1500, 0, p) + Math.abs(land) + lift, lerp(-500, 0, p) + 14 * bt - 22 * taps + 2600 * exit);
     ph.rotation.set(lerp(-0.6, 0.0, p) + 0.015 * Math.sin(s * 1.3) + 0.03 * taps - 0.5 * exit,
                     lerp(Math.PI + 1.1, -0.06, easeInOut(prog(t, 17.0, 17.95))) + 0.04 * Math.sin(s * 1.05) + spin,
                     lerp(-0.35, 0, p) + 0.01 * Math.sin(s * 0.9) + 0.25 * exit);
     ph.scale.setScalar((1 + 0.012 * bt) * (1 - 0.015 * taps));
     const on = prog(t, 17.85, 18.25);
-    const flash = [17.95, 18.62, 20.07, 20.77, 21.42, 22.72].map(e => Math.exp(-Math.pow((t - e) / 0.07, 2))).reduce((a, b) => Math.max(a, b), 0);
-    ph.userData.scrMat.color.setScalar(0.9 * easeOut(on) + 1.3 * flash);
-    O.scrLight.intensity = (1.2 * easeOut(on) + 9 * flash) * p;
+    const flash = [17.95, L.profileAt, 20.92, ...O.N.slice(1).map(n => n.tap), L.tilesOut, 24.72].map(e => Math.exp(-Math.pow((t - e) / 0.07, 2))).reduce((a, b) => Math.max(a, b), 0);
+    ph.userData.scrMat.color.setScalar(0.92 * easeOut(on) + 1.2 * flash);
+    O.scrLight.intensity = (1.4 * easeOut(on) + 9 * flash) * p;
     const lk = prog(t, 17.62, 17.98);
     O.lines.forEach((l, i) => { l.material.opacity = lk > 0 && lk < 1 ? Math.sin(lk * Math.PI) : 0; l.rotation.z = [0.6, -0.9, 1.25, -0.35, 0.15][i]; const d = lerp(-520, 520, lk) * (i % 2 ? 1 : -1); l.position.set(Math.cos(l.rotation.z + 1.57) * d * 0.4, Math.sin(l.rotation.z + 1.57) * d, 29.6); });
     const sc = ph.userData.scan; sc.material.opacity = on > 0 && on < 1 ? 0.9 : 0; sc.position.y = lerp(600, -600, on);
-    // light play on the black glass
     const Cw = P(540, 1185), la = (t - 17) * 1.5;
     amber.position.set(Cw.x + Math.cos(la) * 760, Cw.y + Math.sin(la * 0.8) * 520, 520 + 220 * Math.sin(la));
     cool.position.set(Cw.x - Math.cos(la) * 760, Cw.y - Math.sin(la * 0.8) * 520, 420);
-    amber.intensity = 3.4 * p * (1 + 0.6 * bt); cool.intensity = 2.0 * p;
-    bloom.strength = 0.34 + 0.18 * bt * p + 0.2 * taps + 0.35 * flash;
+    amber.intensity = 3.0 * p * (1 + 0.5 * bt); cool.intensity = 2.0 * p;
+    bloom.strength = 0.34 + 0.16 * bt * p + 0.2 * taps + 0.35 * flash;
     const hue = 0.09 + 0.035 * Math.sin((t - 17) * 1.7);
     O.edge.visible = false;
     O.burst.visible = true; O.burst.rotation.z = (t - 17) * 0.25; O.burst.scale.setScalar(Math.max(0.01, p) * (1 + 0.08 * bt + 0.2 * taps));
     O.burst.material.color.setHSL(hue - 0.02, 0.85, 0.08 + 0.08 * bt + 0.15 * taps);
     O.burst.position.set(0, 0, -300);
     const gl = O.glare; gl.visible = true;
-    const glareAt = [18.15, 19.5, 20.95, 22.2].map(g0 => prog(t, g0, g0 + 0.45)).find(q => q > 0 && q < 1);
+    const glareAt = [18.15, L.profileAt, 21.9, 23.6].map(g0 => prog(t, g0, g0 + 0.45)).find(q => q > 0 && q < 1);
     gl.material.opacity = glareAt !== undefined ? Math.sin(glareAt * Math.PI) * 0.32 : 0;
     gl.material.map.offset.x = glareAt !== undefined ? lerp(-0.9, 0.9, glareAt) : 0;
     G.updateMatrixWorld(true);
     const phoneLocal = v => v.clone().applyMatrix4(ph.matrix);
-    const hp = easeOut(prog(t, 18.0, 18.6));
+    const hp = easeOut(prog(t, 20.35, 20.9));
     O.hud.forEach((h, i) => { h.visible = hp > 0; h.scale.setScalar(Math.max(0.01, hp) * (1 + 0.02 * bt)); h.rotation.set(1.32 + i * 0.08, 0.12 * i, (t - 18) * (i ? -0.35 : 0.5)); h.position.set(0, -40 + i * 30, 0); });
-    // trails + burst particles
     const fxPos = O.fx.geometry.attributes.position.array, fxCol = O.fx.geometry.attributes.color.array; fxCol.fill(0);
     let fi = 0;
     const trail = (a, b, k, n = 18) => { for (let j = 0; j < n && fi < fxCol.length / 3; j++) { const u = j / (n - 1) * k; const q = a.clone().lerp(b, u); q.y += Math.sin(u * Math.PI) * 50; fxPos[fi * 3] = q.x; fxPos[fi * 3 + 1] = q.y; fxPos[fi * 3 + 2] = q.z; const c = Math.pow(j / (n - 1), 2) * 0.9 * Math.sin(k * Math.PI); fxCol[fi * 3] = c; fxCol[fi * 3 + 1] = c * 0.78; fxCol[fi * 3 + 2] = c * 0.45; fi++; } };
-    const back = easeInOut(prog(t, 22.45, 22.8));
+    const back = easeInOut(prog(t, 24.45, 24.8));
     const faceCam = (k, extraY = 0) => new THREE.Quaternion().setFromEuler(new THREE.Euler(0.08 * Math.sin(t * 1.3 + extraY), -G.rotation.y * 0.7 + extraY, 0));
-    // notifications -> 3D sections
+    // likes: 3D hearts out of the like button
+    const hIcon = phoneLocal(new THREE.Vector3(L.heart[0], L.heart[1], 34));
+    O.hearts.forEach((h, i) => {
+      const st = 18.45 + i * 0.075, q = prog(t, st, st + 1.15);
+      h.visible = q > 0 && q < 1;
+      if (!h.visible) return;
+      const r = seeded(500 + i);
+      const drift = lerp(-90, 90, r()), up = lerp(260, 480, r()), out = lerp(120, 320, r());
+      h.position.set(hIcon.x + drift * q + 30 * Math.sin(q * 9 + i), hIcon.y + up * easeOut(q), hIcon.z + out * q);
+      h.rotation.set(0.3 * Math.sin(q * 6 + i), -G.rotation.y * 0.6 + 0.4 * Math.sin(q * 4 + i), 0.3 * Math.sin(q * 5 + i));
+      h.scale.setScalar(easeBack(clamp(q * 3), 2.2) * lerp(0.9, 1.4, r()) * (1 - 0.3 * q));
+      h.material.opacity = clamp((1 - q) * 3.5);
+    });
+    // comments: bubbles out of the comment button
+    const cIcon = phoneLocal(new THREE.Vector3(L.comment[0], L.comment[1], 34));
+    O.bubbles.forEach((b, i) => {
+      const st = 18.9 + i * 0.2, q = prog(t, st, st + 1.2);
+      b.visible = q > 0 && q < 1;
+      if (!b.visible) return;
+      b.position.set(cIcon.x + 80 + i * 40 + 40 * q, cIcon.y + 140 * easeOut(q) + i * 30, cIcon.z + 160 * easeOut(q));
+      b.quaternion.copy(faceCam(1, 0.1));
+      b.scale.setScalar(easeBack(clamp(q * 3), 2) * 1.7);
+      b.material.opacity = clamp((1 - q) * 3);
+    });
+    // sections rising out of the screen (follow card from the follow button, then the notification banners)
     O.N.forEach((n, i) => {
       const grp = n.g, { banner, card } = grp.userData;
-      const lift = easeOut(prog(t, n.tap + 0.05, n.tap + 0.6));
-      const k = lift * (1 - back);
+      const lift2 = easeOut(prog(t, n.tap + 0.05, n.tap + 0.6));
+      const k = lift2 * (1 - back);
       grp.visible = t >= n.tap + 0.05 && back < 1;
       if (!grp.visible) return;
-      const start = phoneLocal(new THREE.Vector3(0, 600 - 400, 33));
+      const start = phoneLocal(new THREE.Vector3(n.from[0], n.from[1], 33));
       const dst = new THREE.Vector3(...n.to); dst.y += 12 * Math.sin(t * 1.8 + i * 2); dst.x += 6 * Math.sin(t * 1.2 + i);
       const home = back > 0 ? phoneLocal(new THREE.Vector3(0, 0, 30)) : start;
-      grp.position.copy((back > 0 ? home : start).clone().lerp(dst, back > 0 ? 1 - back : lift));
-      grp.position.y += Math.sin(lift * Math.PI) * 90 * (1 - back);
-      grp.quaternion.copy(ph.quaternion.clone().slerp(faceCam(k, n.yaw), back > 0 ? 1 - back : lift));
-      banner.material.opacity = clamp(1 - lift * 2.4);
-      banner.visible = banner.material.opacity > 0.01;
-      banner.scale.setScalar(lerp(1, 1.15, lift));
+      grp.position.copy((back > 0 ? home : start).clone().lerp(dst, back > 0 ? 1 - back : lift2));
+      grp.position.y += Math.sin(lift2 * Math.PI) * 90 * (1 - back);
+      grp.quaternion.copy(ph.quaternion.clone().slerp(faceCam(k, n.yaw), back > 0 ? 1 - back : lift2));
+      if (n.banner) { banner.material.opacity = clamp(1 - lift2 * 2.4); banner.visible = banner.material.opacity > 0.01; banner.scale.setScalar(lerp(1, 1.15, lift2)); }
       if (card) {
-        const co = clamp((lift - 0.22) / 0.35) * (1 - back * 0.2);
+        const co = clamp((lift2 - (n.banner ? 0.22 : 0.02)) / 0.35) * (1 - back * 0.2);
         card.visible = co > 0.01;
         card.children.forEach(c => { c.material.opacity = co; });
-        const s0 = 520 / n.w;
-        card.scale.setScalar(lerp(s0, n.scale, easeOut(clamp((lift - 0.1) / 0.8))) * lerp(1, 0.25, back) * (1 + 0.03 * bt));
-        if (n.texB) card.children[0].material.map = t >= 19.5 ? n.texB : n.texA;
+        const s0 = n.banner ? 520 / n.w : 0.25;
+        card.scale.setScalar(lerp(s0, n.scale, easeOut(clamp((lift2 - 0.05) / 0.8))) * lerp(1, 0.25, back) * (1 + 0.03 * bt));
+        if (n.texB) card.children[0].material.map = t >= n.swapAt ? n.texB : n.texA;
       }
-      if ((lift > 0 && lift < 1) || (back > 0 && back < 1)) trail(start, grp.position, lift < 1 ? lift : 1 - back);
+      if ((lift2 > 0 && lift2 < 1) || (back > 0 && back < 1)) trail(start, grp.position, lift2 < 1 ? lift2 : 1 - back);
     });
-    // follow card: button pressed at 19.5 -> burst
-    const bp = prog(t, 19.5, 20.3), fc = O.N[0].g;
+    // follow pressed on the card -> gold burst
+    const bpq = prog(t, 20.95, 21.75), fc = O.N[0].g;
     const rnd = seeded(99);
     for (let j = 0; j < 80; j++) {
       const a = rnd() * Math.PI * 2, el = (rnd() - 0.5) * 1.6, spd = lerp(220, 620, rnd());
-      if (bp > 0 && bp < 1 && fi < fxCol.length / 3) {
-        const d = easeOut(bp) * spd;
-        fxPos[fi * 3] = fc.position.x + Math.cos(a) * Math.cos(el) * d; fxPos[fi * 3 + 1] = fc.position.y - 70 + Math.sin(el) * d - 120 * bp * bp; fxPos[fi * 3 + 2] = fc.position.z + 60 + Math.sin(a) * Math.cos(el) * d * 0.6;
-        const c = (1 - bp) * 1.1; fxCol[fi * 3] = c; fxCol[fi * 3 + 1] = c * 0.82; fxCol[fi * 3 + 2] = c * 0.5;
+      if (bpq > 0 && bpq < 1 && fi < fxCol.length / 3) {
+        const d = easeOut(bpq) * spd;
+        fxPos[fi * 3] = fc.position.x + Math.cos(a) * Math.cos(el) * d; fxPos[fi * 3 + 1] = fc.position.y - 70 + Math.sin(el) * d - 120 * bpq * bpq; fxPos[fi * 3 + 2] = fc.position.z + 60 + Math.sin(a) * Math.cos(el) * d * 0.6;
+        const c = (1 - bpq) * 1.1; fxCol[fi * 3] = c; fxCol[fi * 3 + 1] = c * 0.82; fxCol[fi * 3 + 2] = c * 0.5;
       }
       fi++;
     }
-    const press = Math.sin(Math.PI * prog(t, 19.42, 19.6));
-    if (fc.userData.card) fc.position.z -= 40 * press;
-    // 4th notification: the posts fly out and build a wall behind the phone
+    const press = Math.sin(Math.PI * prog(t, 20.85, 21.02));
+    if (fc.visible) fc.position.z -= 40 * press;
+    // follower counter rises from the profile stats and counts up
+    {
+      const cq = easeOut(prog(t, 21.0, 21.55)), k = cq * (1 - back);
+      const cnt = O.counter; cnt.visible = k > 0.001;
+      if (cnt.visible) {
+        const n = Math.round(lerp(O.IGF[0], O.IGF[1], easeInOut(prog(t, 21.0, 23.2))));
+        O.drawCounter(Math.max(n, O.IGF[0] + 1), t < 23.2 ? 1 : 0);
+        const start = phoneLocal(new THREE.Vector3(105, 425, 33));
+        const dst = new THREE.Vector3(-250, 300, 420); dst.y += 10 * Math.sin(t * 2.1);
+        cnt.position.copy(start.clone().lerp(dst, k));
+        cnt.quaternion.copy(ph.quaternion.clone().slerp(faceCam(k, 0.22), k));
+        cnt.scale.setScalar(lerp(0.2, 1, k) * (1 + 0.05 * Math.sin(Math.PI * ((t * 6) % 1)) * (t > 21.0 && t < 23.2)));
+        if (cq > 0 && cq < 1) trail(start, cnt.position, cq);
+      }
+    }
+    // the profile grid posts fly out and build a wall behind the phone
     const WALL = [];
     for (const y of [430, 40, -350]) for (const x of [-430, 0, 430]) WALL.push([x, y, -380]);
     O.tiles.forEach((tl, i) => {
-      const st = 21.45 + i * 0.05, out = easeOut(prog(t, st, st + 0.55));
+      const st = L.tilesOut + i * 0.05, out = easeOut(prog(t, st, st + 0.55));
       const k = out * (1 - back);
       tl.visible = k > 0.001;
       if (!tl.visible) return;
-      const start = phoneLocal(new THREE.Vector3(0, 200, 33));
+      const start = phoneLocal(new THREE.Vector3(L.grid[i][0], L.grid[i][1], 33));
       const dst = new THREE.Vector3(...WALL[i]); dst.y += 10 * Math.sin(t * 2 + i); dst.z += 20 * Math.sin(t * 1.5 + i);
       tl.position.copy(start.clone().lerp(dst, k));
       tl.position.z += Math.sin(k * Math.PI) * 300;
       tl.quaternion.copy(ph.quaternion.clone().slerp(faceCam(k, 0.1 * Math.sin(i)), k));
-      tl.scale.setScalar(lerp(0.4, 1.3, k) * (1 + 0.04 * bt));
+      tl.scale.setScalar(lerp(L.gridT / 176, 1.3, k) * (1 + 0.04 * bt));
       if (out > 0 && out < 1) trail(start, tl.position, out);
     });
     O.fx.visible = true; O.fx.geometry.attributes.position.needsUpdate = true; O.fx.geometry.attributes.color.needsUpdate = true;
-    // 3D title
-    const a = O.abo; const ap = prog(t, 18.3, 18.75);
+    // 3D title arrives with the follow
+    const a = O.abo; const ap = prog(t, L.profileAt, L.profileAt + 0.45);
     a.visible = ap > 0;
     place(a, P(540, 330, lerp(1500, 0, easeOut(ap))));
-    a.rotation.set(lerp(-1.2, 0, easeBack(ap, 1.3)) + 0.05 * Math.sin(t * 2), 0.12 * Math.sin((t - 18.3) * 1.3), 0);
-    a.scale.setScalar(1 + 0.04 * beat(t, 19.0));
-    const sp = ((t - 19.0) % 1.6) / 1.6;
-    if (t > 19.0) { sweep.intensity = 2.5 * Math.sin(sp * Math.PI); sweep.position.set(lerp(-700, 700, sp), 960 - 330 + 160, 260); }
+    a.rotation.set(lerp(-1.2, 0, easeBack(ap, 1.3)) + 0.05 * Math.sin(t * 2), 0.12 * Math.sin((t - 20.25) * 1.3), 0);
+    a.scale.setScalar(1 + 0.04 * beat(t, 20.5));
+    const spq = ((t - 21.0) % 1.6) / 1.6;
+    if (t > 21.0) { sweep.intensity = 2.5 * Math.sin(spq * Math.PI); sweep.position.set(lerp(-700, 700, spq), 960 - 330 + 160, 260); }
   }
 
-  // S6 hours 23-26.5: pocket watch + 3D title
-  if (t >= 23.0 && t < 26.5) {
+  // S6 hours 25-28.5: pocket watch + 3D title
+  if (t >= 25 && t < 28.5) {
     const w = O.watch; w.visible = true;
-    const p = easeBack(prog(t, 23.0, 23.5));
-    place(w, P(540, 420, lerp(-1500, 0, easeOut(prog(t, 23.0, 23.5)))));
+    const p = easeBack(prog(t, 25, 25.5));
+    place(w, P(540, 420, lerp(-1500, 0, easeOut(prog(t, 25, 25.5)))));
     w.scale.setScalar(Math.max(0.01, p));
     w.rotation.set(0.15 * Math.sin(t * 1.1), 0.5 * Math.sin((t - 23) * 1.2), 0);
-    w.userData.setTime(lerp(0, Math.PI * 2 * 1.5, easeOut(prog(t, 23.0, 24.4))) + 0.25);
-    const h = O.horaires; const hp = prog(t, 23.15, 23.6);
+    w.userData.setTime(lerp(0, Math.PI * 2 * 1.5, easeOut(prog(t, 25, 26.4))) + 0.25);
+    const h = O.horaires; const hp = prog(t, 25.15, 25.6);
     h.visible = hp > 0;
     place(h, P(540, 625, lerp(1400, 0, easeOut(hp))));
     h.rotation.set(lerp(-1.1, 0, easeBack(hp, 1.3)), 0.12 * Math.sin((t - 23) * 1.3), 0);
   }
 
-  // S6b business card 26.5-31: flies in, flips recto/verso, the QR code rises out in 3D and gets scanned
-  if (t >= 26.5 && t < 31.0) {
+  // S6b business card 28.5-33: flies in, flips recto/verso, the QR code rises out in 3D and gets scanned
+  if (t >= 28.5 && t < 33) {
     const cd = O.card; cd.visible = true;
-    const fin = easeOut(prog(t, 26.5, 27.3));
-    const flip = easeInOut(prog(t, 27.6, 28.15));
-    const up = easeInOut(prog(t, 28.75, 29.35));
+    const fin = easeOut(prog(t, 28.5, 29.3));
+    const flip = easeInOut(prog(t, 29.6, 30.15));
+    const up = easeInOut(prog(t, 30.75, 31.35));
     place(cd, P(540, lerp(840, 700, up), lerp(-2600, 0, fin) + 160 * Math.sin(Math.PI * flip)));
-    cd.rotation.set(lerp(0.7, 0.12, fin) - 0.32 * up + 0.04 * Math.sin(t * 1.3), lerp(-Math.PI * 4, 0, fin) + Math.PI * flip + 0.1 * Math.sin((t - 27.3) * 1.1) * fin, lerp(-0.4, 0, fin) + 0.03 * Math.sin(t));
-    cd.scale.setScalar(1 + 0.015 * beat(t, 27.0));
-    const sp1 = prog(t, 27.25, 27.85), sp2 = prog(t, 28.2, 28.8);
+    cd.rotation.set(lerp(0.7, 0.12, fin) - 0.32 * up + 0.04 * Math.sin(t * 1.3), lerp(-Math.PI * 4, 0, fin) + Math.PI * flip + 0.1 * Math.sin((t - 29.3) * 1.1) * fin, lerp(-0.4, 0, fin) + 0.03 * Math.sin(t));
+    cd.scale.setScalar(1 + 0.015 * beat(t, 29));
+    const sp1 = prog(t, 29.25, 29.85), sp2 = prog(t, 30.2, 30.8);
     const spv = sp1 > 0 && sp1 < 1 ? sp1 : sp2 > 0 && sp2 < 1 ? sp2 : -1;
     if (spv >= 0) { sweep.intensity = 2.2 * Math.sin(spv * Math.PI); sweep.position.set(lerp(-800, 800, spv), 960 - 800 + 250, 450); }
     amber.intensity = 1.1 * fin; cool.intensity = 0.6 * fin;
-    const la = (t - 26.5) * 1.3;
+    const la = (t - 28.5) * 1.3;
     amber.position.set(Math.cos(la) * 800, 960 - 820 + Math.sin(la) * 400, 600); cool.position.set(-Math.cos(la) * 800, 960 - 820 - Math.sin(la) * 400, 500);
     // QR code
-    const rise = prog(t, 28.15, 28.75);
+    const rise = prog(t, 30.15, 30.75);
     const q = O.qr; q.visible = rise > 0;
     if (q.visible) {
       cd.updateMatrixWorld(true);
@@ -790,7 +864,7 @@ window.renderAt = async (t, screen) => {
       q.position.z += Math.sin(Math.PI * up) * 220;
       const tq = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.05 * Math.sin(t * 1.4), 0.12 * Math.sin(t * 0.9), 0));
       q.quaternion.copy(cq.clone().slerp(tq, up));
-      q.scale.setScalar(lerp(1, 1.45, up) * (1 + 0.02 * beat(t, 29.5)));
+      q.scale.setScalar(lerp(1, 1.45, up) * (1 + 0.02 * beat(t, 31.5)));
       const { modMesh, mods, maxD, dummy } = O.qrMods;
       mods.forEach(([x, y], i) => {
         const delay = Math.hypot(x, y) / maxD * 0.45;
@@ -800,39 +874,39 @@ window.renderAt = async (t, screen) => {
         dummy.updateMatrix(); modMesh.setMatrixAt(i, dummy.matrix);
       });
       modMesh.instanceMatrix.needsUpdate = true;
-      const sc = prog(t, 29.35, 30.55);
+      const sc = prog(t, 31.35, 32.55);
       O.laser.visible = sc > 0 && sc < 1;
       O.laser.position.y = (O.qr.children[0].geometry.parameters.height / 2) * Math.cos(sc * Math.PI * 2);
-      O.brackets.forEach((b, i) => { const bp = easeBack(prog(t, 29.3 + i * 0.05, 29.6 + i * 0.05)); b.visible = bp > 0; b.scale.setScalar(Math.max(0.01, bp) * (1 + 0.06 * beat(t, 29.5))); });
+      O.brackets.forEach((b, i) => { const bp = easeBack(prog(t, 31.3 + i * 0.05, 31.6 + i * 0.05)); b.visible = bp > 0; b.scale.setScalar(Math.max(0.01, bp) * (1 + 0.06 * beat(t, 31.5))); });
     }
-    bloom.strength = 0.22 + 0.1 * beat(t, 27.0);
+    bloom.strength = 0.22 + 0.1 * beat(t, 29);
   }
 
-  // S7 end 31-34.5: medallion + orbiting tools + 3D title
-  if (t >= 31) {
+  // S7 end 33-36.5: medallion + orbiting tools + 3D title
+  if (t >= 33) {
     const m = O.medal; m.visible = true;
-    const p = easeOut(prog(t, 31, 31.9));
+    const p = easeOut(prog(t, 33, 33.9));
     place(m, P(540, 700, lerp(-2600, 0, p)));
     m.rotation.set(0.1 * Math.sin(t), lerp(-Math.PI * 3, 0, p) + 0.2 * Math.sin(t * 1.2) * p, 0);
     m.scale.setScalar(0.92);
     const og = O.orbitG; og.visible = true; place(og, P(540, 700));
     og.rotation.set(1.22, 0, 0.12);
-    const op = easeOut(prog(t, 31.3, 32.1));
+    const op = easeOut(prog(t, 33.3, 34.1));
     O.orbit.forEach((o, i) => {
       o.visible = true;
-      const a = i / O.orbit.length * Math.PI * 2 + (t - 31) * 0.9;
+      const a = i / O.orbit.length * Math.PI * 2 + (t - 33) * 0.9;
       const r = lerp(150, 470, op);
       o.position.set(Math.cos(a) * r, Math.sin(a) * r, 0);
-      o.rotation.set(-1.22 + 0.3 * Math.sin(t + i), (t - 31) * 1.5 + i, 0.4 * Math.sin(t * 0.8 + i));
+      o.rotation.set(-1.22 + 0.3 * Math.sin(t + i), (t - 33) * 1.5 + i, 0.4 * Math.sin(t * 0.8 + i));
       o.scale.setScalar(0.42 * op);
       if (o.userData.setOpen) o.userData.setOpen(i === 0 ? 30 : 0.9);
     });
-    const a2 = O.abo2; const ap = prog(t, 31.6, 32.05);
+    const a2 = O.abo2; const ap = prog(t, 33.6, 34.05);
     a2.visible = ap > 0;
     place(a2, P(540, 1100, lerp(1400, 0, easeOut(ap))));
-    a2.rotation.set(lerp(-1.1, 0, easeBack(ap, 1.3)) + 0.04 * Math.sin(t * 2), 0.1 * Math.sin((t - 31.5) * 1.2), 0);
+    a2.rotation.set(lerp(-1.1, 0, easeBack(ap, 1.3)) + 0.04 * Math.sin(t * 2), 0.1 * Math.sin((t - 33.5) * 1.2), 0);
     a2.scale.setScalar(1 + 0.035 * beat(t, 32));
-    const sp = prog(t, 32.1, 33.1);
+    const sp = prog(t, 34.1, 35.1);
     if (sp > 0 && sp < 1) { sweep.intensity = 3.5 * Math.sin(sp * Math.PI); sweep.position.set(lerp(-700, 700, sp), 960 - 700 + 300, 420); }
   }
 
