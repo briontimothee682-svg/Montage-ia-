@@ -36,17 +36,19 @@ SCALE = ("Real-world scale, identical outside and inside: the shop is a wide gro
          "(2.6 m tall, 1.8 m wide, slim black frames, long vertical brass handles), so the salon looks as big from the street as it is inside.")
 PS5 = ("a white PlayStation 5 Pro standing vertically on its stand, exactly like the official product: a tall slim body with two glossy white "
        "side covers around a glossy black center core, three thin black horizontal stripes across the middle of the white covers, a thin "
-       "blue-white light line; next to it a white DualSense controller with a black center panel, black thumbsticks and black buttons")
+       "blue-white light line, placed in the center of the dark walnut TV cabinet directly under the TV")
+PADS = "two white DualSense controllers with a black center panel, black thumbsticks and black buttons, lying on the marble coffee table"
 SET = ("The ATELIER 47 BARBIER salon in Annecy, an upscale modern barbershop, completely empty of people. " + SCALE + " Fixed layout, identical in every shot: "
        "the wide double glass entrance door on the street side; the reception and checkout desk just to the right of the entrance; two black leather "
        "barber chairs with gold details facing round gold-framed mirrors along the left wall; the waiting lounge at the back; a row of brass "
        "pendant lamps along the ceiling. Materials: matte black walls, cream veined marble floor, dark walnut counters. Lots of lush green "
        "plants everywhere: tall monstera and an olive tree in matte black pots, hanging pothos trailing from the ceiling, ferns on the shelves, "
        "small plants on the counters. Reception desk in dark walnut: a slim black all-in-one computer whose screen shows a dark booking "
-       "calendar with gold accents, a black card payment terminal with a glowing screen and a contactless symbol, a black-and-gold framed price "
-       f"list titled 'NOS TARIFS', and behind the desk, backlit on the black wall, {LOGO}. Waiting lounge: black leather sofa, two armchairs, a "
-       "low marble coffee table with two white game controllers and a few TIM DESIGN grooming products, and a large wall-mounted flat TV above "
-       "a dark walnut TV cabinet on which stands " + PS5 + ".")
+       "calendar with gold accents, a black card payment terminal with a glowing screen and a contactless symbol, a small black-and-gold "
+       "standing frame turned three-quarters away from the camera so its content is never readable (the real price list is added in editing), "
+       f"and behind the desk, backlit on the black wall, {LOGO}. Waiting lounge: black leather sofa, two armchairs, a low marble coffee table "
+       "with " + PADS.replace(", lying on the marble coffee table", "") + " and a few TIM DESIGN grooming products, a large wall-mounted flat "
+       "TV, and under it " + PS5 + ". The PlayStation 5 Pro is always there, in every shot of the lounge.")
 REALISM_SHORT = ("Ultra-photorealistic live-action footage, like a real commercial shot on an ARRI Alexa 35 with anamorphic and macro lenses: "
                  "true-to-life materials, physically accurate light, shadows and reflections, natural film grain. No cartoon, 3D render, CGI or AI artifacts.")
 SET_WIDE = ("Setting: the ATELIER 47 BARBIER salon, empty of people, a large room about 9 m wide and 15 m deep with a 3.5 m ceiling, "
@@ -65,7 +67,7 @@ NEGATIVE = ("people in the salon, customers, barbers, hands, fingers, arms, face
             "windows (the only people allowed are the small video game players on the TV screen), cartoon, illustration, anime, 3D render, "
             "CGI look, video game look on the real set, plastic textures, AI artifacts, misspelled or garbled letters, {TEXT}, other brand "
             "names or logos, TV channel logos, TV presenter or person close-up on the TV, TV image changing or switching channel, tiny or "
-            "narrow storefront, small door, exterior and interior at different scales, watermark, subtitles, colors outside black/gold/cream except plant green and pitch green, "
+            "narrow storefront, small door, invented or fake price list, readable price list on the counter, missing PlayStation, exterior and interior at different scales, watermark, subtitles, colors outside black/gold/cream except plant green and pitch green, "
             "blue or purple tint, neon lights, daylight, harsh flat lighting, blown-out highlights, blurry or out-of-focus subject, warped "
             "or melting objects, objects changing shape, deformed tools, extra blades, duplicated objects, inconsistent room layout, clutter, "
             "hair on the floor, dirt, flicker, jitter, shaky handheld camera, fisheye distortion, dutch angle, low resolution, noise, "
@@ -121,16 +123,15 @@ SHOTS = [
       "camera pointing straight down, slow lateral slide from left to right along the row", "a warm light reflection gliding across the metal of each tool",
       "speed-ramped pull-back transition (close to wide) with motion blur"),
     S(10.0, 12.5, "wide", "Salle d'attente, TV, PS5 et plantes",
-      "Wide view of the waiting lounge: black leather sofa and two armchairs, low marble coffee table with two white game controllers and a few "
-      "TIM DESIGN products, monstera, olive tree and hanging pothos, and the large wall-mounted TV above a dark walnut cabinet with a white "
-      f"PlayStation 5 Pro standing upright. {TV}",
+      "Wide view of the waiting lounge: black leather sofa and two armchairs, monstera, olive tree and hanging pothos, the large wall-mounted "
+      f"TV, and clearly visible in the center of the frame, under the TV: {PS5}; in front: {PADS}. {TV}",
       "ultra-wide 20mm lens, the whole lounge and the full TV wall in frame, slow lateral tracking", "the game moving on the TV, leaves catching the warm light",
       "push-in transition straight into the TV with a soft blur", prio=True,
-      note="La télé doit montrer uniquement le match du jeu, du début à la fin. Si elle change d'image (présentateur, autre chaîne), relance la génération."),
+      note="La PS5 doit être bien visible sous la télé dès ce plan, au même endroit qu'au plan suivant : génère-le aussi en « image vers vidéo » avec assets/ps5_reference.jpg. La télé montre uniquement le match du jeu : si elle change d'image, relance."),
     S(12.5, 14.0, "close", "La PS5 et la manette",
-      f"Close-up of {PS5}, on the dark walnut cabinet under the TV; the controller lies sharp in the foreground on the marble coffee table; "
+      f"Close-up of {PS5}, the same console at the same place as in the previous shot; in the sharp foreground, {PADS}; "
       "the football video game softly visible on the TV above (same game image, nothing else on the screen)",
-      "slow rack focus from the controller to the console and the TV", "the TV light flickering softly on the console",
+      "slow rack focus from the controllers to the console and the TV", "the TV light flickering softly on the console",
       "whip-pan transition with motion blur and a gold light leak", prio=True,
       note="Pour une PS5 fidèle : utilise le mode « image vers vidéo » (ou « image de référence ») avec ta photo de la PS5 Pro, assets/ps5_reference.jpg."),
     S(14.0, 16.5, "close", "Étagère de produits TIM DESIGN",
@@ -144,18 +145,21 @@ SHOTS = [
       "speed-ramped pull-back transition (close to wide)", prio=True),
     S(18.0, 20.5, "wide", "Comptoir d'accueil complet",
       "Wide view of the reception and checkout desk in dark walnut: the slim black all-in-one computer showing a dark booking calendar, the black "
-      "card payment terminal with its screen glowing, the black-and-gold framed 'NOS TARIFS' price list standing on the counter, and behind it, "
+      "card payment terminal with its screen glowing, a small black-and-gold standing frame turned away so its content is not readable, and behind it, "
       f"backlit on the black wall, {LOGO}; tall plants on both sides of the desk, the salon softly lit in the background",
       "wide 24mm lens showing the whole desk and wall, slow push-in", "the logo glowing softly, screens lit", "hard cut on the beat", prio=True),
     S(20.5, 22.5, "close", "TPE et ordinateur, puis fiche tarifs",
       "Close-up of the checkout counter: the black card payment terminal with a glowing screen and a contactless symbol next to the computer "
-      "keyboard; the focus then moves to the black-and-gold framed 'NOS TARIFS' price list standing beside it",
-      "slow lateral slide, then rack focus onto the price list frame", "screen light reflecting on the walnut",
-      "push-in transition into the price list frame"),
-    S(22.5, 25.5, "close", "Fiche tarifs (ta vraie image)",
+      "keyboard; the focus then moves to a black-and-gold standing frame beside it, facing the camera, whose inside is a uniform, evenly lit "
+      "pure green (#00FF00) chroma-key surface with no text (this green is allowed in this shot only)",
+      "slow lateral slide, then rack focus onto the frame", "screen light reflecting on the walnut",
+      "push-in transition into the frame, straight into the real price list",
+      note="L'intérieur du cadre est vert : colle ta vraie fiche tarifs dedans (Chroma key), jamais une fiche inventée par l'IA."),
+    S(22.5, 25.5, "close", "OBLIGATOIRE · Ta vraie fiche tarifs",
       f"Full-screen view of the real ATELIER 47 price list: {PRICES}",
       "slow push-in 100% to 106%", "a soft gold light sweep across the title", "gold flash transition", gen=False,
-      note="Ne pas générer : place ta vraie image assets/fiche_tarifs.jpg en plein écran au montage, pour que les prix soient parfaitement lisibles."),
+      prio=True,
+      note="Ne pas générer. Mets ta vraie image assets/fiche_tarifs.jpg en plein écran, telle quelle, pendant 3 s : jamais une fiche recréée par l'IA."),
     S(25.5, 28.5, "medium", "OBLIGATOIRE · Téléphone sur le comptoir",
       "A matte black smartphone standing upright on a small brushed-gold stand on the walnut reception counter, screen facing the camera, "
       "nobody holding it; the large salon softly blurred behind it with its pendant lamps and plants. SCREEN",
@@ -204,8 +208,10 @@ OVERLAYS = [
       "slide up 20px + fade in over 0.4s, letter spacing expanding slightly"),
     O(0.7, 3.5, CITY.upper(), f"{FONT} Bold, gold {GOLD}, 60px, letter spacing +120, under the street",
       "fade in with a gold underline drawing itself from left to right under the city, soft glow"),
-    O(18.3, 20.5, "OUVERT DU MARDI AU SAMEDI", f"{FONT} Medium, cream {CREAM}, 40px, letter spacing +100, lower third",
-      "slide in from the left with a thin gold line, fade out on the cut"),
+    O(18.3, 22.4, "HORAIRES", f"{FONT} SemiBold, gold {GOLD}, 44px, letter spacing +150, lower third",
+      "slide in from the left with a thin gold line drawing itself under it"),
+    O(18.6, 22.4, " / ".join(HOURS), f"{FONT} Medium, cream {CREAM}, 38px, three lines under HORAIRES",
+      "lines slide in one after another, 0.15s apart, fade out together"),
     O(26.0, 31.5, "ABONNEZ-VOUS", f"{FONT} Bold, gold gradient {GOLD} to a lighter gold highlight, 104px, letter spacing +60, centered above the phone",
       "letters pop in one by one (scale 120% to 100%, 0.05s apart) on the beat, then a bright gold light sweep across the word, soft outer glow, "
       "a few fine gold sparkle particles, a thin gold underline drawing itself, and a subtle pulse (100% to 104%) on every beat; no motion blur, always readable"),
@@ -231,6 +237,8 @@ PRODUCTION = [
     "Product close-ups are the highlight: perfect focus, controlled reflections, premium macro quality, slowed to 70-80% with optical-flow smoothing.",
     "One identical color grade on every shot.",
     "The phone and Instagram sequence (shots 16-18) is mandatory and must never be cut or shortened.",
+    "The price list shown is always the real provided image, never an invented one; the opening hours appear twice (shots 13-14 and the end).",
+    "The PlayStation 5 Pro stays at the same place under the TV in every lounge shot.",
     "The Instagram moment is perfectly clear: the phone screen is large, steady and sharp, ABONNEZ-VOUS stays readable for the whole 5.5 seconds.",
     "The ending fades to black and loops seamlessly back to the night façade of the first shot.",
 ]
@@ -279,7 +287,8 @@ def master_prompt():
          "", "SET: " + SET + " " + TV, "", "LIGHT AND GRADE: " + LIGHT, "",
          "PRODUCTION RULES:"] + [f"- {r}" for r in PRODUCTION] + ["", "SHOT LIST:"]
     for i, s in enumerate(SHOTS, 1):
-        ins = " (insert the real image fiche_tarifs.jpg here, do not generate it)" if not s["gen"] else ""
+        ins = (" (MANDATORY: use exactly the provided image file fiche_tarifs.jpg, unchanged; never generate, redraw or retype a price list)"
+               if not s["gen"] else "")
         L.append(f"{i}. {ts(s['a'])}-{ts(s['b'])} [{s['scale'].upper()}] {subj(s, True).rstrip('.')}{ins}. Camera: {s['camera']}. "
                  f"Motion: {s['motion']}. Transition out: {s['tr']}.")
     L += ["", "ON-SCREEN TEXT AND EFFECTS:"]
@@ -330,7 +339,7 @@ def write_files():
                                "file_name": "atelier47_reel.mp4"}},
         "brand": {"colors": COLORS, "font": FONT,
                   "assets": {"logo": "assets/logo_atelier47.png (black background: use the Screen blend mode or remove the black)",
-                             "price_list": "assets/fiche_tarifs.jpg (shot 14, full screen)",
+                             "price_list": "assets/fiche_tarifs.jpg (shot 15, full screen, MANDATORY, use the file exactly as provided)",
                              "instagram_screenshot": "instagram_screenshot.png (real screenshot of the @atelier47barbier profile)"}},
         "global_rules": [
             "never show a person in the salon; reject any clip with a person, hand or face (game players on the TV are fine)",
@@ -341,6 +350,8 @@ def write_files():
             "keep all text inside the Instagram safe zone: 250px top, 420px bottom, 140px right, 80px left",
             f"text only in gold {GOLD} or cream {CREAM}, font {FONT}",
             "shots 16-18 (phone + Instagram + ABONNEZ-VOUS) are MANDATORY: never remove or shorten them",
+            "shot 15 is MANDATORY and uses assets/fiche_tarifs.jpg exactly as provided; in shot 14 key out the green frame and place the same image in it",
+            "the opening-hours overlays (18.3-22.4s and at the end) are MANDATORY",
             "shots 16-17: key out the green phone screen (Chroma key) and place instagram_screenshot.png on it, scaled and keyframed to follow the screen",
             "the last frame fades to black so the reel loops cleanly into the first shot",
         ],

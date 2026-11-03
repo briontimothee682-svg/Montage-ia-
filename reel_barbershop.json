@@ -31,7 +31,7 @@
     "realism": "Ultra-photorealistic live-action footage, indistinguishable from a real commercial shot on an ARRI Alexa 35 with anamorphic 35mm and 100mm macro lenses: true-to-life materials (leather grain and stitching, brushed metal with micro-scratches, veined marble, real glass, real plant leaves with natural imperfections), physically accurate light, shadows and reflections, real-world physics and natural camera inertia, subtle lens breathing, soft halation on highlights, natural film grain. Absolutely no cartoon, illustration, 3D render, CGI or AI-looking artifacts.",
     "palette": "Colors strictly matte black #111111, brushed gold #C9A24B and warm cream #F3EEE3; the only other colors allowed are the natural green of the plants and the green pitch on the TV.",
     "lighting_and_grade": "Moody low-key lighting, deep blacks, warm 2700K golden highlights from brass pendant lamps, slightly desaturated warm cinematic grade identical on every shot, subject razor sharp, soft creamy bokeh.",
-    "set": "The ATELIER 47 BARBIER salon in Annecy, an upscale modern barbershop, completely empty of people. Real-world scale, identical outside and inside: the shop is a wide ground-floor commercial unit, about 9 meters wide and 15 meters deep with a 3.5-meter ceiling; the façade has two large floor-to-ceiling display windows framing a wide double glass entrance door (2.6 m tall, 1.8 m wide, slim black frames, long vertical brass handles), so the salon looks as big from the street as it is inside. Fixed layout, identical in every shot: the wide double glass entrance door on the street side; the reception and checkout desk just to the right of the entrance; two black leather barber chairs with gold details facing round gold-framed mirrors along the left wall; the waiting lounge at the back; a row of brass pendant lamps along the ceiling. Materials: matte black walls, cream veined marble floor, dark walnut counters. Lots of lush green plants everywhere: tall monstera and an olive tree in matte black pots, hanging pothos trailing from the ceiling, ferns on the shelves, small plants on the counters. Reception desk in dark walnut: a slim black all-in-one computer whose screen shows a dark booking calendar with gold accents, a black card payment terminal with a glowing screen and a contactless symbol, a black-and-gold framed price list titled 'NOS TARIFS', and behind the desk, backlit on the black wall, the ATELIER 47 BARBIER logo: a circular badge made of two thin concentric brushed-gold rings on matte black; at the top a pair of open gold scissors; the word 'ATELIER' in cream condensed capitals with wide letter spacing; a large bold gold '47' below it; a thin horizontal gold line; 'BARBIER' in cream spaced capitals; and the small gold tagline 'COUPE NETTE · BARBE SOIGNÉE'. Waiting lounge: black leather sofa, two armchairs, a low marble coffee table with two white game controllers and a few TIM DESIGN grooming products, and a large wall-mounted flat TV above a dark walnut TV cabinet on which stands a white PlayStation 5 Pro standing vertically on its stand, exactly like the official product: a tall slim body with two glossy white side covers around a glossy black center core, three thin black horizontal stripes across the middle of the white covers, a thin blue-white light line; next to it a white DualSense controller with a black center panel, black thumbsticks and black buttons.",
+    "set": "The ATELIER 47 BARBIER salon in Annecy, an upscale modern barbershop, completely empty of people. Real-world scale, identical outside and inside: the shop is a wide ground-floor commercial unit, about 9 meters wide and 15 meters deep with a 3.5-meter ceiling; the façade has two large floor-to-ceiling display windows framing a wide double glass entrance door (2.6 m tall, 1.8 m wide, slim black frames, long vertical brass handles), so the salon looks as big from the street as it is inside. Fixed layout, identical in every shot: the wide double glass entrance door on the street side; the reception and checkout desk just to the right of the entrance; two black leather barber chairs with gold details facing round gold-framed mirrors along the left wall; the waiting lounge at the back; a row of brass pendant lamps along the ceiling. Materials: matte black walls, cream veined marble floor, dark walnut counters. Lots of lush green plants everywhere: tall monstera and an olive tree in matte black pots, hanging pothos trailing from the ceiling, ferns on the shelves, small plants on the counters. Reception desk in dark walnut: a slim black all-in-one computer whose screen shows a dark booking calendar with gold accents, a black card payment terminal with a glowing screen and a contactless symbol, a small black-and-gold standing frame turned three-quarters away from the camera so its content is never readable (the real price list is added in editing), and behind the desk, backlit on the black wall, the ATELIER 47 BARBIER logo: a circular badge made of two thin concentric brushed-gold rings on matte black; at the top a pair of open gold scissors; the word 'ATELIER' in cream condensed capitals with wide letter spacing; a large bold gold '47' below it; a thin horizontal gold line; 'BARBIER' in cream spaced capitals; and the small gold tagline 'COUPE NETTE · BARBE SOIGNÉE'. Waiting lounge: black leather sofa, two armchairs, a low marble coffee table with two white DualSense controllers with a black center panel, black thumbsticks and black buttons and a few TIM DESIGN grooming products, a large wall-mounted flat TV, and under it a white PlayStation 5 Pro standing vertically on its stand, exactly like the official product: a tall slim body with two glossy white side covers around a glossy black center core, three thin black horizontal stripes across the middle of the white covers, a thin blue-white light line, placed in the center of the dark walnut TV cabinet directly under the TV. The PlayStation 5 Pro is always there, in every shot of the lounge.",
     "tv": "From the first frame to the last, the TV shows only one thing: a football video game being played on the PlayStation 5, bright green pitch seen from the wide broadcast camera angle, small game players running; the image never changes to anything else (no presenter, no person close-up, no channel change, no menu), no readable score, no team or channel logos.",
     "products": "TIM DESIGN is the premium grooming product line sold in the salon: matte black and amber glass bottles and jars with gold caps."
   },
@@ -44,6 +44,8 @@
     "Product close-ups are the highlight: perfect focus, controlled reflections, premium macro quality, slowed to 70-80% with optical-flow smoothing.",
     "One identical color grade on every shot.",
     "The phone and Instagram sequence (shots 16-18) is mandatory and must never be cut or shortened.",
+    "The price list shown is always the real provided image, never an invented one; the opening hours appear twice (shots 13-14 and the end).",
+    "The PlayStation 5 Pro stays at the same place under the TV in every lounge shot.",
     "The Instagram moment is perfectly clear: the phone screen is large, steady and sharp, ABONNEZ-VOUS stays readable for the whole 5.5 seconds.",
     "The ending fades to black and loops seamlessly back to the night façade of the first shot."
   ],
@@ -150,12 +152,12 @@
       "time": "10.0-12.5s",
       "scale": "wide",
       "label_fr": "Salle d'attente, TV, PS5 et plantes",
-      "subject": "Wide view of the waiting lounge: black leather sofa and two armchairs, low marble coffee table with two white game controllers and a few TIM DESIGN products, monstera, olive tree and hanging pothos, and the large wall-mounted TV above a dark walnut cabinet with a white PlayStation 5 Pro standing upright. From the first frame to the last, the TV shows only one thing: a football video game being played on the PlayStation 5, bright green pitch seen from the wide broadcast camera angle, small game players running; the image never changes to anything else (no presenter, no person close-up, no channel change, no menu), no readable score, no team or channel logos.",
+      "subject": "Wide view of the waiting lounge: black leather sofa and two armchairs, monstera, olive tree and hanging pothos, the large wall-mounted TV, and clearly visible in the center of the frame, under the TV: a white PlayStation 5 Pro standing vertically on its stand, exactly like the official product: a tall slim body with two glossy white side covers around a glossy black center core, three thin black horizontal stripes across the middle of the white covers, a thin blue-white light line, placed in the center of the dark walnut TV cabinet directly under the TV; in front: two white DualSense controllers with a black center panel, black thumbsticks and black buttons, lying on the marble coffee table. From the first frame to the last, the TV shows only one thing: a football video game being played on the PlayStation 5, bright green pitch seen from the wide broadcast camera angle, small game players running; the image never changes to anything else (no presenter, no person close-up, no channel change, no menu), no readable score, no team or channel logos.",
       "camera": "ultra-wide 20mm lens, the whole lounge and the full TV wall in frame, slow lateral tracking",
       "motion": "the game moving on the TV, leaves catching the warm light",
       "transition_out": "push-in transition straight into the TV with a soft blur",
       "generate": true,
-      "note_fr": "La télé doit montrer uniquement le match du jeu, du début à la fin. Si elle change d'image (présentateur, autre chaîne), relance la génération."
+      "note_fr": "La PS5 doit être bien visible sous la télé dès ce plan, au même endroit qu'au plan suivant : génère-le aussi en « image vers vidéo » avec assets/ps5_reference.jpg. La télé montre uniquement le match du jeu : si elle change d'image, relance."
     },
     {
       "id": 10,
@@ -163,8 +165,8 @@
       "time": "12.5-14.0s",
       "scale": "close",
       "label_fr": "La PS5 et la manette",
-      "subject": "Close-up of a white PlayStation 5 Pro standing vertically on its stand, exactly like the official product: a tall slim body with two glossy white side covers around a glossy black center core, three thin black horizontal stripes across the middle of the white covers, a thin blue-white light line; next to it a white DualSense controller with a black center panel, black thumbsticks and black buttons, on the dark walnut cabinet under the TV; the controller lies sharp in the foreground on the marble coffee table; the football video game softly visible on the TV above (same game image, nothing else on the screen)",
-      "camera": "slow rack focus from the controller to the console and the TV",
+      "subject": "Close-up of a white PlayStation 5 Pro standing vertically on its stand, exactly like the official product: a tall slim body with two glossy white side covers around a glossy black center core, three thin black horizontal stripes across the middle of the white covers, a thin blue-white light line, placed in the center of the dark walnut TV cabinet directly under the TV, the same console at the same place as in the previous shot; in the sharp foreground, two white DualSense controllers with a black center panel, black thumbsticks and black buttons, lying on the marble coffee table; the football video game softly visible on the TV above (same game image, nothing else on the screen)",
+      "camera": "slow rack focus from the controllers to the console and the TV",
       "motion": "the TV light flickering softly on the console",
       "transition_out": "whip-pan transition with motion blur and a gold light leak",
       "generate": true,
@@ -200,7 +202,7 @@
       "time": "18.0-20.5s",
       "scale": "wide",
       "label_fr": "Comptoir d'accueil complet",
-      "subject": "Wide view of the reception and checkout desk in dark walnut: the slim black all-in-one computer showing a dark booking calendar, the black card payment terminal with its screen glowing, the black-and-gold framed 'NOS TARIFS' price list standing on the counter, and behind it, backlit on the black wall, the ATELIER 47 BARBIER logo: a circular badge made of two thin concentric brushed-gold rings on matte black; at the top a pair of open gold scissors; the word 'ATELIER' in cream condensed capitals with wide letter spacing; a large bold gold '47' below it; a thin horizontal gold line; 'BARBIER' in cream spaced capitals; and the small gold tagline 'COUPE NETTE · BARBE SOIGNÉE'; tall plants on both sides of the desk, the salon softly lit in the background",
+      "subject": "Wide view of the reception and checkout desk in dark walnut: the slim black all-in-one computer showing a dark booking calendar, the black card payment terminal with its screen glowing, a small black-and-gold standing frame turned away so its content is not readable, and behind it, backlit on the black wall, the ATELIER 47 BARBIER logo: a circular badge made of two thin concentric brushed-gold rings on matte black; at the top a pair of open gold scissors; the word 'ATELIER' in cream condensed capitals with wide letter spacing; a large bold gold '47' below it; a thin horizontal gold line; 'BARBIER' in cream spaced capitals; and the small gold tagline 'COUPE NETTE · BARBE SOIGNÉE'; tall plants on both sides of the desk, the salon softly lit in the background",
       "camera": "wide 24mm lens showing the whole desk and wall, slow push-in",
       "motion": "the logo glowing softly, screens lit",
       "transition_out": "hard cut on the beat",
@@ -212,24 +214,25 @@
       "time": "20.5-22.5s",
       "scale": "close",
       "label_fr": "TPE et ordinateur, puis fiche tarifs",
-      "subject": "Close-up of the checkout counter: the black card payment terminal with a glowing screen and a contactless symbol next to the computer keyboard; the focus then moves to the black-and-gold framed 'NOS TARIFS' price list standing beside it",
-      "camera": "slow lateral slide, then rack focus onto the price list frame",
+      "subject": "Close-up of the checkout counter: the black card payment terminal with a glowing screen and a contactless symbol next to the computer keyboard; the focus then moves to a black-and-gold standing frame beside it, facing the camera, whose inside is a uniform, evenly lit pure green (#00FF00) chroma-key surface with no text (this green is allowed in this shot only)",
+      "camera": "slow lateral slide, then rack focus onto the frame",
       "motion": "screen light reflecting on the walnut",
-      "transition_out": "push-in transition into the price list frame",
-      "generate": true
+      "transition_out": "push-in transition into the frame, straight into the real price list",
+      "generate": true,
+      "note_fr": "L'intérieur du cadre est vert : colle ta vraie fiche tarifs dedans (Chroma key), jamais une fiche inventée par l'IA."
     },
     {
       "id": 15,
       "file": "assets/fiche_tarifs.jpg",
       "time": "22.5-25.5s",
       "scale": "close",
-      "label_fr": "Fiche tarifs (ta vraie image)",
+      "label_fr": "OBLIGATOIRE · Ta vraie fiche tarifs",
       "subject": "Full-screen view of the real ATELIER 47 price list: NOS TARIFS — Coupe: Coupe Homme 22€, Dégradé/Fade 25€, Coupe étudiant 20€, Enfant (-12 ans) 15€. Barbe + soins: Barbe 15€, Shampooing 5€, Coupe + barbe + shampoing 38€. @atelier47barbier",
       "camera": "slow push-in 100% to 106%",
       "motion": "a soft gold light sweep across the title",
       "transition_out": "gold flash transition",
       "generate": false,
-      "note_fr": "Ne pas générer : place ta vraie image assets/fiche_tarifs.jpg en plein écran au montage, pour que les prix soient parfaitement lisibles."
+      "note_fr": "Ne pas générer. Mets ta vraie image assets/fiche_tarifs.jpg en plein écran, telle quelle, pendant 3 s : jamais une fiche recréée par l'IA."
     },
     {
       "id": 16,
@@ -366,10 +369,17 @@
     },
     {
       "a": 18.3,
-      "b": 20.5,
-      "what": "OUVERT DU MARDI AU SAMEDI",
-      "style": "Poppins Medium, cream #F3EEE3, 40px, letter spacing +100, lower third",
-      "effect": "slide in from the left with a thin gold line, fade out on the cut"
+      "b": 22.4,
+      "what": "HORAIRES",
+      "style": "Poppins SemiBold, gold #C9A24B, 44px, letter spacing +150, lower third",
+      "effect": "slide in from the left with a thin gold line drawing itself under it"
+    },
+    {
+      "a": 18.6,
+      "b": 22.4,
+      "what": "MARDI – VENDREDI · 9H – 19H / SAMEDI · 9H – 18H / FERMÉ DIMANCHE ET LUNDI",
+      "style": "Poppins Medium, cream #F3EEE3, 38px, three lines under HORAIRES",
+      "effect": "lines slide in one after another, 0.15s apart, fade out together"
     },
     {
       "a": 26.0,
@@ -429,5 +439,5 @@
     }
   ],
   "audio": "Dark luxury deep-house instrumental, no vocals, heavy bass drop at 3.5s, fade out over the last 2 seconds. Layered sound design: night street ambience and the door opening, a deep impact on the drop, metallic clicks on the product flashes, the razor ring, a whoosh on every zoom, pull-back and whip-pan, muffled stadium crowd and game sounds from the TV in the lounge shots, a soft beep from the card terminal, a smooth slide when the phone rises, a bright notification ding when ABONNEZ-VOUS appears, a warm low boom under the final logo.",
-  "negative_prompt": "people in the salon, customers, barbers, hands, fingers, arms, faces, body parts, silhouettes, people reflected in mirrors or windows (the only people allowed are the small video game players on the TV screen), cartoon, illustration, anime, 3D render, CGI look, video game look on the real set, plastic textures, AI artifacts, misspelled or garbled letters, any text other than ATELIER 47 BARBIER and TIM DESIGN, other brand names or logos, TV channel logos, TV presenter or person close-up on the TV, TV image changing or switching channel, tiny or narrow storefront, small door, exterior and interior at different scales, watermark, subtitles, colors outside black/gold/cream except plant green and pitch green, blue or purple tint, neon lights, daylight, harsh flat lighting, blown-out highlights, blurry or out-of-focus subject, warped or melting objects, objects changing shape, deformed tools, extra blades, duplicated objects, inconsistent room layout, clutter, hair on the floor, dirt, flicker, jitter, shaky handheld camera, fisheye distortion, dutch angle, low resolution, noise, compression artifacts"
+  "negative_prompt": "people in the salon, customers, barbers, hands, fingers, arms, faces, body parts, silhouettes, people reflected in mirrors or windows (the only people allowed are the small video game players on the TV screen), cartoon, illustration, anime, 3D render, CGI look, video game look on the real set, plastic textures, AI artifacts, misspelled or garbled letters, any text other than ATELIER 47 BARBIER and TIM DESIGN, other brand names or logos, TV channel logos, TV presenter or person close-up on the TV, TV image changing or switching channel, tiny or narrow storefront, small door, invented or fake price list, readable price list on the counter, missing PlayStation, exterior and interior at different scales, watermark, subtitles, colors outside black/gold/cream except plant green and pitch green, blue or purple tint, neon lights, daylight, harsh flat lighting, blown-out highlights, blurry or out-of-focus subject, warped or melting objects, objects changing shape, deformed tools, extra blades, duplicated objects, inconsistent room layout, clutter, hair on the floor, dirt, flicker, jitter, shaky handheld camera, fisheye distortion, dutch angle, low resolution, noise, compression artifacts"
 }

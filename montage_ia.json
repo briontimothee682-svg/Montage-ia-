@@ -21,7 +21,7 @@
     "font": "Poppins",
     "assets": {
       "logo": "assets/logo_atelier47.png (black background: use the Screen blend mode or remove the black)",
-      "price_list": "assets/fiche_tarifs.jpg (shot 14, full screen)",
+      "price_list": "assets/fiche_tarifs.jpg (shot 15, full screen, MANDATORY, use the file exactly as provided)",
       "instagram_screenshot": "instagram_screenshot.png (real screenshot of the @atelier47barbier profile)"
     }
   },
@@ -34,6 +34,8 @@
     "keep all text inside the Instagram safe zone: 250px top, 420px bottom, 140px right, 80px left",
     "text only in gold #C9A24B or cream #F3EEE3, font Poppins",
     "shots 16-18 (phone + Instagram + ABONNEZ-VOUS) are MANDATORY: never remove or shorten them",
+    "shot 15 is MANDATORY and uses assets/fiche_tarifs.jpg exactly as provided; in shot 14 key out the green frame and place the same image in it",
+    "the opening-hours overlays (18.3-22.4s and at the end) are MANDATORY",
     "shots 16-17: key out the green phone screen (Chroma key) and place instagram_screenshot.png on it, scaled and keyframed to follow the screen",
     "the last frame fades to black so the reel loops cleanly into the first shot"
   ],
@@ -158,14 +160,14 @@
       "out": 22.5,
       "scale": "close",
       "content": "TPE et ordinateur, puis fiche tarifs",
-      "transition_out": "push-in transition into the price list frame"
+      "transition_out": "push-in transition into the frame, straight into the real price list"
     },
     {
       "clip": "assets/fiche_tarifs.jpg",
       "in": 22.5,
       "out": 25.5,
       "scale": "close",
-      "content": "Fiche tarifs (ta vraie image)",
+      "content": "OBLIGATOIRE · Ta vraie fiche tarifs",
       "transition_out": "gold flash transition"
     },
     {
@@ -265,10 +267,17 @@
     },
     {
       "a": 18.3,
-      "b": 20.5,
-      "what": "OUVERT DU MARDI AU SAMEDI",
-      "style": "Poppins Medium, cream #F3EEE3, 40px, letter spacing +100, lower third",
-      "effect": "slide in from the left with a thin gold line, fade out on the cut"
+      "b": 22.4,
+      "what": "HORAIRES",
+      "style": "Poppins SemiBold, gold #C9A24B, 44px, letter spacing +150, lower third",
+      "effect": "slide in from the left with a thin gold line drawing itself under it"
+    },
+    {
+      "a": 18.6,
+      "b": 22.4,
+      "what": "MARDI – VENDREDI · 9H – 19H / SAMEDI · 9H – 18H / FERMÉ DIMANCHE ET LUNDI",
+      "style": "Poppins Medium, cream #F3EEE3, 38px, three lines under HORAIRES",
+      "effect": "lines slide in one after another, 0.15s apart, fade out together"
     },
     {
       "a": 26.0,
