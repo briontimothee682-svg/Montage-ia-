@@ -756,7 +756,7 @@ def main():
     synth_audio_3d(wav)
     final = OUT / "atelier47_motion_3d.mp4"
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(silent), "-i", str(wav), "-c:v", "copy",
-                    "-af", "acompressor=threshold=0.1:ratio=3:attack=5:release=120:makeup=2,loudnorm=I=-14:TP=-1.5:LRA=9,aresample=48000,alimiter=limit=0.82:level=false", "-ar", "48000", "-c:a", "aac", "-b:a", "256k", "-shortest",
+                    "-af", "acompressor=threshold=0.1:ratio=3:attack=5:release=120:makeup=2,loudnorm=I=-14:TP=-1.5:LRA=9,aresample=48000,volume=-2.2dB,alimiter=limit=0.78:attack=1:release=60:level=false", "-ar", "48000", "-c:a", "aac", "-b:a", "256k", "-shortest",
                     "-movflags", "+faststart", str(final)], check=True)
     wav.unlink()
     # short version for A/B testing (hook + phone sequence + end), cut on the beat
