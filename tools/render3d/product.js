@@ -8,6 +8,9 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import { TTFLoader } from 'three/addons/loaders/TTFLoader.js';
+import { Font } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 const W = 1080, H = 1920;
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -39,8 +42,7 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(12000, 64, 32), new THREE.Me
   x.fillStyle = g; x.fillRect(0, 0, w, h);
 }) }));
 scene.add(sky);
-const wall = new THREE.Mesh(new THREE.PlaneGeometry(9000, 7000), new THREE.MeshStandardMaterial({ color: 0xd9a05a, roughness: 0.95 }));
-wall.position.set(0, 1500, -2600); wall.receiveShadow = true; scene.add(wall);
+
 
 // ---- materials ---------------------------------------------------------------------------------------------
 const gold = new THREE.MeshPhysicalMaterial({ color: 0xf2cf7e, metalness: 1, roughness: 0.2, clearcoat: 0.4, clearcoatRoughness: 0.12, envMapIntensity: 1.5 });
@@ -98,6 +100,68 @@ const ready = (async () => {
   const s2 = stone(260, 9); s2.position.set(-340, -90, 200); scene.add(s2);
   const s3 = stone(300, 21); s3.position.set(340, -80, 160); scene.add(s3);
   scene.add(moss(1400, 0, 0, 330, 150, 5), moss(700, -330, 200, 200, 70, 6), moss(700, 330, 160, 220, 80, 7));
+  // ---- high-end set: warm plaster wall with an arch niche, glowing niche, plants -----------------------
+  const plasterTex = canvasTex(1024, 1024, (x, w, h) => {
+    x.fillStyle = '#cfae80'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 26000; i++) { const c = Math.random() < 0.5 ? '255,236,205' : '120,86,50'; x.fillStyle = `rgba(${c},${Math.random() * 0.07})`; const r = 1 + Math.random() * 7; x.beginPath(); x.arc(Math.random() * w, Math.random() * h, r, 0, 6.28); x.fill(); }
+  });
+  plasterTex.repeat.set(4, 3);
+  const plaster = new THREE.MeshStandardMaterial({ map: plasterTex, color: 0xfae8cc, roughness: 0.96, bumpMap: plasterTex, bumpScale: 2.5, envMapIntensity: 0.35 });
+  const niche = new THREE.Mesh(new THREE.PlaneGeometry(4000, 5200), new THREE.MeshStandardMaterial({ map: plasterTex, color: 0xe2c49a, roughness: 0.97, bumpMap: plasterTex, bumpScale: 2.5, envMapIntensity: 0.3 }));
+  niche.position.set(0, 2400, -3000); niche.receiveShadow = true; scene.add(niche);
+  const outer = new THREE.Shape(); outer.moveTo(-6000, -200); outer.lineTo(6000, -200); outer.lineTo(6000, 7000); outer.lineTo(-6000, 7000); outer.lineTo(-6000, -200);
+  const hole = new THREE.Path(); const aw = 1250, ah = 2300;
+  hole.moveTo(-aw, -200); hole.lineTo(aw, -200); hole.lineTo(aw, ah); hole.absarc(0, ah, aw, 0, Math.PI, false); hole.lineTo(-aw, -200);
+  outer.holes.push(hole);
+  const archGeo = new THREE.ExtrudeGeometry(outer, { depth: 260, bevelEnabled: true, bevelThickness: 30, bevelSize: 30, bevelSegments: 4, curveSegments: 64 });
+  const arch = new THREE.Mesh(archGeo, plaster); arch.position.set(0, -120, -2300); arch.receiveShadow = true; arch.castShadow = true; scene.add(arch);
+  A.nicheLight = new THREE.PointLight(0xffc27e, 2.2, 0, 0); A.nicheLight.position.set(0, 1600, -2700); scene.add(A.nicheLight);
+  // monstera / palm leaves (alpha-cut, gently curved), on stems, a black ceramic pot
+  const plantLeafTex = (kind) => canvasTex(512, 1024, (x, w, h) => {
+    x.clearRect(0, 0, w, h);
+    const g = x.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#2f4a1c'); g.addColorStop(0.5, '#4a6a28'); g.addColorStop(1, '#22361a');
+    x.fillStyle = g; x.beginPath();
+    if (kind === 0) { // monstera: heart shape with slits
+      x.moveTo(w / 2, h * 0.98); x.bezierCurveTo(-w * 0.15, h * 0.75, -w * 0.05, h * 0.12, w / 2, h * 0.05); x.bezierCurveTo(w * 1.05, h * 0.12, w * 1.15, h * 0.75, w / 2, h * 0.98); x.fill();
+      x.globalCompositeOperation = 'destination-out';
+      for (let k = 0; k < 7; k++) { const y = h * (0.2 + k * 0.1); x.lineWidth = 16; x.beginPath(); x.moveTo(-10, y - 40); x.quadraticCurveTo(w * 0.25, y, w * 0.42, y + 30); x.stroke(); x.beginPath(); x.moveTo(w + 10, y - 40); x.quadraticCurveTo(w * 0.75, y, w * 0.58, y + 30); x.stroke(); }
+      x.globalCompositeOperation = 'source-over';
+    } else {          // palm frond leaflet: long ellipse
+      x.ellipse(w / 2, h / 2, w * 0.18, h * 0.48, 0, 0, Math.PI * 2); x.fill();
+    }
+    x.strokeStyle = 'rgba(160,190,110,0.55)'; x.lineWidth = 5; x.beginPath(); x.moveTo(w / 2, h * 0.97); x.lineTo(w / 2, h * 0.06); x.stroke();
+    x.lineWidth = 2; for (let k = 0; k < 12; k++) { const y = h * (0.15 + k * 0.065); x.beginPath(); x.moveTo(w / 2, y + 30); x.lineTo(w * 0.2, y); x.moveTo(w / 2, y + 30); x.lineTo(w * 0.8, y); x.stroke(); }
+  });
+  const leafMats = [0, 1].map(k => new THREE.MeshStandardMaterial({ map: plantLeafTex(k), alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.7, envMapIntensity: 0.4 }));
+  const leaf = (k, size) => {
+    const geo = new THREE.PlaneGeometry(size * 0.5, size, 6, 12), p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) { const y = p.getY(i), x = p.getX(i); p.setZ(i, -Math.pow(y / size, 2) * size * 0.35 - Math.pow(x / size, 2) * size * 0.6); }
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, leafMats[k]); m.castShadow = true; m.receiveShadow = true; return m;
+  };
+  A.plants = [];
+  const plant = (x, z, n, k, size, seed, potted) => {
+    const g = new THREE.Group(), rr = seeded(seed);
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + rr() * 0.5, tilt = lerp(0.35, 0.95, rr()), L = lerp(0.7, 1.15, rr()) * size;
+      const stemEnd = new THREE.Vector3(Math.cos(a) * L * 0.45 * tilt, L * 0.85, Math.sin(a) * L * 0.3 * tilt);
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0, 0), stemEnd.clone().multiplyScalar(0.5).add(new THREE.Vector3(0, L * 0.1, 0)), stemEnd]), 16, 6, 8), new THREE.MeshStandardMaterial({ color: 0x3a5a22, roughness: 0.8 })));
+      const l = leaf(k, L * 0.8); l.position.copy(stemEnd); l.rotation.set(-0.5 - tilt * 0.6, a + Math.PI / 2, (rr() - 0.5) * 0.6); l.translateY(L * 0.38); g.add(l);
+    }
+    if (potted) { const pot = new THREE.Mesh(new THREE.CylinderGeometry(200, 150, 360, 64), new THREE.MeshPhysicalMaterial({ color: 0x141414, roughness: 0.4, clearcoat: 0.6 })); pot.position.y = -180; pot.castShadow = true; g.add(pot); }
+    g.position.set(x, potted ? 240 : -120, z); scene.add(g); A.plants.push(g); return g;
+  };
+  plant(-1150, -1400, 9, 0, 1100, 3, true);      // big monstera at the left of the arch
+  plant(1250, -1600, 11, 1, 1300, 8, true);      // palm at the right
+  const fg = plant(-850, 1300, 6, 0, 700, 13, false); fg.rotation.z = -0.3;   // foreground leaves, out of focus
+  // 3D gold title TIM DESIGN for the final shot
+  const fnt = await new Promise((res, rej) => new TTFLoader().load('/assets/fonts/Poppins-Bold.ttf', j => res(new Font(j)), undefined, rej));
+  const mk = (str, size, mat, depth) => { const g = new TextGeometry(str, { font: fnt, size, height: depth, curveSegments: 8, bevelEnabled: true, bevelThickness: depth * 0.15, bevelSize: size * 0.02, bevelSegments: 4 }); g.center(); const m = new THREE.Mesh(g, mat); m.castShadow = true; return m; };
+  A.title = new THREE.Group();
+  A.title.add(mk('TIM DESIGN', 150, gold, 36));
+  const sub = mk('SOINS POUR HOMME', 52, new THREE.MeshPhysicalMaterial({ color: 0xf3eee3, roughness: 0.5 }), 8); sub.position.y = -190; A.title.add(sub);
+  A.title.position.set(0, 1060, -500); scene.add(A.title);
+  A.sweep = new THREE.PointLight(0xfff2da, 0, 2200, 1); scene.add(A.sweep);
   // beard oil (hero)
   const oil = new THREE.Group();
   const glassMat = new THREE.MeshPhysicalMaterial({ color: 0xc69456, roughness: 0.02, metalness: 0, clearcoat: 1, transmission: 0.9, thickness: 8, ior: 1.52, attenuationColor: new THREE.Color(0xa86a22), attenuationDistance: 260, envMapIntensity: 1.3, specularIntensity: 1 });
@@ -137,13 +201,13 @@ const ready = (async () => {
     const rr = seeded(77);
     for (let i = 0; i < 90; i++) { x.save(); x.translate(rr() * w, rr() * h); x.rotate(rr() * 6.28); x.fillStyle = `rgba(0,0,0,${0.55 + rr() * 0.4})`; const L = 40 + rr() * 110; x.beginPath(); x.ellipse(0, 0, L, L * 0.38, 0, 0, Math.PI * 2); x.fill(); x.restore(); }
   });
-  const sun = new THREE.SpotLight(0xffc27a, 3.2, 0, 0.75, 0.35, 0);
+  const sun = new THREE.SpotLight(0xffdcaa, 3.0, 0, 0.75, 0.35, 0);
   sun.position.set(-1800, 2600, 1600); sun.target.position.set(0, 150, 0); sun.map = leafTex; sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.radius = 4; sun.shadow.camera.near = 500; sun.shadow.camera.far = 9000;
+  sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -0.0004; sun.shadow.radius = 4; sun.shadow.camera.near = 500; sun.shadow.camera.far = 9000;
   scene.add(sun, sun.target);
   const rim = new THREE.SpotLight(0xffb060, 1.6, 0, 0.5, 0.7, 0); rim.position.set(1500, 900, -1400); rim.target.position.set(0, 300, 0); scene.add(rim, rim.target);
   scene.add(new THREE.AmbientLight(0x5a3a1c, 0.35));
-  A.sun = sun;
+  A.sun = sun; A.sunBase = sun.position.clone();
   // macro liquid set, far from the main set: animated golden liquid + bubbles
   const liq = new THREE.Group(); liq.position.set(20000, 0, 0); scene.add(liq);
   const lc = document.createElement('canvas'); lc.width = 512; lc.height = 1024;
@@ -170,7 +234,7 @@ const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(W, H, 
 composer.addPass(new RenderPass(scene, camera));
 const bokeh = new BokehPass(scene, camera, { focus: 3000, aperture: 0.0002, maxblur: 0.008 });
 composer.addPass(bokeh);
-composer.addPass(new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), 0.22, 0.6, 0.94));
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), 0.26, 0.6, 0.92));
 composer.addPass(new OutputPass());
 
 const CUTS = [0.6, 1.25, 1.8, 2.35];
@@ -179,13 +243,20 @@ window.renderAt = async t => {
   const shot = CUTS.filter(c => t >= c).length;  // 0..4
   const look = (px, py, pz, tx, ty, tz, aperture) => { camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); bokeh.uniforms.focus.value = camera.position.distanceTo(new THREE.Vector3(tx, ty, tz)); bokeh.uniforms.aperture.value = aperture; };
   // dropper rises, a golden drop forms at the tip and falls
-  A.dropG.position.y = 210 + 520 * easeOut(prog(t, 0.0, 0.7));
+  A.dropG.position.y = 210 + 520 * easeOut(prog(t, 0.0, 0.7)) * (t < 2.35 ? 1 : 0);
   const form = easeOut(prog(t, 0.65, 0.95)), fall = prog(t, 0.95, 1.25);
   A.drop.visible = t > 0.65 && fall < 1;
   A.drop.position.set(0, A.dropG.position.y - 246 - fall * fall * 330, 0);
   A.drop.scale.set(Math.max(0.01, form), Math.max(0.01, form) * (1.2 + fall * 0.5), Math.max(0.01, form));
   A.liq.visible = shot === 2;
   A.sun.intensity = 3.2 * (0.92 + 0.08 * Math.sin(t * 5));
+  A.sun.position.set(A.sunBase.x + 140 * Math.sin(t * 1.7), A.sunBase.y + 60 * Math.cos(t * 1.3), A.sunBase.z);   // leaves moving in the wind
+  A.nicheLight.intensity = 2.2 * (0.85 + 0.15 * Math.sin(t * 2.4));
+  A.plants.forEach((g, i) => { g.rotation.y = 0.05 * Math.sin(t * 1.1 + i); });
+  const sv = [prog(t, 0.05, 0.6), prog(t, 2.4, 3.0)].find(q => q > 0 && q < 1);
+  A.sweep.intensity = sv !== undefined ? 5 * Math.sin(sv * Math.PI) : 0; A.sweep.position.set(lerp(-900, 900, sv || 0), 700, 900);
+  A.title.visible = shot === 4;
+  if (shot === 4) { const q = easeOut(prog(t, 2.45, 2.85)); A.title.position.y = lerp(900, 1060, q); A.title.scale.setScalar(lerp(0.85, 1, q)); A.title.rotation.y = 0.08 * Math.sin(t * 2); }
   A.oil.rotation.y = 0.2;
   if (shot === 0) {            // A: hero bottle, slow push-in
     const p = ease(prog(t, 0, 0.6));
@@ -204,7 +275,7 @@ window.renderAt = async t => {
     look(lerp(-180, 160, p), 320, 520, 0, 310, 0, 0.0006);
   } else {                     // E: hero line-up, slow pull-out
     const p = ease(prog(t, 2.35, 3.0));
-    look(lerp(150, 0, p), lerp(700, 760, p), lerp(3300, 3900, p), 0, 330, 0, 0.00012);
+    look(lerp(150, 0, p), lerp(760, 820, p), lerp(3500, 4100, p), 0, 560, 0, 0.00012);
   }
   composer.render();
   return true;
