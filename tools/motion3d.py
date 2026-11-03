@@ -153,13 +153,40 @@ def o_end(c, t):
 OVERLAYS = [(0.0, 3.5, o_hook), (3.5, 7.5, o_kinetic), (7.5, 12.0, o_salon), (12.0, 17.0, o_prices),
             (17.0, 23.0, o_instagram), (23.0, 26.5, o_hours), (26.5, 30.0, o_end)]
 
+def streaks(img):
+    """Anamorphic horizontal light streaks on the brightest highlights."""
+    arr = np.asarray(img).astype(np.float32)
+    lum = arr.max(axis=2)
+    bright = np.clip((lum - 205) / 50.0, 0, 1) ** 2
+    sm = Image.fromarray((bright * 255).astype(np.uint8), "L").resize((W // 8, H // 8), Image.BOX)
+    sm = sm.resize((W // 96, H // 8), Image.BOX).resize((W // 8, H // 8), Image.BILINEAR)
+    st = np.asarray(sm.resize((W, H), Image.BILINEAR)).astype(np.float32)[..., None] / 255.0
+    arr += st * np.array([255, 222, 165], np.float32) * 0.55
+    return arr
+
+@lru_cache(maxsize=None)
+def leak_sprite():
+    y, x = np.mgrid[0:H, 0:W // 2].astype(np.float32)
+    g = np.exp(-(((x - W / 4) / (W * 0.22)) ** 2 + ((y - H * 0.45) / (H * 0.42)) ** 2))
+    return g[..., None] * np.array([255, 150, 60], np.float32)
+
 def composite(fi):
     t = fi / FPS
     c = base_frame(fi)
     for a, b, fn in OVERLAYS:
         if a <= t < b:
             fn(c, t)
-    img = c.convert("RGB")
+    arr = streaks(c.convert("RGB"))
+    for cut in CUTS:
+        d = t - cut
+        if abs(d) <= 0.35:  # warm light leak sweeping across the cut
+            k = 1 - abs(d) / 0.35
+            x0 = int(lerp(-W / 2, W, (d + 0.35) / 0.7))
+            sp = leak_sprite()
+            a0, a1 = max(0, x0), min(W, x0 + W // 2)
+            if a1 > a0:
+                arr[:, a0:a1] += sp[:, a0 - x0:a1 - x0] * 0.45 * k
+    img = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB")
     for cut in CUTS:
         d = t - cut
         if -0.2 <= d <= 0.2:
@@ -167,6 +194,12 @@ def composite(fi):
             z = 1 + 0.14 * k ** 2
             layers = [m.zoom(img, z * (1 + 0.03 * j * k)) for j in range(3)]
             img = Image.blend(Image.blend(layers[0], layers[1], 0.4), layers[2], 0.3)
+            sh = int(10 * k)
+            if sh > 0:  # chromatic aberration
+                r, g, b = img.split()
+                r = Image.fromarray(np.roll(np.asarray(r), sh, axis=1))
+                b = Image.fromarray(np.roll(np.asarray(b), -sh, axis=1))
+                img = Image.merge("RGB", (r, g, b))
             fl = max(0.0, 1 - abs(d) / 0.1) * 0.5
             if fl > 0:
                 img = Image.blend(img, Image.new("RGB", (W, H), (255, 238, 200)), fl)
@@ -175,19 +208,78 @@ def composite(fi):
     arr = np.asarray(img).astype(np.float32) + m.GRAIN[fi % len(m.GRAIN)] * 0.6
     return np.clip(arr, 0, 255).astype(np.uint8)
 
+TILES_OUT = (18.6, 20.9)   # the 9 posts leave the screen in 3D during this window
+
 def screens():
     (OUT / "screen").mkdir(parents=True, exist_ok=True)
+    tl, T = m.tiles()
     for fi in range(int(17 * FPS), int(23 * FPS)):
         t = fi / FPS
-        scr, _ = m.draw_screen(t, t >= 19.75, 17.6)
+        lifted = TILES_OUT[0] + 0.1 <= t < TILES_OUT[1] - 0.1
+        scr, _ = m.draw_screen(t, t >= 19.75, 99.0 if lifted else 17.6)
         bg = Image.new("RGBA", scr.size, (0, 0, 0, 255))
+        if lifted:
+            slot = panel(T, T, radius=6, fill=(20, 19, 16), border_a=70, bw=1)
+            gx = (scr.width - 3 * T - 8) // 2
+            for i in range(9):
+                r, col = divmod(i, 3)
+                bg.alpha_composite(slot, (gx + col * (T + 4), 580 + r * (T + 4)))
         bg.alpha_composite(scr)
         bg.convert("RGB").save(OUT / "screen" / f"s{fi:04d}.png")
+
+def holo_assets():
+    """Textures for the 3D elements that come out of the phone."""
+    d = OUT / "holo"
+    d.mkdir(parents=True, exist_ok=True)
+    tl, T = m.tiles()
+    for i, tile in enumerate(tl):
+        tile.resize((T * 2, T * 2), Image.LANCZOS).save(d / f"tile{i}.png")
+    S = 2
+
+    def card(w, h, icon_name, title, sub, sub_col=CREAM, extra=None):
+        im = panel(w * S, h * S, radius=34 * S, fill=(16, 15, 13), border_a=200, bw=3 * S)
+        a = np.asarray(im).copy()
+        a[..., 3] = np.where(a[..., 3] > 0, a[..., 3] * 0.97, 0).astype(np.uint8)
+        im = Image.fromarray(a, "RGBA")
+        cy = h * S // 2
+        rc = m.ring_img(54 * S, 2 * S, GOLD, 255, 1000)
+        im.alpha_composite(rc, (int(80 * S - rc.width / 2), int(cy - rc.height / 2)))
+        ic = m.scissors(64 * S, 340) if icon_name == "scissors" else icon(icon_name, 60 * S, GOLD, 6 * S)
+        im.alpha_composite(ic, (int(80 * S - ic.width / 2), int(cy - ic.height / 2)))
+        text(im, title, "SemiBold", 36 * S, 150 * S, cy - 24 * S, CREAM, anchor="left")
+        text(im, sub, "Regular", 30 * S, 150 * S, cy + 28 * S, sub_col, anchor="left")
+        if extra:
+            text(im, extra, "Regular", 24 * S, (w - 36) * S, cy - 26 * S, MUTED, anchor="right")
+        return im
+
+    card(820, 160, "check", "atelier47barbier", "Merci pour votre abonnement !", GOLD, "maintenant").save(d / "card_notif.png")
+    card(640, 160, "pin", ADDRESS, "74000 Annecy", GOLD).save(d / "card_addr.png")
+    card(640, 160, "scissors", "Coupe Homme · 22 €", "Barbe · 15 €", GOLD).save(d / "card_price.png")
+
+    def button(followed):
+        bw, bh = 496 * S, 76 * S
+        im, dr = m.ss_layer(bw, bh)
+        if followed:
+            dr.rounded_rectangle((3 * 3, 3 * 3, (bw - 3) * 3, (bh - 3) * 3), radius=18 * S * 3, fill=(28, 26, 22, 255), outline=(243, 238, 227, 200), width=3 * 3)
+        else:
+            dr.rounded_rectangle((0, 0, bw * 3, bh * 3), radius=18 * S * 3, fill=(GOLD[0], GOLD[1], GOLD[2], 255))
+        im = m.ss_done(im)
+        if followed:
+            text(im, "Abonné", "SemiBold", 32 * S, bw / 2 + 20 * S, bh / 2, CREAM)
+            ck = icon("check", 36 * S, CREAM, 9)
+            im.alpha_composite(ck, (int(bw / 2 - 98 * S), int(bh / 2 - ck.height / 2)))
+        else:
+            text(im, "S'abonner", "SemiBold", 34 * S, bw / 2, bh / 2, m.BLACK)
+        return im
+
+    button(False).save(d / "btn_follow.png")
+    button(True).save(d / "btn_followed.png")
 
 def main():
     cmd = sys.argv[1]
     if cmd == "screens":
         screens()
+        holo_assets()
         return
     if cmd == "frames":
         d = OUT / "test_comp"

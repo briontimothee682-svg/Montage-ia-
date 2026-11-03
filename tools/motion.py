@@ -136,7 +136,7 @@ def paste(canvas, img, cx, cy, alpha=1.0, scale=1.0, anchor="center"):
     else:  # right
         x, y = int(round(cx - img.width)), int(round(cy - img.height / 2))
     sx0, sy0 = max(0, -x), max(0, -y)
-    sx1, sy1 = min(img.width, W - x), min(img.height, H - y)
+    sx1, sy1 = min(img.width, canvas.width - x), min(img.height, canvas.height - y)
     if sx1 <= sx0 or sy1 <= sy0:
         return
     if (sx0, sy0, sx1, sy1) != (0, 0, img.width, img.height):
