@@ -120,10 +120,6 @@ def o_prices(c, t):
             row += 1
 
 def o_instagram(c, t):
-    hp = prog(t, 18.9, 19.5)
-    if hp > 0:
-        n = int(len(HANDLE) * hp)
-        text(c, HANDLE[:max(1, n)], "Medium", 42, W / 2 - layout(HANDLE, "Medium", 42)[1] / 2, 470, CREAM, anchor="left")
     hline(c, W / 2, 415, 560, ease_in_out(prog(t, 18.9, 19.3)), width=3)
     if t > 19.0:
         for (x, y, r, ph) in SPARKS:
@@ -217,7 +213,125 @@ def composite(fi):
     arr = np.asarray(img).astype(np.float32) + m.GRAIN[fi % len(m.GRAIN)] * 0.6
     return np.clip(arr, 0, 255).astype(np.uint8)
 
-TILES_OUT = (18.6, 20.5)   # the 9 posts leave the screen in 3D during this window
+
+# notifications on the black lock screen: (appears, tapped, title, body)
+NOTIFS = [(18.2, 18.6, "atelier47barbier", "Nouveau : abonne-toi !"),
+          (19.75, 20.05, "Nos tarifs", "Coupe Homme 22 € · Barbe 15 €"),
+          (20.45, 20.75, "Atelier 47 Barbier", "12 rue de la République, Annecy"),
+          (21.1, 21.4, "atelier47barbier", "9 nouvelles publications")]
+BANNER_Y = 400   # banner centre on the 560x1200 screen
+
+@lru_cache(maxsize=None)
+def banner(i, S=1):
+    _, _, title, body = NOTIFS[i]
+    w, h = 520 * S, 130 * S
+    im = panel(w, h, radius=30 * S, fill=(30, 28, 24), border_a=90, bw=2 * S)
+    av = m.avatar(84 * S)
+    im.alpha_composite(av, (22 * S, (h - av.height) // 2))
+    text(im, title, "SemiBold", 26 * S, 124 * S, h / 2 - 20 * S, CREAM, anchor="left")
+    text(im, body, "Regular", 22 * S, 124 * S, h / 2 + 22 * S, MUTED, anchor="left")
+    text(im, "maintenant", "Regular", 18 * S, w - 22 * S, h / 2 - 22 * S, MUTED, anchor="right")
+    return im
+
+@lru_cache(maxsize=None)
+def lock_bg():
+    im = Image.new("RGBA", (560, 1200), (0, 0, 0, 255))
+    lg = m.logo(170).copy()
+    lg.putalpha(lg.getchannel("A").point(lambda v: int(v * 0.16)))
+    im.alpha_composite(lg, ((560 - 170) // 2, 860))
+    return im
+
+def lock_screen(t):
+    wake = ease_out(prog(t, 17.95, 18.25))
+    if wake <= 0:
+        return Image.new("RGB", (560, 1200), (0, 0, 0))
+    scr = lock_bg().copy()
+    text(scr, "18:47", "Light", 128, 280, 205, CREAM, alpha=wake)
+    text(scr, "ATELIER 47 BARBIER", "Medium", 20, 280, 105, MUTED, alpha=wake, tracking=6)
+    for i, (ap, tap, _, _) in enumerate(NOTIFS):
+        if not (ap <= t < tap + 0.08):
+            continue
+        p = ease_out(prog(t, ap, ap + 0.25))
+        y = lerp(-90, BANNER_Y, p)
+        sc = 1 - 0.04 * math.sin(math.pi * prog(t, tap - 0.06, tap + 0.08))
+        paste(scr, banner(i), 280, y, alpha=clamp(p * 1.5), scale=sc)
+        q = prog(t, tap - 0.05, tap + 0.3)
+        if 0 < q < 1:
+            paste(scr, m.ring_img(int(lerp(10, 120, ease_out(q))), 3, CREAM, 255, 1000), 280, y, alpha=1 - q)
+    bg = Image.new("RGBA", scr.size, (0, 0, 0, 255))
+    bg.alpha_composite(scr)
+    return bg.convert("RGB")
+
+def screens():
+    (OUT / "screen").mkdir(parents=True, exist_ok=True)
+    for fi in range(int(17 * FPS), int(23 * FPS)):
+        lock_screen(fi / FPS).save(OUT / "screen" / f"s{fi:04d}.png")
+
+def holo_assets():
+    """Textures for the 3D sections that rise out of the phone."""
+    d = OUT / "holo"
+    d.mkdir(parents=True, exist_ok=True)
+    tl, T = m.tiles()
+    for i, tile in enumerate(tl):
+        tile.resize((T * 2, T * 2), Image.LANCZOS).save(d / f"tile{i}.png")
+    for i in range(len(NOTIFS)):
+        banner(i, 2).save(d / f"banner{i}.png")
+    S = 2
+
+    def base(w, h):
+        return panel(w * S, h * S, radius=34 * S, fill=(16, 15, 13), border_a=210, bw=3 * S)
+
+    def follow(followed):
+        w, h = 820, 260
+        im = base(w, h)
+        av = m.avatar(120 * S)
+        im.alpha_composite(av, (36 * S, 26 * S))
+        rc = m.ring_img(62 * S, 2 * S, GOLD, 255, 1000)
+        im.alpha_composite(rc, (36 * S + 60 * S - rc.width // 2, 26 * S + 60 * S - rc.height // 2))
+        text(im, HANDLE, "Bold", 38 * S, 186 * S, 62 * S, CREAM, anchor="left")
+        text(im, "Atelier 47 Barbier · Annecy", "Regular", 26 * S, 186 * S, 108 * S, MUTED, anchor="left")
+        bw_, bh_ = 760 * S, 74 * S
+        btn, dr = m.ss_layer(bw_, bh_)
+        if followed:
+            dr.rounded_rectangle((9, 9, bw_ * 3 - 9, bh_ * 3 - 9), radius=20 * S * 3, fill=(30, 28, 24, 255), outline=(243, 238, 227, 210), width=9)
+        else:
+            dr.rounded_rectangle((0, 0, bw_ * 3, bh_ * 3), radius=20 * S * 3, fill=(GOLD[0], GOLD[1], GOLD[2], 255))
+        btn = m.ss_done(btn)
+        if followed:
+            text(btn, "Abonné", "SemiBold", 32 * S, bw_ / 2 + 22 * S, bh_ / 2, CREAM)
+            ck = icon("check", 36 * S, CREAM, 9)
+            btn.alpha_composite(ck, (int(bw_ / 2 - 100 * S), int(bh_ / 2 - ck.height / 2)))
+        else:
+            text(btn, "S'abonner", "SemiBold", 34 * S, bw_ / 2, bh_ / 2, m.BLACK)
+        im.alpha_composite(btn, (30 * S, 166 * S))
+        return im
+
+    follow(False).save(d / "card_follow.png")
+    follow(True).save(d / "card_followed.png")
+
+    im = base(560, 340)
+    text(im, "NOS TARIFS", "Bold", 34 * S, 280 * S, 52 * S, "gold", tracking=6 * S)
+    rows = [("Coupe Homme", 22), ("Dégradé / Fade", 25), ("Barbe", 15), ("Coupe + barbe + shampoing", 38)]
+    for k, (name, price) in enumerate(rows):
+        y = (118 + k * 58) * S
+        text(im, name, "Medium", 25 * S, 34 * S, y, CREAM, anchor="left")
+        text(im, f"{price} €", "Bold", 28 * S, (560 - 34) * S, y, "gold", anchor="right")
+        if k < len(rows) - 1:
+            hline(im, 280 * S, y + 29 * S, 492 * S, 1.0, width=S, alpha=0.35)
+    im.save(d / "card_prices.png")
+
+    im = base(560, 230)
+    rc = m.ring_img(52 * S, 2 * S, GOLD, 255, 1000)
+    im.alpha_composite(rc, (int(76 * S - rc.width / 2), int(88 * S - rc.height / 2)))
+    pin = icon("pin", 58 * S, GOLD, 6 * S)
+    im.alpha_composite(pin, (int(76 * S - pin.width / 2), int(88 * S - pin.height / 2)))
+    text(im, ADDRESS, "SemiBold", 30 * S, 150 * S, 66 * S, CREAM, anchor="left")
+    text(im, "74000 Annecy", "Regular", 28 * S, 150 * S, 112 * S, GOLD, anchor="left")
+    hline(im, 280 * S, 160 * S, 492 * S, 1.0, width=S, alpha=0.35)
+    ci = icon("card", 40 * S, GOLD, 5 * S)
+    im.alpha_composite(ci, (int(76 * S - ci.width / 2), int(196 * S - ci.height / 2)))
+    text(im, "Paiement par carte accepté", "Regular", 24 * S, 150 * S, 196 * S, MUTED, anchor="left")
+    im.save(d / "card_address.png")
 
 def synth_audio_3d(path):
     """Music + sound design from motion.py, plus ASMR barber sounds synced to the 3D action."""
@@ -274,13 +388,20 @@ def synth_audio_3d(path):
         add(snip(), 3.75 + k * 0.5, 0.35)
     add(shing(), 5.7, 0.3)                   # razor
     add(buzz(1.8), 7.8, 0.16)                # clipper arriving in the tool showcase
-    for k in range(9):                       # posts leaving the phone
-        add(pop(), 18.6 + k * 0.06, 0.12)
-    add(click(), 19.66, 0.6)                 # button pressed
-    add(shing(0.5), 20.5, 0.22)              # phone 360 spin
-    for k in range(3):                       # info cards
-        add(pop(), 21.0 + k * 0.2, 0.22)
-    add(suck(), 22.4, 0.25)                  # everything returns into the screen
+    def chime():  # soft two-tone notification
+        x = np.arange(int(0.5 * sr)) / sr
+        e = np.exp(-x * 7) * np.minimum(1, x / 0.004)
+        return (np.sin(2 * np.pi * 1318.5 * x) * (x < 0.12) + np.sin(2 * np.pi * 1760 * x) * (x >= 0.1)) * e * 0.6
+
+    for ap, tap, _, _ in NOTIFS:
+        add(chime(), ap, 0.22)               # notification arrives
+        add(click(), tap, 0.55)              # tapped
+        add(pop(), tap + 0.08, 0.25)         # section rises out of the phone
+    add(click(), 19.5, 0.6)                  # follow button pressed
+    for k in range(9):                       # posts flying to the wall
+        add(pop(), 21.45 + k * 0.05, 0.1)
+    add(shing(0.5), 21.95, 0.22)             # phone 360 spin
+    add(suck(), 22.45, 0.25)                 # everything returns into the screen
     add(snip(), 26.9, 0.25)
     out /= max(1e-6, np.abs(out).max()) / 0.89
     with wave.open(str(path), "wb") as wf:
@@ -300,71 +421,6 @@ def short_cut(src, dst, segments):
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-filter_complex", fc, "-map", "[v]", "-map", "[a]",
                     "-c:v", "libx264", "-preset", "slow", "-b:v", "9M", "-maxrate", "12M", "-bufsize", "18M", "-pix_fmt", "yuv420p",
                     "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(dst)], check=True)
-
-def screens():
-    (OUT / "screen").mkdir(parents=True, exist_ok=True)
-    tl, T = m.tiles()
-    for fi in range(int(17 * FPS), int(23 * FPS)):
-        t = fi / FPS
-        lifted = TILES_OUT[0] + 0.1 <= t < TILES_OUT[1] - 0.1
-        scr, _ = m.draw_screen(t, t >= 19.75, 99.0 if lifted else 17.6)
-        bg = Image.new("RGBA", scr.size, (0, 0, 0, 255))
-        if lifted:
-            slot = panel(T, T, radius=6, fill=(20, 19, 16), border_a=70, bw=1)
-            gx = (scr.width - 3 * T - 8) // 2
-            for i in range(9):
-                r, col = divmod(i, 3)
-                bg.alpha_composite(slot, (gx + col * (T + 4), 580 + r * (T + 4)))
-        bg.alpha_composite(scr)
-        bg.convert("RGB").save(OUT / "screen" / f"s{fi:04d}.png")
-
-def holo_assets():
-    """Textures for the 3D elements that come out of the phone."""
-    d = OUT / "holo"
-    d.mkdir(parents=True, exist_ok=True)
-    tl, T = m.tiles()
-    for i, tile in enumerate(tl):
-        tile.resize((T * 2, T * 2), Image.LANCZOS).save(d / f"tile{i}.png")
-    S = 2
-
-    def card(w, h, icon_name, title, sub, sub_col=CREAM, extra=None):
-        im = panel(w * S, h * S, radius=34 * S, fill=(16, 15, 13), border_a=200, bw=3 * S)
-        a = np.asarray(im).copy()
-        a[..., 3] = np.where(a[..., 3] > 0, a[..., 3] * 0.97, 0).astype(np.uint8)
-        im = Image.fromarray(a, "RGBA")
-        cy = h * S // 2
-        rc = m.ring_img(54 * S, 2 * S, GOLD, 255, 1000)
-        im.alpha_composite(rc, (int(80 * S - rc.width / 2), int(cy - rc.height / 2)))
-        ic = m.scissors(64 * S, 340) if icon_name == "scissors" else icon(icon_name, 60 * S, GOLD, 6 * S)
-        im.alpha_composite(ic, (int(80 * S - ic.width / 2), int(cy - ic.height / 2)))
-        text(im, title, "SemiBold", 36 * S, 150 * S, cy - 24 * S, CREAM, anchor="left")
-        text(im, sub, "Regular", 30 * S, 150 * S, cy + 28 * S, sub_col, anchor="left")
-        if extra:
-            text(im, extra, "Regular", 24 * S, (w - 36) * S, cy - 26 * S, MUTED, anchor="right")
-        return im
-
-    card(820, 160, "check", "atelier47barbier", "Merci pour votre abonnement !", GOLD, "maintenant").save(d / "card_notif.png")
-    card(640, 160, "pin", ADDRESS, "74000 Annecy", GOLD).save(d / "card_addr.png")
-    card(640, 160, "scissors", "Coupe Homme · 22 €", "Barbe · 15 €", GOLD).save(d / "card_price.png")
-
-    def button(followed):
-        bw, bh = 496 * S, 76 * S
-        im, dr = m.ss_layer(bw, bh)
-        if followed:
-            dr.rounded_rectangle((3 * 3, 3 * 3, (bw - 3) * 3, (bh - 3) * 3), radius=18 * S * 3, fill=(28, 26, 22, 255), outline=(243, 238, 227, 200), width=3 * 3)
-        else:
-            dr.rounded_rectangle((0, 0, bw * 3, bh * 3), radius=18 * S * 3, fill=(GOLD[0], GOLD[1], GOLD[2], 255))
-        im = m.ss_done(im)
-        if followed:
-            text(im, "Abonné", "SemiBold", 32 * S, bw / 2 + 20 * S, bh / 2, CREAM)
-            ck = icon("check", 36 * S, CREAM, 9)
-            im.alpha_composite(ck, (int(bw / 2 - 98 * S), int(bh / 2 - ck.height / 2)))
-        else:
-            text(im, "S'abonner", "SemiBold", 34 * S, bw / 2, bh / 2, m.BLACK)
-        return im
-
-    button(False).save(d / "btn_follow.png")
-    button(True).save(d / "btn_followed.png")
 
 def main():
     cmd = sys.argv[1]

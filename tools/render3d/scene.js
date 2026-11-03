@@ -217,12 +217,13 @@ function pocketWatch() {
 
 const blackGlass = new THREE.MeshPhysicalMaterial({ color: 0x070707, metalness: 0.25, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.03 });
 const titanium = new THREE.MeshPhysicalMaterial({ color: 0xd2ab5e, metalness: 1, roughness: 0.2, clearcoat: 0.6, clearcoatRoughness: 0.08 });
+const blackTi = new THREE.MeshPhysicalMaterial({ color: 0x161616, metalness: 1, roughness: 0.3, clearcoat: 0.9, clearcoatRoughness: 0.05 });
 const lensGlass = new THREE.MeshPhysicalMaterial({ color: 0x05060a, metalness: 0.1, roughness: 0.02, clearcoat: 1, clearcoatRoughness: 0 });
 const holoAdd = (color, opacity) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
 
 function phone(screenTex, logoTex) {
   const g = new THREE.Group();
-  g.add(new THREE.Mesh(new RoundedBoxGeometry(612, 1252, 44, 10, 74), titanium));
+  g.add(new THREE.Mesh(new RoundedBoxGeometry(612, 1252, 44, 10, 74), blackTi));
   g.add(new THREE.Mesh(new RoundedBoxGeometry(600, 1240, 54, 10, 70), blackGlass));
   const scrMat = new THREE.MeshBasicMaterial({ map: screenTex, color: 0x000000, toneMapped: false });
   const scr = new THREE.Mesh(new THREE.PlaneGeometry(560, 1200), scrMat); scr.position.z = 27.2; g.add(scr);
@@ -232,15 +233,15 @@ function phone(screenTex, logoTex) {
   const scan = new THREE.Mesh(new THREE.PlaneGeometry(560, 10), holoAdd(0xfff1c8, 0)); scan.position.z = 28; g.add(scan);
   // side buttons
   for (const [x, y, h] of [[307, 250, 150], [-307, 330, 90], [-307, 200, 90], [-307, 450, 50]]) {
-    const b = new THREE.Mesh(new RoundedBoxGeometry(10, h, 22, 3, 4), titanium); b.position.set(x, y, 0); g.add(b);
+    const b = new THREE.Mesh(new RoundedBoxGeometry(10, h, 22, 3, 4), blackTi); b.position.set(x, y, 0); g.add(b);
   }
   // back: engraved logo + camera module
-  const back = new THREE.Mesh(new THREE.CircleGeometry(120, 96), new THREE.MeshStandardMaterial({ map: logoTex, metalness: 0.4, roughness: 0.35, emissive: 0xffffff, emissiveMap: logoTex, emissiveIntensity: 0.35 }));
+  const back = new THREE.Mesh(new THREE.CircleGeometry(120, 96), new THREE.MeshStandardMaterial({ map: logoTex, metalness: 0.4, roughness: 0.35, color: 0x3a3a3a, emissive: 0xffffff, emissiveMap: logoTex, emissiveIntensity: 0.08 }));
   back.rotation.y = Math.PI; back.position.set(0, 40, -27.6); g.add(back);
-  const backRing = new THREE.Mesh(new THREE.TorusGeometry(124, 4, 12, 96), titanium); backRing.position.set(0, 40, -27.6); g.add(backRing);
+  const backRing = new THREE.Mesh(new THREE.TorusGeometry(124, 4, 12, 96), blackTi); backRing.position.set(0, 40, -27.6); g.add(backRing);
   const bump = new THREE.Mesh(new RoundedBoxGeometry(240, 240, 18, 6, 56), blackGlass); bump.position.set(150, 450, -33); g.add(bump);
   for (const [x, y] of [[105, 495], [105, 405], [195, 450]]) {
-    const ringM = new THREE.Mesh(new THREE.CylinderGeometry(46, 46, 16, 48), titanium); ringM.rotation.x = Math.PI / 2; ringM.position.set(x, y, -44); g.add(ringM);
+    const ringM = new THREE.Mesh(new THREE.CylinderGeometry(46, 46, 16, 48), blackTi); ringM.rotation.x = Math.PI / 2; ringM.position.set(x, y, -44); g.add(ringM);
     const lens = new THREE.Mesh(new THREE.CylinderGeometry(36, 36, 17, 48), lensGlass); lens.rotation.x = Math.PI / 2; lens.position.set(x, y, -45); g.add(lens);
     const dot = new THREE.Mesh(new THREE.CircleGeometry(9, 24), holoAdd(0x6a7cff, 0.35)); dot.rotation.y = Math.PI; dot.position.set(x + 8, y + 8, -53.6); g.add(dot);
   }
@@ -296,14 +297,29 @@ const ready = (async () => {
   O.screenTex = new THREE.Texture(); O.screenTex.colorSpace = THREE.SRGBColorSpace;
   O.phone = phone(O.screenTex, logoTex);
   const H5 = '/exports/holo/';
-  const [tilesT, notifT, addrT, priceT, bf, bd] = await Promise.all([
+  const [tilesT, banT, follA, follB, pricesT, addrT] = await Promise.all([
     Promise.all([...Array(9).keys()].map(i => tex(`${H5}tile${i}.png`))),
-    tex(`${H5}card_notif.png`), tex(`${H5}card_addr.png`), tex(`${H5}card_price.png`), tex(`${H5}btn_follow.png`), tex(`${H5}btn_followed.png`)]);
+    Promise.all([...Array(4).keys()].map(i => tex(`${H5}banner${i}.png`))),
+    tex(`${H5}card_follow.png`), tex(`${H5}card_followed.png`), tex(`${H5}card_prices.png`), tex(`${H5}card_address.png`)]);
   O.s5 = new THREE.Group();
   O.s5.add(O.phone);
   O.tiles = tilesT.map(tx => { const p = holoPanel(tx, 176, 176, 8); O.s5.add(p); return p; });
-  O.cards = [[notifT, 820, 160], [addrT, 640, 160], [priceT, 640, 160]].map(([tx, w, h]) => { const p = holoPanel(tx, w, h, 10, true); O.s5.add(p); return p; });
-  O.btn = holoPanel(bf, 496, 76, 16, true); O.btn.userData.texF = bf; O.btn.userData.texD = bd; O.s5.add(O.btn);
+  const notifDefs = [
+    { tap: 18.6, tex: follA, texB: follB, w: 820, h: 260, to: [0, 540, 380], scale: 0.82, yaw: 0 },
+    { tap: 20.05, tex: pricesT, w: 560, h: 340, to: [-250, -20, 360], scale: 0.8, yaw: 0.2 },
+    { tap: 20.75, tex: addrT, w: 560, h: 230, to: [250, -330, 400], scale: 0.8, yaw: -0.2 },
+    { tap: 21.4, tex: null, w: 520, h: 130, to: [0, 200, 120], scale: 1, yaw: 0 },
+  ];
+  O.N = notifDefs.map((d, i) => {
+    const g = new THREE.Group();
+    const banner = new THREE.Mesh(new THREE.PlaneGeometry(520, 130), new THREE.MeshBasicMaterial({ map: banT[i], transparent: true, toneMapped: false, depthWrite: false }));
+    g.add(banner);
+    let card = null;
+    if (d.tex) { card = holoPanel(d.tex, d.w, d.h, 10, true); card.children.forEach(c => { c.material.transparent = true; c.material.depthWrite = false; }); g.add(card); }
+    g.userData = { banner, card };
+    O.s5.add(g);
+    return { ...d, g, texA: d.tex };
+  });
   O.hud = [new THREE.Mesh(new THREE.TorusGeometry(470, 1.8, 8, 200), holoAdd(0xd8b064, 0.55)), new THREE.Mesh(new THREE.TorusGeometry(530, 1.0, 8, 200), holoAdd(0xd8b064, 0.35))];
   O.hud.forEach(h => O.s5.add(h));
   const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx; };
@@ -450,110 +466,107 @@ window.renderAt = async (t, screen) => {
     if (sp > 0 && sp < 1) { sweep.intensity = 3 * Math.sin(sp * Math.PI); sweep.position.set(lerp(-600, 600, sp), 960 - 320 + 150, 300); }
   }
 
-  // S5 instagram 17-23: realistic phone comes out in 3D, then its sections leave the screen as holograms
+  // S5 instagram 17-23: all-black phone; notifications arrive, are tapped and rise out of it as 3D sections
   if (t >= 17.0 && t < 23.0) {
     const G = O.s5, ph = O.phone;
     G.visible = true; ph.visible = true;
     if (screen) await setScreen(O, screen);
-    const C = P(540, 1185);
-    G.position.copy(C);
-    G.rotation.set(0.04 * Math.sin((t - 17) * 0.8), 0.2 * Math.sin((t - 18.2) * 0.62), 0);
-    // entrance: arrives from below showing its back, flips to the front
+    G.position.copy(P(540, 1185));
+    G.rotation.set(0.04 * Math.sin((t - 17) * 0.8), 0.16 * Math.sin((t - 18.2) * 0.62), 0);
     const p = easeOut(prog(t, 17.0, 17.95));
     const s = Math.max(0, t - 17.95);
-    const bt = beat(t, 18.0), press = Math.sin(Math.PI * prog(t, 19.62, 19.9));
-    const spin = Math.PI * 2 * easeInOut(prog(t, 20.5, 20.95));          // full 360 on the beat
-    const exit = easeIn3(prog(t, 22.82, 23.0));                            // dives into the camera for the cut
-    ph.position.set(lerp(420, 0, p) + 14 * Math.sin(s * 1.6), lerp(-1500, 0, p) + 22 * Math.sin(s * 2.2) * p, lerp(-700, 0, p) + 34 * bt - 40 * press + 2600 * exit);
-    ph.rotation.set(lerp(0.6, 0.06, p) + 0.06 * Math.sin(s * 1.3) + 0.16 * press - 0.5 * exit,
-                    lerp(Math.PI + 1.1, -0.1, easeInOut(prog(t, 17.0, 17.95))) + 0.18 * Math.sin(s * 1.05) + spin,
-                    lerp(-0.35, 0, p) + 0.04 * Math.sin(s * 0.9) + 0.25 * exit);
-    ph.scale.setScalar((1 + 0.015 * bt) * (1 - 0.02 * press));
-    // colour and light play
-    const Cw = new THREE.Vector3().copy(P(540, 1185));
-    const la = (t - 17) * 1.5;
+    const bt = beat(t, 18.0);
+    const taps = O.N.map(n => Math.sin(Math.PI * prog(t, n.tap - 0.05, n.tap + 0.15))).reduce((a, b) => Math.max(a, b), 0);
+    const spin = Math.PI * 2 * easeInOut(prog(t, 21.95, 22.4));
+    const exit = easeIn3(prog(t, 22.82, 23.0));
+    ph.position.set(lerp(420, 0, p) + 14 * Math.sin(s * 1.6), lerp(-1500, 0, p) + 20 * Math.sin(s * 2.2) * p, lerp(-700, 0, p) + 28 * bt - 30 * taps + 2600 * exit);
+    ph.rotation.set(lerp(0.6, 0.06, p) + 0.05 * Math.sin(s * 1.3) + 0.08 * taps - 0.5 * exit,
+                    lerp(Math.PI + 1.1, -0.1, easeInOut(prog(t, 17.0, 17.95))) + 0.15 * Math.sin(s * 1.05) + spin,
+                    lerp(-0.35, 0, p) + 0.035 * Math.sin(s * 0.9) + 0.25 * exit);
+    ph.scale.setScalar((1 + 0.012 * bt) * (1 - 0.015 * taps));
+    const on = prog(t, 17.85, 18.25);
+    ph.userData.scrMat.color.setScalar(0.9 * easeOut(on));
+    const sc = ph.userData.scan; sc.material.opacity = on > 0 && on < 1 ? 0.9 : 0; sc.position.y = lerp(600, -600, on);
+    // light play on the black glass
+    const Cw = P(540, 1185), la = (t - 17) * 1.5;
     amber.position.set(Cw.x + Math.cos(la) * 760, Cw.y + Math.sin(la * 0.8) * 520, 520 + 220 * Math.sin(la));
     cool.position.set(Cw.x - Math.cos(la) * 760, Cw.y - Math.sin(la * 0.8) * 520, 420);
-    amber.intensity = 3.2 * p * (1 + 0.6 * bt); cool.intensity = 1.8 * p;
-    bloom.strength = 0.34 + 0.28 * bt * p + 0.35 * press;
+    amber.intensity = 3.4 * p * (1 + 0.6 * bt); cool.intensity = 2.0 * p;
+    bloom.strength = 0.34 + 0.18 * bt * p + 0.2 * taps;
     const hue = 0.09 + 0.035 * Math.sin((t - 17) * 1.7);
-    O.edge.visible = true; O.edge.material.color.setHSL(hue, 0.9, 0.55 + 0.25 * bt + 0.3 * press);
-    O.burst.visible = true; O.burst.rotation.z = (t - 17) * 0.25; O.burst.scale.setScalar(Math.max(0.01, p) * (1 + 0.08 * bt + 0.25 * press));
-    O.burst.material.color.setHSL(hue - 0.02, 0.85, 0.35 + 0.25 * bt + 0.4 * press);
-    O.burst.position.set(0, 0, -260);
+    O.edge.visible = false;
+    O.burst.visible = true; O.burst.rotation.z = (t - 17) * 0.25; O.burst.scale.setScalar(Math.max(0.01, p) * (1 + 0.08 * bt + 0.2 * taps));
+    O.burst.material.color.setHSL(hue - 0.02, 0.85, 0.32 + 0.22 * bt + 0.3 * taps);
+    O.burst.position.set(0, 0, -300);
     const gl = O.glare; gl.visible = true;
-    const glareAt = [18.15, 19.75, 20.95, 22.2].map(g0 => prog(t, g0, g0 + 0.45)).find(q => q > 0 && q < 1);
-    gl.material.opacity = glareAt !== undefined ? Math.sin(glareAt * Math.PI) : 0;
+    const glareAt = [18.15, 19.5, 20.95, 22.2].map(g0 => prog(t, g0, g0 + 0.45)).find(q => q > 0 && q < 1);
+    gl.material.opacity = glareAt !== undefined ? Math.sin(glareAt * Math.PI) * 0.32 : 0;
     gl.material.map.offset.x = glareAt !== undefined ? lerp(-0.9, 0.9, glareAt) : 0;
-    // screen power-on with a scan line
-    const on = prog(t, 17.85, 18.25);
-    ph.userData.scrMat.color.setScalar(0.85 * easeOut(on));
-    const sc = ph.userData.scan; sc.material.opacity = on > 0 && on < 1 ? 0.9 : 0; sc.position.y = lerp(600, -600, on);
     G.updateMatrixWorld(true);
-    const phoneLocal = v => v.clone().applyMatrix4(ph.matrix);   // phone space -> group space
-    // HUD rings
+    const phoneLocal = v => v.clone().applyMatrix4(ph.matrix);
     const hp = easeOut(prog(t, 18.0, 18.6));
-    O.hud.forEach((h, i) => { h.visible = hp > 0; h.scale.setScalar(Math.max(0.01, hp) * (1 + 0.02 * beat(t, 18.5))); h.rotation.set(1.32 + i * 0.08, 0.12 * i, (t - 18) * (i ? -0.35 : 0.5)); h.position.set(0, -40 + i * 30, 0); });
-    // the nine posts fly out of the screen
+    O.hud.forEach((h, i) => { h.visible = hp > 0; h.scale.setScalar(Math.max(0.01, hp) * (1 + 0.02 * bt)); h.rotation.set(1.32 + i * 0.08, 0.12 * i, (t - 18) * (i ? -0.35 : 0.5)); h.position.set(0, -40 + i * 30, 0); });
+    // trails + burst particles
     const fxPos = O.fx.geometry.attributes.position.array, fxCol = O.fx.geometry.attributes.color.array; fxCol.fill(0);
     let fi = 0;
-    const trail = (a, b, k, n = 18) => { for (let j = 0; j < n; j++) { const u = j / (n - 1) * k; const q = a.clone().lerp(b, u); q.y += Math.sin(u * Math.PI) * 60; fxPos[fi * 3] = q.x; fxPos[fi * 3 + 1] = q.y; fxPos[fi * 3 + 2] = q.z; const c = Math.pow(j / (n - 1), 2) * 0.9 * Math.sin(k * Math.PI); fxCol[fi * 3] = c; fxCol[fi * 3 + 1] = c * 0.78; fxCol[fi * 3 + 2] = c * 0.45; fi++; } };
-    const TT = [[-390, 425, 230], [-430, 175, 320], [-380, -75, 230], [390, 425, 230], [430, 175, 320], [380, -75, 230], [-240, -380, 360], [0, -460, 400], [240, -380, 360]];
-    const order = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-    O.tiles.forEach((tl, i) => {
-      const r = Math.floor(i / 3), c = i % 3;
-      const home = phoneLocal(new THREE.Vector3(12 + c * 180 + 88 - 280, 600 - (580 + r * 180 + 88), 30));
-      const st = 18.6 + order[i] * 0.06, out = easeOut(prog(t, st, st + 0.6)), back = easeInOut(prog(t, 20.0 + i * 0.03, 20.4 + i * 0.03));
-      const k = out * (1 - back);
-      tl.visible = k > 0.001;
-      if (!tl.visible) return;
-      const dst = new THREE.Vector3(...TT[i]);
-      dst.y += 16 * Math.sin(t * 2.1 + i); dst.x += 10 * Math.sin(t * 1.4 + i * 2);
-      tl.position.copy(home.clone().lerp(dst, k));
-      tl.position.y += Math.sin(k * Math.PI) * 60;
-      const q0 = ph.quaternion.clone(), q1 = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.12 * Math.sin(t * 1.7 + i), -G.rotation.y * 0.6 + 0.2 * Math.sin(t * 1.2 + i), 0.08 * Math.sin(t + i)));
-      tl.quaternion.copy(q0.slerp(q1, k));
-      tl.scale.setScalar(lerp(1.0, 0.95, k) * (1 + 0.04 * beat(t, 19.0)));
-      if ((out > 0 && out < 1) || (back > 0 && back < 1)) trail(home, tl.position, out < 1 ? out : 1 - back);
+    const trail = (a, b, k, n = 18) => { for (let j = 0; j < n && fi < fxCol.length / 3; j++) { const u = j / (n - 1) * k; const q = a.clone().lerp(b, u); q.y += Math.sin(u * Math.PI) * 50; fxPos[fi * 3] = q.x; fxPos[fi * 3 + 1] = q.y; fxPos[fi * 3 + 2] = q.z; const c = Math.pow(j / (n - 1), 2) * 0.9 * Math.sin(k * Math.PI); fxCol[fi * 3] = c; fxCol[fi * 3 + 1] = c * 0.78; fxCol[fi * 3 + 2] = c * 0.45; fi++; } };
+    const back = easeInOut(prog(t, 22.45, 22.8));
+    const faceCam = (k, extraY = 0) => new THREE.Quaternion().setFromEuler(new THREE.Euler(0.08 * Math.sin(t * 1.3 + extraY), -G.rotation.y * 0.7 + extraY, 0));
+    // notifications -> 3D sections
+    O.N.forEach((n, i) => {
+      const grp = n.g, { banner, card } = grp.userData;
+      const lift = easeOut(prog(t, n.tap + 0.05, n.tap + 0.6));
+      const k = lift * (1 - back);
+      grp.visible = t >= n.tap + 0.05 && back < 1;
+      if (!grp.visible) return;
+      const start = phoneLocal(new THREE.Vector3(0, 600 - 400, 33));
+      const dst = new THREE.Vector3(...n.to); dst.y += 12 * Math.sin(t * 1.8 + i * 2); dst.x += 6 * Math.sin(t * 1.2 + i);
+      const home = back > 0 ? phoneLocal(new THREE.Vector3(0, 0, 30)) : start;
+      grp.position.copy((back > 0 ? home : start).clone().lerp(dst, back > 0 ? 1 - back : lift));
+      grp.position.y += Math.sin(lift * Math.PI) * 90 * (1 - back);
+      grp.quaternion.copy(ph.quaternion.clone().slerp(faceCam(k, n.yaw), back > 0 ? 1 - back : lift));
+      banner.material.opacity = clamp(1 - lift * 2.4);
+      banner.visible = banner.material.opacity > 0.01;
+      banner.scale.setScalar(lerp(1, 1.15, lift));
+      if (card) {
+        const co = clamp((lift - 0.22) / 0.35) * (1 - back * 0.2);
+        card.visible = co > 0.01;
+        card.children.forEach(c => { c.material.opacity = co; });
+        const s0 = 520 / n.w;
+        card.scale.setScalar(lerp(s0, n.scale, easeOut(clamp((lift - 0.1) / 0.8))) * lerp(1, 0.25, back) * (1 + 0.03 * bt));
+        if (n.texB) card.children[0].material.map = t >= 19.5 ? n.texB : n.texA;
+      }
+      if ((lift > 0 && lift < 1) || (back > 0 && back < 1)) trail(start, grp.position, lift < 1 ? lift : 1 - back);
     });
-    // follow button pops out, is pressed, turns into "Abonné"
-    const b = O.btn, bh = phoneLocal(new THREE.Vector3(0, 120, 30));
-    const pop = easeBack(prog(t, 19.25, 19.5)), bpress = Math.sin(Math.PI * prog(t, 19.62, 19.85)), ret = easeInOut(prog(t, 20.15, 20.45));
-    b.visible = pop > 0 && ret < 1;
-    if (b.visible) {
-      const z = lerp(0, 120, clamp(pop)) * (1 - ret) - 55 * bpress;
-      b.position.copy(bh).add(new THREE.Vector3(0, 0, z).applyQuaternion(ph.quaternion));
-      b.quaternion.copy(ph.quaternion);
-      b.scale.setScalar(lerp(1, 1.12, clamp(pop)) * (1 - 0.06 * bpress) * lerp(1, 0.98, ret));
-      b.userData.front.map = t >= 19.75 ? b.userData.texD : b.userData.texF;
-    }
-    const tap = prog(t, 19.75, 20.3), rp = ph.userData.ripple;
-    rp.scale.setScalar(lerp(10, 190, easeOut(tap))); rp.material.opacity = tap > 0 && tap < 1 ? 1 - tap : 0;
-    // gold burst at the tap
-    const bp = prog(t, 19.75, 20.55);
+    // follow card: button pressed at 19.5 -> burst
+    const bp = prog(t, 19.5, 20.3), fc = O.N[0].g;
     const rnd = seeded(99);
     for (let j = 0; j < 80; j++) {
-      const a = rnd() * Math.PI * 2, el = (rnd() - 0.5) * 1.6, sp = lerp(220, 620, rnd());
-      if (bp > 0 && bp < 1) {
-        const d = easeOut(bp) * sp;
-        fxPos[fi * 3] = bh.x + Math.cos(a) * Math.cos(el) * d; fxPos[fi * 3 + 1] = bh.y + Math.sin(el) * d - 120 * bp * bp; fxPos[fi * 3 + 2] = bh.z + 120 + Math.sin(a) * Math.cos(el) * d * 0.6;
+      const a = rnd() * Math.PI * 2, el = (rnd() - 0.5) * 1.6, spd = lerp(220, 620, rnd());
+      if (bp > 0 && bp < 1 && fi < fxCol.length / 3) {
+        const d = easeOut(bp) * spd;
+        fxPos[fi * 3] = fc.position.x + Math.cos(a) * Math.cos(el) * d; fxPos[fi * 3 + 1] = fc.position.y - 70 + Math.sin(el) * d - 120 * bp * bp; fxPos[fi * 3 + 2] = fc.position.z + 60 + Math.sin(a) * Math.cos(el) * d * 0.6;
         const c = (1 - bp) * 1.1; fxCol[fi * 3] = c; fxCol[fi * 3 + 1] = c * 0.82; fxCol[fi * 3 + 2] = c * 0.5;
       }
       fi++;
     }
-    // info cards come out of the screen
-    const CT = [[0, 540, 380], [-200, -130, 340], [200, -340, 400]];
-    O.cards.forEach((cd, i) => {
-      const home = phoneLocal(new THREE.Vector3(0, 0, 30));
-      const st = 21.0 + i * 0.2, out = easeOut(prog(t, st, st + 0.5)), back = easeInOut(prog(t, 22.4 + i * 0.05, 22.8));
+    const press = Math.sin(Math.PI * prog(t, 19.42, 19.6));
+    if (fc.userData.card) fc.position.z -= 40 * press;
+    // 4th notification: the posts fly out and build a wall behind the phone
+    const WALL = [];
+    for (const y of [430, 40, -350]) for (const x of [-430, 0, 430]) WALL.push([x, y, -380]);
+    O.tiles.forEach((tl, i) => {
+      const st = 21.45 + i * 0.05, out = easeOut(prog(t, st, st + 0.55));
       const k = out * (1 - back);
-      cd.visible = k > 0.001;
-      if (!cd.visible) return;
-      const dst = new THREE.Vector3(...CT[i]); dst.y += 12 * Math.sin(t * 1.8 + i * 2);
-      cd.position.copy(home.clone().lerp(dst, k));
-      cd.quaternion.copy(ph.quaternion.clone().slerp(new THREE.Quaternion().setFromEuler(new THREE.Euler(0.1 * Math.sin(t * 1.3 + i), -G.rotation.y * 0.7 + (i === 1 ? 0.18 : i === 2 ? -0.18 : 0), 0)), k));
-      cd.scale.setScalar(lerp(0.2, 0.85, k));
-      if ((out > 0 && out < 1) || (back > 0 && back < 1)) trail(home, cd.position, out < 1 ? out : 1 - back);
+      tl.visible = k > 0.001;
+      if (!tl.visible) return;
+      const start = phoneLocal(new THREE.Vector3(0, 200, 33));
+      const dst = new THREE.Vector3(...WALL[i]); dst.y += 10 * Math.sin(t * 2 + i); dst.z += 20 * Math.sin(t * 1.5 + i);
+      tl.position.copy(start.clone().lerp(dst, k));
+      tl.position.z += Math.sin(k * Math.PI) * 300;
+      tl.quaternion.copy(ph.quaternion.clone().slerp(faceCam(k, 0.1 * Math.sin(i)), k));
+      tl.scale.setScalar(lerp(0.4, 1.3, k) * (1 + 0.04 * bt));
+      if (out > 0 && out < 1) trail(start, tl.position, out);
     });
     O.fx.visible = true; O.fx.geometry.attributes.position.needsUpdate = true; O.fx.geometry.attributes.color.needsUpdate = true;
     // 3D title
