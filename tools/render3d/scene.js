@@ -20,6 +20,7 @@ const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const prog = (t, a, b) => clamp((t - a) / (b - a));
 const easeOut = p => 1 - Math.pow(1 - p, 3);
 const easeInOut = p => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+const easeIn3 = p => p * p * p;
 const easeBack = (p, s = 1.6) => { p -= 1; return 1 + (s + 1) * p * p * p + s * p * p; };
 const lerp = (a, b, p) => a + (b - a) * p;
 const beat = (t, start) => (t < start ? 0 : Math.exp(-(((t - start) % BEAT) / BEAT) * 6));
@@ -46,6 +47,8 @@ const key = new THREE.DirectionalLight(0xffd9a0, 2.6); key.position.set(900, 140
 const rim = new THREE.DirectionalLight(0xfff3dd, 1.6); rim.position.set(-1400, -400, -800); scene.add(rim);
 const fill = new THREE.AmbientLight(0x3a2c18, 0.6); scene.add(fill);
 const sweep = new THREE.PointLight(0xfff0d0, 0, 1600, 1.2); scene.add(sweep);
+const amber = new THREE.PointLight(0xff9a3c, 0, 0, 1); scene.add(amber);
+const cool = new THREE.PointLight(0x7fb0ff, 0, 0, 1); scene.add(cool);
 
 const target = new THREE.WebGLRenderTarget(W, H, { samples: 4, type: THREE.HalfFloatType });
 const composer = new EffectComposer(renderer, target);
@@ -303,6 +306,38 @@ const ready = (async () => {
   O.btn = holoPanel(bf, 496, 76, 16, true); O.btn.userData.texF = bf; O.btn.userData.texD = bd; O.s5.add(O.btn);
   O.hud = [new THREE.Mesh(new THREE.TorusGeometry(470, 1.8, 8, 200), holoAdd(0xd8b064, 0.55)), new THREE.Mesh(new THREE.TorusGeometry(530, 1.0, 8, 200), holoAdd(0xd8b064, 0.35))];
   O.hud.forEach(h => O.s5.add(h));
+  const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx; };
+  const burstTex = canvasTex(1024, 1024, (x, w, h) => {
+    const g = x.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    g.addColorStop(0, 'rgba(255,240,205,0.9)'); g.addColorStop(0.18, 'rgba(255,190,90,0.35)'); g.addColorStop(0.55, 'rgba(160,90,20,0.08)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g; x.fillRect(0, 0, w, h);
+    x.translate(w / 2, h / 2);
+    for (let i = 0; i < 28; i++) {
+      x.rotate(Math.PI * 2 / 28);
+      const lg = x.createLinearGradient(0, 0, 0, -w / 2);
+      lg.addColorStop(0, 'rgba(255,225,160,0.32)'); lg.addColorStop(1, 'rgba(255,200,120,0)');
+      x.fillStyle = lg; const wd = i % 2 ? 10 : 22;
+      x.beginPath(); x.moveTo(-wd, 0); x.lineTo(0, -w / 2); x.lineTo(wd, 0); x.closePath(); x.fill();
+    }
+  });
+  O.burst = new THREE.Mesh(new THREE.PlaneGeometry(1700, 1700), new THREE.MeshBasicMaterial({ map: burstTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, color: 0xffffff }));
+  O.burst.position.z = -260; O.s5.add(O.burst);
+  const edgeTex = canvasTex(512, 1024, (x, w, h) => {
+    x.shadowColor = 'rgba(255,200,110,1)'; x.shadowBlur = 46; x.strokeStyle = 'rgba(255,225,160,1)'; x.lineWidth = 10;
+    const r = 70, m = 56; x.beginPath(); x.roundRect(m, m, w - 2 * m, h - 2 * m, r); x.stroke(); x.stroke();
+  });
+  O.edge = new THREE.Mesh(new THREE.PlaneGeometry(612 * 512 / 400, 1252 * 1024 / 912), new THREE.MeshBasicMaterial({ map: edgeTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  O.edge.position.z = -34; O.phone.add(O.edge);
+  const glareTex = canvasTex(512, 64, (x, w, h) => {
+    const g = x.createLinearGradient(0, 0, w, 0);
+    g.addColorStop(0.0, 'rgba(255,255,255,0)'); g.addColorStop(0.44, 'rgba(255,248,230,0)'); g.addColorStop(0.5, 'rgba(255,248,230,0.55)'); g.addColorStop(0.56, 'rgba(255,248,230,0)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, w, h);
+  });
+  glareTex.wrapS = THREE.ClampToEdgeWrapping;
+  O.glare = new THREE.Mesh(new THREE.PlaneGeometry(560, 1200), new THREE.MeshBasicMaterial({ map: glareTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, opacity: 0 }));
+  O.glare.position.z = 28.5; O.glare.rotation.z = 0; O.phone.add(O.glare);
+  const glareGeo = O.glare.geometry; const uv = glareGeo.attributes.uv;
+  for (let i = 0; i < uv.count; i++) { const u = uv.getX(i), v = uv.getY(i); uv.setXY(i, u * 0.8 + v * 0.45, v); }
   for (let k = 0; k < 24; k++) { const tick = new THREE.Mesh(new THREE.BoxGeometry(3, 18, 1), holoAdd(0xd8b064, 0.6)); const a = k / 24 * Math.PI * 2; tick.position.set(Math.cos(a) * 470, Math.sin(a) * 470, 0); tick.rotation.z = a + Math.PI / 2; O.hud[0].add(tick); }
   // light trails and the follow burst share one additive point cloud
   const NT = 9 * 18 + 3 * 18 + 80;
@@ -340,7 +375,7 @@ function place(obj, v) { obj.position.copy(v); }
 window.renderAt = async (t, screen) => {
   const O = await ready;
   for (const k of Object.keys(O)) if (O[k] && O[k].isObject3D) O[k].visible = false;
-  sweep.intensity = 0;
+  sweep.intensity = 0; amber.intensity = 0; cool.intensity = 0; bloom.strength = 0.32;
 
   // camera: slow handheld drift + push on every beat
   const bp = beat(t, 3.5) * (t < 29.5 ? 1 : 0);
@@ -425,10 +460,31 @@ window.renderAt = async (t, screen) => {
     G.rotation.set(0.04 * Math.sin((t - 17) * 0.8), 0.2 * Math.sin((t - 18.2) * 0.62), 0);
     // entrance: arrives from below showing its back, flips to the front
     const p = easeOut(prog(t, 17.0, 17.95));
-    ph.position.set(lerp(420, 0, p), lerp(-1500, 0, p), lerp(-700, 0, p));
     const s = Math.max(0, t - 17.95);
-    ph.rotation.set(lerp(0.6, 0.06, p) + 0.025 * Math.sin(s * 1.3), lerp(Math.PI + 1.1, -0.1, easeInOut(prog(t, 17.0, 17.95))) + 0.06 * Math.sin(s * 1.05), lerp(-0.35, 0, p));
-    ph.scale.setScalar(1 - 0.018 * Math.sin(Math.PI * prog(t, 19.62, 19.85)));
+    const bt = beat(t, 18.0), press = Math.sin(Math.PI * prog(t, 19.62, 19.9));
+    const spin = Math.PI * 2 * easeInOut(prog(t, 20.5, 20.95));          // full 360 on the beat
+    const exit = easeIn3(prog(t, 22.82, 23.0));                            // dives into the camera for the cut
+    ph.position.set(lerp(420, 0, p) + 14 * Math.sin(s * 1.6), lerp(-1500, 0, p) + 22 * Math.sin(s * 2.2) * p, lerp(-700, 0, p) + 34 * bt - 40 * press + 2600 * exit);
+    ph.rotation.set(lerp(0.6, 0.06, p) + 0.06 * Math.sin(s * 1.3) + 0.16 * press - 0.5 * exit,
+                    lerp(Math.PI + 1.1, -0.1, easeInOut(prog(t, 17.0, 17.95))) + 0.18 * Math.sin(s * 1.05) + spin,
+                    lerp(-0.35, 0, p) + 0.04 * Math.sin(s * 0.9) + 0.25 * exit);
+    ph.scale.setScalar((1 + 0.015 * bt) * (1 - 0.02 * press));
+    // colour and light play
+    const Cw = new THREE.Vector3().copy(P(540, 1185));
+    const la = (t - 17) * 1.5;
+    amber.position.set(Cw.x + Math.cos(la) * 760, Cw.y + Math.sin(la * 0.8) * 520, 520 + 220 * Math.sin(la));
+    cool.position.set(Cw.x - Math.cos(la) * 760, Cw.y - Math.sin(la * 0.8) * 520, 420);
+    amber.intensity = 3.2 * p * (1 + 0.6 * bt); cool.intensity = 1.8 * p;
+    bloom.strength = 0.34 + 0.28 * bt * p + 0.35 * press;
+    const hue = 0.09 + 0.035 * Math.sin((t - 17) * 1.7);
+    O.edge.visible = true; O.edge.material.color.setHSL(hue, 0.9, 0.55 + 0.25 * bt + 0.3 * press);
+    O.burst.visible = true; O.burst.rotation.z = (t - 17) * 0.25; O.burst.scale.setScalar(Math.max(0.01, p) * (1 + 0.08 * bt + 0.25 * press));
+    O.burst.material.color.setHSL(hue - 0.02, 0.85, 0.35 + 0.25 * bt + 0.4 * press);
+    O.burst.position.set(0, 0, -260);
+    const gl = O.glare; gl.visible = true;
+    const glareAt = [18.15, 19.75, 20.95, 22.2].map(g0 => prog(t, g0, g0 + 0.45)).find(q => q > 0 && q < 1);
+    gl.material.opacity = glareAt !== undefined ? Math.sin(glareAt * Math.PI) : 0;
+    gl.material.map.offset.x = glareAt !== undefined ? lerp(-0.9, 0.9, glareAt) : 0;
     // screen power-on with a scan line
     const on = prog(t, 17.85, 18.25);
     ph.userData.scrMat.color.setScalar(0.85 * easeOut(on));
@@ -447,7 +503,7 @@ window.renderAt = async (t, screen) => {
     O.tiles.forEach((tl, i) => {
       const r = Math.floor(i / 3), c = i % 3;
       const home = phoneLocal(new THREE.Vector3(12 + c * 180 + 88 - 280, 600 - (580 + r * 180 + 88), 30));
-      const st = 18.6 + order[i] * 0.06, out = easeOut(prog(t, st, st + 0.6)), back = easeInOut(prog(t, 20.4 + i * 0.03, 20.85 + i * 0.03));
+      const st = 18.6 + order[i] * 0.06, out = easeOut(prog(t, st, st + 0.6)), back = easeInOut(prog(t, 20.0 + i * 0.03, 20.4 + i * 0.03));
       const k = out * (1 - back);
       tl.visible = k > 0.001;
       if (!tl.visible) return;
@@ -462,13 +518,13 @@ window.renderAt = async (t, screen) => {
     });
     // follow button pops out, is pressed, turns into "Abonné"
     const b = O.btn, bh = phoneLocal(new THREE.Vector3(0, 120, 30));
-    const pop = easeBack(prog(t, 19.25, 19.5)), press = Math.sin(Math.PI * prog(t, 19.62, 19.85)), ret = easeInOut(prog(t, 20.2, 20.45));
+    const pop = easeBack(prog(t, 19.25, 19.5)), bpress = Math.sin(Math.PI * prog(t, 19.62, 19.85)), ret = easeInOut(prog(t, 20.15, 20.45));
     b.visible = pop > 0 && ret < 1;
     if (b.visible) {
-      const z = lerp(0, 120, clamp(pop)) * (1 - ret) - 55 * press;
+      const z = lerp(0, 120, clamp(pop)) * (1 - ret) - 55 * bpress;
       b.position.copy(bh).add(new THREE.Vector3(0, 0, z).applyQuaternion(ph.quaternion));
       b.quaternion.copy(ph.quaternion);
-      b.scale.setScalar(lerp(1, 1.12, clamp(pop)) * (1 - 0.06 * press) * lerp(1, 0.98, ret));
+      b.scale.setScalar(lerp(1, 1.12, clamp(pop)) * (1 - 0.06 * bpress) * lerp(1, 0.98, ret));
       b.userData.front.map = t >= 19.75 ? b.userData.texD : b.userData.texF;
     }
     const tap = prog(t, 19.75, 20.3), rp = ph.userData.ripple;
@@ -489,7 +545,7 @@ window.renderAt = async (t, screen) => {
     const CT = [[0, 540, 380], [-200, -130, 340], [200, -340, 400]];
     O.cards.forEach((cd, i) => {
       const home = phoneLocal(new THREE.Vector3(0, 0, 30));
-      const st = 20.7 + i * 0.22, out = easeOut(prog(t, st, st + 0.55)), back = easeInOut(prog(t, 22.55 + i * 0.05, 22.95));
+      const st = 21.0 + i * 0.2, out = easeOut(prog(t, st, st + 0.5)), back = easeInOut(prog(t, 22.4 + i * 0.05, 22.8));
       const k = out * (1 - back);
       cd.visible = k > 0.001;
       if (!cd.visible) return;

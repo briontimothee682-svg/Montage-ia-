@@ -217,7 +217,7 @@ def composite(fi):
     arr = np.asarray(img).astype(np.float32) + m.GRAIN[fi % len(m.GRAIN)] * 0.6
     return np.clip(arr, 0, 255).astype(np.uint8)
 
-TILES_OUT = (18.6, 20.9)   # the 9 posts leave the screen in 3D during this window
+TILES_OUT = (18.6, 20.5)   # the 9 posts leave the screen in 3D during this window
 
 def synth_audio_3d(path):
     """Music + sound design from motion.py, plus ASMR barber sounds synced to the 3D action."""
@@ -277,9 +277,10 @@ def synth_audio_3d(path):
     for k in range(9):                       # posts leaving the phone
         add(pop(), 18.6 + k * 0.06, 0.12)
     add(click(), 19.66, 0.6)                 # button pressed
+    add(shing(0.5), 20.5, 0.22)              # phone 360 spin
     for k in range(3):                       # info cards
-        add(pop(), 20.7 + k * 0.22, 0.22)
-    add(suck(), 22.5, 0.25)                  # everything returns into the screen
+        add(pop(), 21.0 + k * 0.2, 0.22)
+    add(suck(), 22.4, 0.25)                  # everything returns into the screen
     add(snip(), 26.9, 0.25)
     out /= max(1e-6, np.abs(out).max()) / 0.89
     with wave.open(str(path), "wb") as wf:
