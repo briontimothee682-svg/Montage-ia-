@@ -10,6 +10,7 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/pn
   const args = process.argv.slice(2);
   const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });
+  page.setDefaultTimeout(300000);
   page.on('console', m => { if (m.type() === 'error') console.error('page:', m.text()); });
   page.on('pageerror', e => console.error('pageerror:', e.message));
   await page.route('http://local/**', async route => {
@@ -26,7 +27,10 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/pn
     const fi = Math.round(t * FPS);
     const scr = (PAGE === 'scene' && t >= 17 && t < 30.5) ? `/exports/screen/s${String(fi).padStart(4, '0')}.png` : null;
     await page.evaluate(([t, s]) => window.renderAt(t, s), [t, scr]);
-    await page.screenshot({ path: file, type: 'png', clip: { x: 0, y: 0, width: 1080, height: 1920 } });
+    for (let attempt = 0; ; attempt++) {
+      try { await page.screenshot({ path: file, type: 'png', clip: { x: 0, y: 0, width: 1080, height: 1920 }, timeout: 300000 }); break; }
+      catch (e) { if (attempt >= 2) throw e; console.error('retry screenshot', file); }
+    }
   };
   if (args[0] === 'test') {
     const out = path.join(ROOT, 'exports', 'test3d'); fs.mkdirSync(out, { recursive: true });
