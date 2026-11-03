@@ -120,8 +120,10 @@ SHOTS = [
       "in one clean horizontal row with equal spacing, from left to right: a closed gold straight razor, a black fine-tooth comb, a pair of "
       "closed gold barber scissors, a shaving brush with a black handle and cream bristles, and a neatly folded cream towel; every tool "
       "complete, correctly shaped, perfectly parallel and razor sharp; a small potted fern in the top corner",
-      "camera pointing straight down, slow lateral slide from left to right along the row", "a warm light reflection gliding across the metal of each tool",
-      "speed-ramped pull-back transition (close to wide) with motion blur"),
+      "camera pointing straight down; starts as an extreme macro on the pivot screw and sharp edge of the gold scissors, then rises smoothly "
+      "straight up to reveal the full row of five tools in perfect focus",
+      "a warm light reflection gliding across the metal of each tool",
+      "fast zoom-out transition with motion blur: the camera keeps rising and pulls back to reveal the whole salon"),
     S(10.0, 12.5, "wide", "Salle d'attente, TV, PS5 et plantes",
       "Wide view of the waiting lounge: black leather sofa and two armchairs, monstera, olive tree and hanging pothos, the large wall-mounted "
       f"TV, and clearly visible in the center of the frame, under the TV: {PS5}; in front: {PADS}. {TV}",
@@ -176,13 +178,13 @@ SHOTS = [
       "down out of frame and the salon is sharp again", "rack focus from foreground to background, then very slow push-in",
       "phone gliding down out of frame", "whip-pan transition with motion blur"),
     S(33.5, 35.5, "close", "Fauteuil en cuir",
-      "Close-up of a black leather barber chair headrest and polished gold armrest, leather grain and stitching clearly visible",
-      "slow sideways tracking", "warm reflections gliding on the leather", "speed-ramped pull-back transition (close to wide)"),
+      "Extreme close-up of a black leather barber chair headrest and polished gold armrest, leather grain and stitching clearly visible",
+      "100mm macro, slow sideways tracking, then a smooth pull-back revealing the whole chair in front of its round mirror", "warm reflections gliding on the leather", "speed-ramped pull-back transition (close to wide)"),
     S(35.5, 38.0, "wide", "Miroir qui reflète le salon",
       "A round gold-framed mirror reflecting the whole empty salon, the plants and the warm pendant lamps, no person in the reflection",
       "wide 24mm lens, slow push-in toward the mirror", "reflections shifting softly", "zoom-in transition (wide to close) with a gold light leak"),
     S(38.0, 40.0, "close", "Tondeuse dorée en macro",
-      "Macro of a professional gold hair clipper resting on black leather", "slow lateral slide along the blade",
+      "Extreme macro of a professional gold hair clipper resting on black leather, every tooth of the blade sharp", "100mm macro, slow lateral slide along the blade",
       "sharp highlights running across the gold teeth", "blur dissolve"),
     S(40.0, 42.0, "close", "Feuille de plante, puis salon",
       "A large monstera leaf sharp in the foreground, real leaf texture and veins, then the focus moves to the barber chairs and pendant lamps behind it",
@@ -225,6 +227,18 @@ OVERLAYS = [
     O(46.8, 50.0, " / ".join(HOURS), f"{FONT} Medium, gold {GOLD}, 32px, three centered lines", "lines fade in one after another, 0.2s apart"),
     O(47.4, 50.0, f"{LINE}", f"{FONT} Light, cream {CREAM} at 70% opacity, 24px, letter spacing +200, just above the bottom safe zone",
       "fade in 0.5s, discreet signature"),
+]
+
+MISTAKES = [
+    "The storefront must not look small: wide façade, two large display windows and a wide double glass door, same scale as the large room inside.",
+    "Scissors appear only once, in the tool flat lay; never two scissors shots in a row.",
+    "The tool flat lay must show exactly five complete, correctly shaped tools, sharp and aligned; no missing, melted or extra tools.",
+    "Wide shots must be really wide: the whole room visible from floor to ceiling.",
+    "The PlayStation 5 Pro is visible under the TV in every lounge shot, identical to the reference photo.",
+    "The TV shows the football video game the whole time: never a presenter, a person or another channel.",
+    "The phone + Instagram + ABONNEZ-VOUS sequence is never removed.",
+    "The price list is always the real provided image, never an invented one.",
+    "The opening hours appear on the reception shots and at the end.",
 ]
 
 PRODUCTION = [
@@ -285,7 +299,8 @@ def master_prompt():
          f"BRAND: the salon is {SALON}; its logo is {LOGO}. {PRODUCTS} {PALETTE} All on-screen text uses the font {FONT}: main text in gold "
          f"{GOLD} capitals with wide letter spacing, secondary text in cream {CREAM}.",
          "", "SET: " + SET + " " + TV, "", "LIGHT AND GRADE: " + LIGHT, "",
-         "PRODUCTION RULES:"] + [f"- {r}" for r in PRODUCTION] + ["", "SHOT LIST:"]
+         "PRODUCTION RULES:"] + [f"- {r}" for r in PRODUCTION] + ["",
+         "MISTAKES FROM THE PREVIOUS VERSION, NOW CORRECTED (check each one):"] + [f"- {m}" for m in MISTAKES] + ["", "SHOT LIST:"]
     for i, s in enumerate(SHOTS, 1):
         ins = (" (MANDATORY: use exactly the provided image file fiche_tarifs.jpg, unchanged; never generate, redraw or retype a price list)"
                if not s["gen"] else "")
@@ -368,6 +383,7 @@ def write_files():
                           [20.8, "card terminal beep"], [22.4, "whoosh into the frame"], [25.4, "gold flash shimmer"],
                           [25.5, "smooth mechanical slide"], [26.0, "notification ding"], [33.4, "whip-pan whoosh"],
                           [35.4, "reverse whoosh"], [41.9, "reverse whoosh"], [44.5, "warm low boom"]]},
+        "mistakes_to_fix_from_previous_version": MISTAKES,
         "final_checks": [f"duration {DURATION}s", "no person in the salon", "ATELIER 47 and TIM DESIGN spelled correctly everywhere",
                          "prices, address, hours, ABONNEZ-VOUS and handle readable and inside the safe zone", "cuts on the beat",
                          "same salon layout in every wide shot", "the ending loops cleanly into the start"],

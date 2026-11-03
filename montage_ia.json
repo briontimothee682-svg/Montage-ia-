@@ -112,7 +112,7 @@
       "out": 10.0,
       "scale": "close",
       "content": "Outils du barbier à plat, vus de dessus",
-      "transition_out": "speed-ramped pull-back transition (close to wide) with motion blur"
+      "transition_out": "fast zoom-out transition with motion blur: the camera keeps rising and pulls back to reveal the whole salon"
     },
     {
       "clip": "shot_09.mp4",
@@ -421,6 +421,17 @@
       ]
     ]
   },
+  "mistakes_to_fix_from_previous_version": [
+    "The storefront must not look small: wide façade, two large display windows and a wide double glass door, same scale as the large room inside.",
+    "Scissors appear only once, in the tool flat lay; never two scissors shots in a row.",
+    "The tool flat lay must show exactly five complete, correctly shaped tools, sharp and aligned; no missing, melted or extra tools.",
+    "Wide shots must be really wide: the whole room visible from floor to ceiling.",
+    "The PlayStation 5 Pro is visible under the TV in every lounge shot, identical to the reference photo.",
+    "The TV shows the football video game the whole time: never a presenter, a person or another channel.",
+    "The phone + Instagram + ABONNEZ-VOUS sequence is never removed.",
+    "The price list is always the real provided image, never an invented one.",
+    "The opening hours appear on the reception shots and at the end."
+  ],
   "final_checks": [
     "duration 50.0s",
     "no person in the salon",

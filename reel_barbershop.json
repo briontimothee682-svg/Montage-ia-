@@ -141,9 +141,9 @@
       "scale": "close",
       "label_fr": "Outils du barbier à plat, vus de dessus",
       "subject": "Overhead flat lay shot straight down at 90 degrees: on a black leather mat placed on dark walnut, exactly five barber tools laid out in one clean horizontal row with equal spacing, from left to right: a closed gold straight razor, a black fine-tooth comb, a pair of closed gold barber scissors, a shaving brush with a black handle and cream bristles, and a neatly folded cream towel; every tool complete, correctly shaped, perfectly parallel and razor sharp; a small potted fern in the top corner",
-      "camera": "camera pointing straight down, slow lateral slide from left to right along the row",
+      "camera": "camera pointing straight down; starts as an extreme macro on the pivot screw and sharp edge of the gold scissors, then rises smoothly straight up to reveal the full row of five tools in perfect focus",
       "motion": "a warm light reflection gliding across the metal of each tool",
-      "transition_out": "speed-ramped pull-back transition (close to wide) with motion blur",
+      "transition_out": "fast zoom-out transition with motion blur: the camera keeps rising and pulls back to reveal the whole salon",
       "generate": true
     },
     {
@@ -278,8 +278,8 @@
       "time": "33.5-35.5s",
       "scale": "close",
       "label_fr": "Fauteuil en cuir",
-      "subject": "Close-up of a black leather barber chair headrest and polished gold armrest, leather grain and stitching clearly visible",
-      "camera": "slow sideways tracking",
+      "subject": "Extreme close-up of a black leather barber chair headrest and polished gold armrest, leather grain and stitching clearly visible",
+      "camera": "100mm macro, slow sideways tracking, then a smooth pull-back revealing the whole chair in front of its round mirror",
       "motion": "warm reflections gliding on the leather",
       "transition_out": "speed-ramped pull-back transition (close to wide)",
       "generate": true
@@ -302,8 +302,8 @@
       "time": "38.0-40.0s",
       "scale": "close",
       "label_fr": "Tondeuse dorée en macro",
-      "subject": "Macro of a professional gold hair clipper resting on black leather",
-      "camera": "slow lateral slide along the blade",
+      "subject": "Extreme macro of a professional gold hair clipper resting on black leather, every tooth of the blade sharp",
+      "camera": "100mm macro, slow lateral slide along the blade",
       "motion": "sharp highlights running across the gold teeth",
       "transition_out": "blur dissolve",
       "generate": true
