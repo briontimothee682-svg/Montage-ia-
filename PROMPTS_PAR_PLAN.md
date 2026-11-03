@@ -3,6 +3,7 @@
 À coller un par un dans ton générateur vidéo (Kling, Runway, Veo, Hailuo…). Réglages pour chaque plan : **format 9:16**, **durée 5 s** (la plus courte proposée), **qualité maximale**. Garde le meilleur résultat et nomme-le `shot_XX.mp4`.
 
 Si ton outil a une case séparée « negative prompt », colle le negative prompt dedans. Sinon, ajoute-le à la fin du prompt après « Avoid: ».
+
 **Negative prompt (le même pour tous les plans) :**
 
 ```
