@@ -395,10 +395,11 @@ def nav_bar(scr):
         paste(scr, ig_icon(n, size=40), 70 + i * 140, 1160)
     paste(scr, m.avatar(40), 70 + 3.85 * 140, 1160)
 
-def post_screen(t):
+def post_screen(t, media=True):
     """Instagram Reel UI: full-screen video, actions on the right, account and caption at the bottom."""
-    scr = Image.new("RGBA", (560, 1200), (0, 0, 0, 255))
-    scr.paste(post_media(t), (0, 0))
+    scr = Image.new("RGBA", (560, 1200), (0, 0, 0, 255 if media else 0))
+    if media:
+        scr.paste(post_media(t), (0, 0))
     scr.alpha_composite(reel_gradients())
     text(scr, "Reels", "Bold", 30, 26, 62, CREAM, anchor="left")
     liked = t >= LIKE_AT
@@ -495,9 +496,9 @@ def profile_screen(t, lifted):
 def app_screen(t):
     wake = ease_out(prog(t, 17.95, 18.25))
     if wake <= 0:
-        return Image.new("RGB", (560, 1200), (0, 0, 0))
+        return Image.new("RGB", (1120, 2400), (0, 0, 0))
     if t < PROFILE_AT:
-        scr = post_screen(t)
+        scr = post_screen(t, media=False)
     else:
         sl = ease_in_out(prog(t, PROFILE_AT, PROFILE_AT + 0.3))   # profile slides in from the right
         lifted = TILES_OUT + 0.05 <= t < 24.75
@@ -523,10 +524,20 @@ def app_screen(t):
         q = prog(t, tap - 0.05, tap + 0.3)
         if 0 < q < 1:
             paste(scr, m.ring_img(int(lerp(10, 120, ease_out(q))), 3, CREAM, 255, 1000), 280, y, alpha=1 - q)
-    bg = Image.new("RGBA", scr.size, (0, 0, 0, 255))
-    bg.alpha_composite(scr)
+    big = scr.resize((1120, 2400), Image.LANCZOS)
+    bg = Image.new("RGBA", big.size, (0, 0, 0, 255))
+    if t < PROFILE_AT:
+        bg.paste(post_media_2x(t), (0, 0))
+    bg.alpha_composite(big)
     arr = np.asarray(bg.convert("RGB")).astype(np.float32) * wake
     return Image.fromarray(arr.astype(np.uint8), "RGB")
+
+def post_media_2x(t):
+    fi = int(min(89, max(0, (t - POST_START) * FPS * 1.2)))
+    f = OUT / "postvid" / f"f{fi:04d}.png"
+    if not f.exists():
+        return Image.new("RGB", (1120, 2400), (14, 18, 40))
+    return Image.open(f).convert("RGB").resize((1350, 2400), Image.LANCZOS).crop((115, 0, 1235, 2400))
 
 def screens():
     (OUT / "screen").mkdir(parents=True, exist_ok=True)
@@ -609,23 +620,27 @@ def holo_assets():
     im.save(d / "card_address.png")
 
 def synth_audio_3d(path):
-    """Music + sound design from motion.py, plus ASMR barber sounds synced to the 3D action."""
+    """Original stereo music (tools/music.py) + sound design + ASMR barber sounds synced to the 3D action."""
     import wave
-    tmp = OUT / "_base.wav"
-    m.synth_audio(tmp)
-    with wave.open(str(tmp)) as wf:
-        sr = wf.getframerate()
-        base = np.frombuffer(wf.readframes(wf.getnframes()), np.int16).astype(np.float32) / 32767
-    tmp.unlink()
+    import music as mu
+    sr = mu.SR
+    base = mu.music(DUR, drops=(3.5,), breaks=((17.0, PROFILE_AT),), outro=END_T)
     n = len(base)
-    out = base * 0.8
+    out = base * 0.85
     r = np.random.default_rng(3)
 
     def add(sig, at, gain):
         i = int(at * sr)
         j = min(n, i + len(sig))
-        if i < n:
-            out[i:j] += sig[: j - i] * gain
+        if 0 <= i < n:
+            out[i:j] += (sig[: j - i] * gain)[:, None]
+
+    def whoosh(length=0.5):
+        s_ = r.normal(0, 1, int(length * sr))
+        x = np.linspace(0, 1, len(s_))
+        return np.convolve(s_, np.ones(30) / 30, "same") * np.sin(np.pi * x) ** 2 * 2.0
+    for c_ in CUTS:
+        add(whoosh(), c_ - 0.3, 0.16)
 
     def snip():  # scissors: bright metallic transient
         x = np.arange(int(0.09 * sr)) / sr
@@ -693,7 +708,7 @@ def synth_audio_3d(path):
     add(chime(), 31.35, 0.2)                 # scan
     out /= max(1e-6, np.abs(out).max()) / 0.89
     with wave.open(str(path), "wb") as wf:
-        wf.setnchannels(1)
+        wf.setnchannels(2)
         wf.setsampwidth(2)
         wf.setframerate(sr)
         wf.writeframes((out * 32767).astype(np.int16).tobytes())
@@ -707,7 +722,7 @@ def short_cut(src, dst, segments):
         labels.append(f"[v{i}][a{i}]")
     fc = ";".join(parts) + ";" + "".join(labels) + f"concat=n={len(segments)}:v=1:a=1[v][a]"
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-filter_complex", fc, "-map", "[v]", "-map", "[a]",
-                    "-c:v", "libx264", "-preset", "slow", "-b:v", "9M", "-maxrate", "12M", "-bufsize", "18M", "-pix_fmt", "yuv420p",
+                    "-c:v", "libx264", "-preset", "slow", "-b:v", "16M", "-maxrate", "20M", "-bufsize", "30M", "-pix_fmt", "yuv420p",
                     "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(dst)], check=True)
 
 def main():
@@ -738,7 +753,7 @@ def main():
     synth_audio_3d(wav)
     final = OUT / "atelier47_motion_3d.mp4"
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(silent), "-i", str(wav), "-c:v", "copy",
-                    "-af", "loudnorm=I=-14:TP=-1.5:LRA=7,aresample=48000,volume=-1.3dB,alimiter=limit=0.75:level=false", "-ar", "48000", "-c:a", "aac", "-b:a", "192k", "-shortest",
+                    "-af", "acompressor=threshold=0.1:ratio=3:attack=5:release=120:makeup=2,loudnorm=I=-14:TP=-1.5:LRA=9,aresample=48000,alimiter=limit=0.82:level=false", "-ar", "48000", "-c:a", "aac", "-b:a", "256k", "-shortest",
                     "-movflags", "+faststart", str(final)], check=True)
     wav.unlink()
     # 17 s version for A/B testing (hook + kinetic + phone + end), cut on the beat

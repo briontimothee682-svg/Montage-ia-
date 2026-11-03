@@ -401,7 +401,7 @@ const ready = (async () => {
   O.abo = textMesh('ABONNEZ-VOUS', fXB, gold, 920, 30);
   O.abo2 = textMesh('ABONNEZ-VOUS', fXB, gold, 740, 30);
   O.horaires = textMesh('HORAIRES', fBold, gold, 640, 28);
-  O.screenTex = new THREE.Texture(); O.screenTex.colorSpace = THREE.SRGBColorSpace;
+  O.screenTex = new THREE.Texture(); O.screenTex.colorSpace = THREE.SRGBColorSpace; O.screenTex.anisotropy = 16;
   O.phone = phone(O.screenTex, logoTex);
   const H5 = '/exports/holo/';
   const [tilesT, banT, follA, follB, pricesT, addrT] = await Promise.all([
@@ -652,6 +652,8 @@ window.renderAt = async (t, screen) => {
   for (const k of Object.keys(O)) if (O[k] && O[k].isObject3D) O[k].visible = false;
   O.arcs.forEach(a => { a.visible = false; });
   sweep.intensity = 0; amber.intensity = 0; cool.intensity = 0; bloom.strength = 0.32; dof.enabled = false;
+  { const ss = ((t >= 7.5 && t < 12.0) || (t >= 17.0 && t < 25.0)) ? 2 : 1;   // supersampling on the detailed scenes
+    if (renderer.getPixelRatio() !== ss) { renderer.setPixelRatio(ss); composer.setPixelRatio(ss); composer.setSize(W, H); } }
 
   // camera: slow handheld drift + push on every beat
   const bp = beat(t, 3.5) * (t < 36.0 ? 1 : 0);
