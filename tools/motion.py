@@ -145,6 +145,7 @@ def paste(canvas, img, cx, cy, alpha=1.0, scale=1.0, anchor="center"):
     canvas.alpha_composite(img, (x + sx0, y + sy0))
 
 SHADOW = 0.0   # drop-shadow strength under every text (the 3D reel turns it on for legibility)
+GLOW_SCALE = 1.0   # global multiplier on gold text glow
 
 def shadow_under(canvas, s, weight, size, tracking, cx, cy, alpha, scale, anchor):
     if SHADOW <= 0 or alpha <= 0.01:
@@ -164,6 +165,7 @@ def text(canvas, s, weight, size, cx, cy, color=CREAM, alpha=1.0, tracking=0, an
         x0, y0 = cx, cy - m.height / 2
     else:
         x0, y0 = cx - m.width, cy - m.height / 2
+    glow *= GLOW_SCALE
     if glow > 0:
         r = max(6, size // 6)
         g = glow_mask(s, weight, size, tracking, r)
@@ -192,9 +194,9 @@ def letters(canvas, s, weight, size, cx, cy, t, start, color=CREAM, tracking=0, 
             sc, dy, al = 1.0, lerp(size * 0.6, 0, ease_out(p)), clamp(p * 1.6)
         m = text_mask(ch, weight, size, 0)
         shadow_under(canvas, ch, weight, size, 0, ccx, cy + dy, al, sc, "center")
-        if glow > 0 and p > 0.5:
+        if glow * GLOW_SCALE > 0 and p > 0.5:
             r = max(6, size // 6)
-            paste(canvas, colorize(glow_mask(ch, weight, size, 0, r), GOLD, glow * al), ccx, cy + dy, scale=sc)
+            paste(canvas, colorize(glow_mask(ch, weight, size, 0, r), GOLD, glow * GLOW_SCALE * al), ccx, cy + dy, scale=sc)
         img = colorize(m, color, al, sweep, ccx - m.width / 2, cy + dy - m.height / 2)
         paste(canvas, img, ccx, cy + dy, scale=sc)
 

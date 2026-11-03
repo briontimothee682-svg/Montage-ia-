@@ -46,6 +46,7 @@ def base_frame(fi):
 # ------------------------------------------------------------------ 2D overlays (the 3D layer carries logo, titles, tools, phone)
 # ------------------------------------------------------------------ legibility: dark plates behind every text block
 m.SHADOW = 0.9
+m.GLOW_SCALE = 0.4
 MUTED = (226, 220, 208)          # secondary text, brighter than the 2D reel
 
 @lru_cache(maxsize=None)
@@ -223,23 +224,23 @@ def light_trails(arr, t):
         glow = core.filter(ImageFilter.GaussianBlur(7))
         c_ = np.asarray(core.resize((W, H), Image.BILINEAR)).astype(np.float32)[..., None] / 255
         g_ = np.asarray(glow.resize((W, H), Image.BILINEAR)).astype(np.float32)[..., None] / 255
-        arr += c_ * np.array([255, 250, 240], np.float32) * 1.4 + g_ * np.array([110, 220, 255], np.float32) * 2.2
+        arr += c_ * np.array([255, 250, 240], np.float32) * 1.0 + g_ * np.array([110, 220, 255], np.float32) * 1.5
         burst = max(0.0, 1 - abs(d) / 0.09)          # convergence burst
         if burst > 0:
             yy, xx = np.ogrid[0:H, 0:W]
             rad = np.exp(-(((xx - cx) / 260.0) ** 2 + ((yy - cy) / 260.0) ** 2))
-            arr += rad[..., None] * np.array([200, 240, 255], np.float32) * 1.3 * burst
+            arr += rad[..., None] * np.array([200, 240, 255], np.float32) * 0.7 * burst
     return arr
 
 def streaks(img):
     """Anamorphic horizontal light streaks on the brightest highlights."""
     arr = np.asarray(img).astype(np.float32)
     lum = arr.max(axis=2)
-    bright = np.clip((lum - 205) / 50.0, 0, 1) ** 2
+    bright = np.clip((lum - 228) / 27.0, 0, 1) ** 2
     sm = Image.fromarray((bright * 255).astype(np.uint8), "L").resize((W // 8, H // 8), Image.BOX)
     sm = sm.resize((W // 96, H // 8), Image.BOX).resize((W // 8, H // 8), Image.BILINEAR)
     st = np.asarray(sm.resize((W, H), Image.BILINEAR)).astype(np.float32)[..., None] / 255.0
-    arr += st * np.array([255, 222, 165], np.float32) * 0.55
+    arr += st * np.array([255, 222, 165], np.float32) * 0.22
     return arr
 
 @lru_cache(maxsize=None)
@@ -264,7 +265,7 @@ def composite(fi):
             sp = leak_sprite()
             a0, a1 = max(0, x0), min(W, x0 + W // 2)
             if a1 > a0:
-                arr[:, a0:a1] += sp[:, a0 - x0:a1 - x0] * 0.45 * k
+                arr[:, a0:a1] += sp[:, a0 - x0:a1 - x0] * 0.22 * k
     img = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB")
     for cut in CUTS:
         d = t - cut
@@ -279,7 +280,7 @@ def composite(fi):
                 r = Image.fromarray(np.roll(np.asarray(r), sh, axis=1))
                 b = Image.fromarray(np.roll(np.asarray(b), -sh, axis=1))
                 img = Image.merge("RGB", (r, g, b))
-            fl = max(0.0, 1 - abs(d) / 0.1) * 0.5
+            fl = max(0.0, 1 - abs(d) / 0.1) * 0.32
             if fl > 0:
                 img = Image.blend(img, Image.new("RGB", (W, H), (255, 238, 200)), fl)
     if t > DUR - 0.7:
