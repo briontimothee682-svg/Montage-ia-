@@ -6,6 +6,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { TTFLoader } from 'three/addons/loaders/TTFLoader.js';
 import { Font } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
@@ -71,13 +72,15 @@ const cool = new THREE.PointLight(0x7fb0ff, 0, 0, 1); scene.add(cool);
 const target = new THREE.WebGLRenderTarget(W, H, { samples: 4, type: THREE.HalfFloatType });
 const composer = new EffectComposer(renderer, target);
 composer.addPass(new RenderPass(scene, camera));
+const dof = new BokehPass(scene, camera, { focus: CAM_Z, aperture: 0.00012, maxblur: 0.006 });
+dof.enabled = false; composer.addPass(dof);
 const bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), 0.18, 0.45, 0.97);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
 // ------------------------------------------------------------ materials
-const gold = new THREE.MeshPhysicalMaterial({ color: 0xd4ad5f, metalness: 1.0, roughness: 0.34, envMapIntensity: 0.9, clearcoat: 0.25, clearcoatRoughness: 0.25 });
-const goldBrushed = new THREE.MeshStandardMaterial({ color: 0xc09a4c, metalness: 1.0, roughness: 0.42, envMapIntensity: 0.85 });
+const gold = new THREE.MeshPhysicalMaterial({ color: 0xebc874, metalness: 1.0, roughness: 0.26, envMapIntensity: 1.3, clearcoat: 0.25, clearcoatRoughness: 0.25 });
+const goldBrushed = new THREE.MeshStandardMaterial({ color: 0xdcb565, metalness: 1.0, roughness: 0.34, envMapIntensity: 1.2 });
 const blackGloss = new THREE.MeshPhysicalMaterial({ color: 0x0d0d0d, metalness: 0.5, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.06 });
 const blackMatte = new THREE.MeshStandardMaterial({ color: 0x141414, metalness: 0.2, roughness: 0.6 });
 const cream = new THREE.MeshPhysicalMaterial({ color: 0xa39b8d, metalness: 0.15, roughness: 0.55, clearcoat: 0.4, clearcoatRoughness: 0.3 });
@@ -131,12 +134,12 @@ const brushLines = canvasTex2(512, 64, (x, w, h) => {          // fine brushed-m
   x.putImageData(id, 0, 0);
 }, false);
 brushLines.repeat.set(1, 6);
-const polishedGold = new THREE.MeshPhysicalMaterial({ color: 0xd6af62, metalness: 1, roughness: 0.27, clearcoat: 0.35, clearcoatRoughness: 0.2, envMapIntensity: 0.95 });
-const brushedGold2 = new THREE.MeshPhysicalMaterial({ color: 0xc29b4e, metalness: 1, roughness: 0.4, roughnessMap: brushLines, bumpMap: brushLines, bumpScale: 0.4, anisotropy: 0.7, envMapIntensity: 1.2 });
+const polishedGold = new THREE.MeshPhysicalMaterial({ color: 0xecc978, metalness: 1, roughness: 0.2, clearcoat: 0.4, clearcoatRoughness: 0.15, envMapIntensity: 1.25 });
+const brushedGold2 = new THREE.MeshPhysicalMaterial({ color: 0xe0b968, metalness: 1, roughness: 0.32, roughnessMap: brushLines, bumpMap: brushLines, bumpScale: 0.4, anisotropy: 0.7, envMapIntensity: 1.2 });
 const mirrorSteel = new THREE.MeshPhysicalMaterial({ color: 0xdedee2, metalness: 1, roughness: 0.1, clearcoat: 0.6, clearcoatRoughness: 0.05, envMapIntensity: 1.0 });
 const brushedSteel = new THREE.MeshPhysicalMaterial({ color: 0xcfcfd3, metalness: 1, roughness: 0.3, roughnessMap: brushLines, anisotropy: 0.85, envMapIntensity: 1.0 });
 const softTouch = new THREE.MeshPhysicalMaterial({ color: 0x1a1a1a, metalness: 0, roughness: 0.55, clearcoat: 0.2, clearcoatRoughness: 0.5, sheen: 0.5, sheenColor: new THREE.Color(0x3a3a3a), sheenRoughness: 0.8 });
-const knurlGold = new THREE.MeshPhysicalMaterial({ color: 0xd0a85a, metalness: 1, roughness: 0.42, bumpMap: knurlTex, bumpScale: 2.4, envMapIntensity: 0.9 });
+const knurlGold = new THREE.MeshPhysicalMaterial({ color: 0xe6c070, metalness: 1, roughness: 0.34, bumpMap: knurlTex, bumpScale: 2.4, envMapIntensity: 1.2 });
 const knurlBlack = new THREE.MeshPhysicalMaterial({ color: 0x141414, metalness: 0.5, roughness: 0.55, bumpMap: knurlTex, bumpScale: 2.2 });
 const rubberBlack = new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: 0.85, metalness: 0 });
 const acetate = new THREE.MeshPhysicalMaterial({ color: 0x0c0c0c, metalness: 0, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.03 });
@@ -251,7 +254,7 @@ function jar() {
   g.add(new THREE.Mesh(new THREE.CylinderGeometry(110, 112, 110, 128), softTouch));
   const ridges = canvasTex2(512, 32, (x, w, h) => { for (let i = 0; i < w; i += 6) { x.fillStyle = (i / 6) % 2 ? '#202020' : '#e0e0e0'; x.fillRect(i, 0, 6, h); } }, false);
   ridges.repeat.set(6, 1);
-  const lidSide = new THREE.MeshPhysicalMaterial({ color: 0xc6a056, metalness: 1, roughness: 0.36, bumpMap: ridges, bumpScale: 1.4 });
+  const lidSide = new THREE.MeshPhysicalMaterial({ color: 0xe2bc6c, metalness: 1, roughness: 0.28, bumpMap: ridges, bumpScale: 1.4 });
   const lidTop = new THREE.MeshPhysicalMaterial({ map: lidTopTex, metalness: 1, roughness: 0.34, bumpMap: lidTopTex, bumpScale: 0.8 });
   const lid = new THREE.Mesh(new THREE.CylinderGeometry(116, 116, 40, 128), [lidSide, lidTop, lidTop]); lid.position.y = 74; g.add(lid);
   const t = new THREE.Mesh(new THREE.TorusGeometry(116, 4, 12, 128), polishedGold); t.rotation.x = Math.PI / 2; t.position.y = 94; g.add(t);
@@ -298,7 +301,7 @@ function pocketWatch() {
 }
 
 const blackGlass = new THREE.MeshPhysicalMaterial({ color: 0x070707, metalness: 0.25, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.03 });
-const titanium = new THREE.MeshPhysicalMaterial({ color: 0xc6a056, metalness: 1, roughness: 0.32, clearcoat: 0.3, clearcoatRoughness: 0.2 });
+const titanium = new THREE.MeshPhysicalMaterial({ color: 0xe2bc6c, metalness: 1, roughness: 0.26, clearcoat: 0.3, clearcoatRoughness: 0.2 });
 const blackTi = new THREE.MeshPhysicalMaterial({ color: 0x161616, metalness: 1, roughness: 0.3, clearcoat: 0.9, clearcoatRoughness: 0.05 });
 const lensGlass = new THREE.MeshPhysicalMaterial({ color: 0x05060a, metalness: 0.1, roughness: 0.02, clearcoat: 1, clearcoatRoughness: 0 });
 const holoAdd = (color, opacity) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
@@ -466,7 +469,7 @@ const ready = (async () => {
     tex(`${H5}card_verso.png`), linTex(`${H5}card_verso_metal.png`), linTex(`${H5}card_verso_rough.png`), linTex(`${H5}card_verso_bump.png`)]);
   const qr = await (await fetch(`${H5}qr.json`)).json();
   const face = (map, metal, rough, bump) => new THREE.MeshPhysicalMaterial({ map, metalnessMap: metal, metalness: 1, roughnessMap: rough, roughness: 1, bumpMap: bump, bumpScale: 1.0, clearcoat: 0.08, clearcoatRoughness: 0.6, envMapIntensity: 0.75 });
-  const edgeGold = new THREE.MeshPhysicalMaterial({ color: 0xc6a056, metalness: 1, roughness: 0.32, clearcoat: 0.3 });
+  const edgeGold = new THREE.MeshPhysicalMaterial({ color: 0xe2bc6c, metalness: 1, roughness: 0.26, clearcoat: 0.3 });
   O.card = new THREE.Mesh(new RoundedBoxGeometry(860, 557, 10, 6, 26), [edgeGold, edgeGold, edgeGold, edgeGold, face(rectoC, rectoMe, rectoRo, rectoBu), face(versoC, versoMe, versoRo, versoBu)]);
   // QR plate with raised modules (instanced)
   const QS = qr.size / 2, mat = qr.matrix, NQ = mat.length + 8, cell = QS / NQ;
@@ -510,11 +513,11 @@ const ready = (async () => {
   desk.rotation.x = -Math.PI / 2; desk.position.set(0, -640, -500);
   const wallTex = canvasTex2(1024, 1024, (x, w, h) => {
     x.fillStyle = '#06080a'; x.fillRect(0, 0, w, h);
-    let g1 = x.createRadialGradient(w * 0.74, h * 0.38, 0, w * 0.74, h * 0.38, w * 0.55); g1.addColorStop(0, 'rgba(40,175,205,0.65)'); g1.addColorStop(0.45, 'rgba(18,90,115,0.3)'); g1.addColorStop(1, 'rgba(0,0,0,0)');
+    let g1 = x.createRadialGradient(w * 0.74, h * 0.38, 0, w * 0.74, h * 0.38, w * 0.55); g1.addColorStop(0, 'rgba(60,85,200,0.6)'); g1.addColorStop(0.45, 'rgba(30,36,110,0.32)'); g1.addColorStop(1, 'rgba(0,0,0,0)');
     x.fillStyle = g1; x.fillRect(0, 0, w, h);
     let g2 = x.createRadialGradient(w * 0.18, h * 0.62, 0, w * 0.18, h * 0.62, w * 0.45); g2.addColorStop(0, 'rgba(210,140,60,0.38)'); g2.addColorStop(1, 'rgba(0,0,0,0)');
     x.fillStyle = g2; x.fillRect(0, 0, w, h);
-    x.shadowColor = 'rgba(90,230,255,1)'; x.shadowBlur = 40; x.fillStyle = 'rgba(170,245,255,0.9)'; x.fillRect(w * 0.84, h * 0.05, 8, h * 0.62);
+    x.shadowColor = 'rgba(120,140,255,1)'; x.shadowBlur = 40; x.fillStyle = 'rgba(190,200,255,0.9)'; x.fillRect(w * 0.84, h * 0.05, 8, h * 0.62);
     const sh = x.createLinearGradient(0, h * 0.55, 0, h); sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,0.85)'); x.shadowBlur = 0; x.fillStyle = sh; x.fillRect(0, 0, w, h);
   });
   const wall = new THREE.Mesh(new THREE.PlaneGeometry(6400, 4400), new THREE.MeshBasicMaterial({ map: wallTex }));
@@ -525,7 +528,7 @@ const ready = (async () => {
   const rb = seeded(31);
   for (let i = 0; i < 26; i++) {
     const warm = rb() < 0.75, sz = lerp(70, 260, rb());
-    const b = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), new THREE.MeshBasicMaterial({ map: bokehTex, color: warm ? 0xffb860 : 0x6fe0ff, transparent: true, opacity: lerp(0.05, 0.16, rb()), blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    const b = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), new THREE.MeshBasicMaterial({ map: bokehTex, color: warm ? 0xffc870 : 0x8a9cff, transparent: true, opacity: lerp(0.05, 0.16, rb()), blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
     b.position.set(lerp(-1700, 1700, rb()), lerp(-350, 1100, rb()), lerp(-2300, -1300, rb())); O.env.add(b);
   }
   const standMat = blackTi;
@@ -558,9 +561,9 @@ const ready = (async () => {
     geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NP * 3), 3));
     O.lp = new THREE.Points(geo, new THREE.PointsMaterial({ size: 30, color: 0xf0c878, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
     O.lp.userData = { start, target, NP };
-    O.shock = new THREE.Mesh(new THREE.TorusGeometry(1, 0.01, 8, 160), holoAdd(0xbff4ff, 0));
-    O.arcs = [0, 1, 2].map(i => new THREE.Mesh(new THREE.TorusGeometry(352 + i * 14, 2.4, 8, 64, Math.PI * (0.35 + 0.1 * i)), holoAdd(i === 1 ? 0x8fe6ff : 0xffd38a, 0)));
-    const haloTex = canvasTex2(512, 512, (x, w, h) => { const g = x.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); g.addColorStop(0, 'rgba(40,170,190,0.55)'); g.addColorStop(0.45, 'rgba(200,120,40,0.25)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); });
+    O.shock = new THREE.Mesh(new THREE.TorusGeometry(1, 0.01, 8, 160), holoAdd(0xc9d3ff, 0));
+    O.arcs = [0, 1, 2].map(i => new THREE.Mesh(new THREE.TorusGeometry(352 + i * 14, 2.4, 8, 64, Math.PI * (0.35 + 0.1 * i)), holoAdd(i === 1 ? 0x9fb2ff : 0xffdc96, 0)));
+    const haloTex = canvasTex2(512, 512, (x, w, h) => { const g = x.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); g.addColorStop(0, 'rgba(70,95,210,0.5)'); g.addColorStop(0.45, 'rgba(120,70,200,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); });
     O.halo = new THREE.Mesh(new THREE.PlaneGeometry(1900, 1900), new THREE.MeshBasicMaterial({ map: haloTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
   }
   // ---- barber station for the tool showcase (tools resting on walnut, cream towel, real shadows)
@@ -648,7 +651,7 @@ window.renderAt = async (t, screen) => {
   const O = await ready;
   for (const k of Object.keys(O)) if (O[k] && O[k].isObject3D) O[k].visible = false;
   O.arcs.forEach(a => { a.visible = false; });
-  sweep.intensity = 0; amber.intensity = 0; cool.intensity = 0; bloom.strength = 0.32;
+  sweep.intensity = 0; amber.intensity = 0; cool.intensity = 0; bloom.strength = 0.32; dof.enabled = false;
 
   // camera: slow handheld drift + push on every beat
   const bp = beat(t, 3.5) * (t < 36.0 ? 1 : 0);
@@ -743,6 +746,8 @@ window.renderAt = async (t, screen) => {
     }
     const sp = prog(t, 9.0, 10.2);
     if (sp > 0 && sp < 1) { sweep.intensity = 3 * Math.sin(sp * Math.PI); sweep.position.set(lerp(-800, 800, sp), 960 - 700, 600); }
+    dof.enabled = true; S.updateMatrixWorld(true);
+    dof.uniforms.focus.value = camera.position.distanceTo(O.st.clip.getWorldPosition(new THREE.Vector3()));
   }
 
   // S4 prices 12-17: 3D title
@@ -769,7 +774,7 @@ window.renderAt = async (t, screen) => {
     const p = easeOut(prog(t, 17.0, 17.95));
     const s = Math.max(0, t - 17.95);
     const bt = beat(t, 18.0);
-    const tapT = [18.42, L.profileAt, 20.92, ...O.N.slice(1).map(n => n.tap)];
+    const tapT = [19.35, 20.12, L.profileAt, 20.92, ...O.N.slice(1).map(n => n.tap)];
     const taps = tapT.map(x => Math.sin(Math.PI * prog(t, x - 0.05, x + 0.15))).reduce((a, b) => Math.max(a, b), 0);
     const spin = Math.PI * 2 * easeInOut(prog(t, 23.4, 23.85));
     const exit = easeIn3(prog(t, 24.82, 25.0));
@@ -812,7 +817,7 @@ window.renderAt = async (t, screen) => {
     // likes: 3D hearts out of the like button
     const hIcon = phoneLocal(new THREE.Vector3(L.heart[0], L.heart[1], 34));
     O.hearts.forEach((h, i) => {
-      const st = 18.45 + i * 0.075, q = prog(t, st, st + 1.15);
+      const st = 19.37 + i * 0.045, q = prog(t, st, st + 1.1);
       h.visible = q > 0 && q < 1;
       if (!h.visible) return;
       const r = seeded(500 + i);
@@ -825,7 +830,7 @@ window.renderAt = async (t, screen) => {
     // comments: bubbles out of the comment button
     const cIcon = phoneLocal(new THREE.Vector3(L.comment[0], L.comment[1], 34));
     O.bubbles.forEach((b, i) => {
-      const st = 18.9 + i * 0.2, q = prog(t, st, st + 1.2);
+      const st = 19.6 + i * 0.12, q = prog(t, st, st + 1.1);
       b.visible = q > 0 && q < 1;
       if (!b.visible) return;
       b.position.set(cIcon.x + 80 + i * 40 + 40 * q, cIcon.y + 140 * easeOut(q) + i * 30, cIcon.z + 160 * easeOut(q));

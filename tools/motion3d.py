@@ -20,6 +20,8 @@ from motion import (W, H, FPS, DUR, CUTS, GOLD, CREAM, MUTED, PANEL, ADDRESS, CI
                     panel, star, beat_pulse, SPARKS, FEATURES)
 
 ROOT = m.ROOT
+m.GOLD_LIGHT, m.GOLD, m.GOLD_DARK = (252, 232, 168), (230, 192, 100), (198, 156, 66)
+GOLD = m.GOLD
 DUR = 36.5                       # 8 s Instagram phone sequence + 4.5 s business-card scene
 CUTS = [3.5, 7.5, 12.0, 17.0, 25.0, 28.5, 33.0]
 END_T = 33.0
@@ -32,25 +34,27 @@ F3D = OUT / "frames3d"
 def grade_maps():
     y, x = np.mgrid[0:H, 0:W].astype(np.float32)
     glow = np.exp(-(((x - W / 2) / (W * 0.8)) ** 2 + ((y - H * 0.4) / (H * 0.5)) ** 2))
-    teal = np.exp(-(((x - W * 0.15) / (W * 0.7)) ** 2 + ((y - H * 0.18) / (H * 0.45)) ** 2))
-    amber = np.exp(-(((x - W * 0.9) / (W * 0.6)) ** 2 + ((y - H * 0.86) / (H * 0.38)) ** 2))
-    add = (np.array([18, 13, 5], np.float32) * glow[..., None] + np.array([6, 46, 54], np.float32) * teal[..., None]
-           + np.array([50, 25, 5], np.float32) * amber[..., None])
+    top = np.exp(-(((x - W * 0.2) / (W * 0.75)) ** 2 + ((y - H * 0.15) / (H * 0.5)) ** 2))
+    low = np.exp(-(((x - W * 0.85) / (W * 0.7)) ** 2 + ((y - H * 0.9) / (H * 0.45)) ** 2))
+    add = np.array([16, 12, 5], np.float32) * glow[..., None]
+    night = add + np.array([8, 16, 52], np.float32) * top[..., None] + np.array([6, 10, 34], np.float32) * low[..., None]
+    indigo = add + np.array([24, 12, 60], np.float32) * top[..., None] + np.array([10, 8, 40], np.float32) * low[..., None]
     vign = np.clip(1 - 0.5 * ((((x - W / 2) / (W / 2)) ** 2 + ((y - H / 2) / (H / 2)) ** 2) / 2) ** 1.2, 0, 1)[..., None]
-    return add, vign
+    return (night, indigo), vign
 
 def base_frame(fi):
     im = Image.open(F3D / f"f{fi:04d}.png").convert("RGB")
     arr = np.asarray(im).astype(np.float32)
-    add, vign = grade_maps()
-    arr = (arr + add) * vign
+    (night, indigo), vign = grade_maps()
+    k = 0.5 + 0.5 * math.sin(fi / FPS * 0.33 - 1.2)     # the blue slowly drifts between midnight and indigo
+    arr = (arr + night * (1 - k) + indigo * k) * vign
     return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
 
 # ------------------------------------------------------------------ 2D overlays (the 3D layer carries logo, titles, tools, phone)
 # ------------------------------------------------------------------ typography: solid colour tags instead of gold-framed plates
 m.SHADOW = 0.6
 m.GLOW_SCALE = 0.3
-TEAL, TEAL_D, AMBER, INK = (18, 92, 102), (9, 44, 50), (236, 158, 70), (14, 14, 14)
+TEAL, TEAL_D, AMBER, INK = (24, 36, 88), (11, 17, 44), (240, 196, 98), (14, 14, 14)   # bleu nuit, nuit profonde, or clair, encre
 MUTED = (224, 218, 206)
 
 @lru_cache(maxsize=None)
@@ -232,12 +236,12 @@ def light_trails(arr, t):
         glow = core.filter(ImageFilter.GaussianBlur(7))
         c_ = np.asarray(core.resize((W, H), Image.BILINEAR)).astype(np.float32)[..., None] / 255
         g_ = np.asarray(glow.resize((W, H), Image.BILINEAR)).astype(np.float32)[..., None] / 255
-        arr += c_ * np.array([255, 250, 240], np.float32) * 1.0 + g_ * np.array([110, 220, 255], np.float32) * 1.5
+        arr += c_ * np.array([255, 250, 240], np.float32) * 1.0 + g_ * np.array([130, 150, 255], np.float32) * 1.5
         burst = max(0.0, 1 - abs(d) / 0.09)          # convergence burst
         if burst > 0:
             yy, xx = np.ogrid[0:H, 0:W]
             rad = np.exp(-(((xx - cx) / 260.0) ** 2 + ((yy - cy) / 260.0) ** 2))
-            arr += rad[..., None] * np.array([200, 240, 255], np.float32) * 0.7 * burst
+            arr += rad[..., None] * np.array([210, 220, 255], np.float32) * 0.7 * burst
     return arr
 
 def streaks(img):
@@ -306,6 +310,7 @@ BANNER_Y = 130          # banner centre on the 560x1200 screen (top, over the ap
 FOLLOW_PILL = (330, 986)
 HEART_ICON, COMMENT_ICON = (515, 700), (515, 815)
 POST_START, PROFILE_AT, TILES_OUT = 18.0, 20.25, 22.3
+LIKE_AT, FOLLOW_CLICK = 19.35, 20.12
 GRID_Y, GRID_T = 580, 172
 
 def fr_num(n):
@@ -396,14 +401,10 @@ def post_screen(t):
     scr.paste(post_media(t), (0, 0))
     scr.alpha_composite(reel_gradients())
     text(scr, "Reels", "Bold", 30, 26, 62, CREAM, anchor="left")
-    big = prog(t, 18.42, 18.95)                       # double-tap heart
-    if 0 < big < 1:
-        sc = ease_back(clamp(big * 2.2), 2.0) * (1 - 0.15 * big)
-        paste(scr, ig_icon("heart", True, 200), 280, 560, alpha=clamp((1 - big) * 2.5), scale=max(0.01, sc))
-    liked = t >= 18.45
-    lk = int(lerp(IG["likes"][0], IG["likes"][1], ease_in_out(prog(t, 18.45, 20.1))))
-    cm = int(lerp(IG["comments"][0], IG["comments"][1], ease_in_out(prog(t, 18.9, 20.1))))
-    paste(scr, ig_icon("heart", liked, 50), *HEART_ICON, scale=1 + 0.35 * math.sin(math.pi * prog(t, 18.45, 18.7)))
+    liked = t >= LIKE_AT
+    lk = int(lerp(IG["likes"][0], IG["likes"][1], ease_in_out(prog(t, LIKE_AT, 20.2))))
+    cm = int(lerp(IG["comments"][0], IG["comments"][1], ease_in_out(prog(t, 19.6, 20.2))))
+    paste(scr, ig_icon("heart", liked, 50), *HEART_ICON, scale=1 + 0.35 * math.sin(math.pi * prog(t, LIKE_AT, LIKE_AT + 0.25)))
     text(scr, fr_num(lk), "SemiBold", 18, HEART_ICON[0], HEART_ICON[1] + 44, CREAM)
     paste(scr, ig_icon("comment", size=46), *COMMENT_ICON)
     text(scr, fr_num(cm), "SemiBold", 18, COMMENT_ICON[0], COMMENT_ICON[1] + 44, CREAM)
@@ -413,7 +414,7 @@ def post_screen(t):
         paste(scr, Image.new("RGBA", (6, 6), (243, 238, 227, 255)), 503 + k * 12, 1030)
     scr.alpha_composite(m.avatar(52), (22, 960))
     text(scr, "atelier47barbier", "SemiBold", 21, 86, 986, CREAM, anchor="left")
-    followed = t >= PROFILE_AT
+    followed = t >= FOLLOW_CLICK
     pill = panel(120, 40, radius=12, fill=GOLD if not followed else (40, 38, 34), border_a=0 if not followed else 160, bw=1)
     paste(scr, pill, *FOLLOW_PILL)
     text(scr, "Abonné" if followed else "S'abonner", "SemiBold", 18, FOLLOW_PILL[0], FOLLOW_PILL[1], m.BLACK if not followed else CREAM)
@@ -424,7 +425,39 @@ def post_screen(t):
     paste(scr, Image.new("RGBA", (560, 3), (243, 238, 227, 70)), 0, 1128, anchor="left")
     paste(scr, Image.new("RGBA", (int(560 * pr) + 1, 3), (243, 238, 227, 230)), 0, 1128, anchor="left")
     nav_bar(scr)
+    draw_cursor(scr, t)
     return scr
+
+@lru_cache(maxsize=None)
+def cursor_img():
+    from PIL import ImageDraw
+    k = 3
+    pts = [(0, 0), (0, 36), (9, 27), (16, 42), (23, 39), (16, 25), (28, 25)]
+    im = Image.new("RGBA", (34 * k, 46 * k), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    big = [(x * k + 3 * k, y * k + 2 * k) for x, y in pts]
+    d.polygon(big, fill=(255, 255, 255, 255), outline=(10, 10, 10, 255), width=2 * k)
+    return im.resize((34, 46), Image.LANCZOS)
+
+CURSOR_PATH = [(19.0, (440, 1190)), (19.28, (HEART_ICON[0] - 2, HEART_ICON[1] + 4)), (19.72, (HEART_ICON[0] - 2, HEART_ICON[1] + 4)),
+               (20.04, (FOLLOW_PILL[0] - 10, FOLLOW_PILL[1] + 4)), (20.4, (FOLLOW_PILL[0] - 10, FOLLOW_PILL[1] + 4))]
+
+def draw_cursor(scr, t):
+    if not (CURSOR_PATH[0][0] <= t < CURSOR_PATH[-1][0]):
+        return
+    for (t0, a), (t1, b) in zip(CURSOR_PATH, CURSOR_PATH[1:]):
+        if t0 <= t < t1:
+            q = ease_in_out(prog(t, t0, t1))
+            x, y = lerp(a[0], b[0], q), lerp(a[1], b[1], q)
+            break
+    press = max(math.sin(math.pi * prog(t, LIKE_AT - 0.04, LIKE_AT + 0.08)), math.sin(math.pi * prog(t, FOLLOW_CLICK - 0.04, FOLLOW_CLICK + 0.08)))
+    al = clamp((t - CURSOR_PATH[0][0]) / 0.12) * clamp((CURSOR_PATH[-1][0] - t) / 0.15)
+    for ct in (LIKE_AT, FOLLOW_CLICK):
+        q = prog(t, ct - 0.02, ct + 0.32)
+        if 0 < q < 1:
+            paste(scr, m.ring_img(int(lerp(6, 46, ease_out(q))), 3, CREAM, 255, 1000), x, y, alpha=(1 - q) * al)
+    c = cursor_img()
+    paste(scr, c, x + c.width * 0.42, y + c.height * 0.45, alpha=al, scale=1 - 0.15 * press)
 
 def profile_screen(t, lifted):
     scr = Image.new("RGBA", (560, 1200), (0, 0, 0, 255))
@@ -476,7 +509,7 @@ def app_screen(t):
         else:
             scr = prof
     # taps (ripples) and notification banners over the app
-    for tx, ty, tt in [(280, 560, 18.42), (FOLLOW_PILL[0], FOLLOW_PILL[1], PROFILE_AT), (146, 490, 20.92)]:
+    for tx, ty, tt in [(146, 490, 20.92)]:
         q = prog(t, tt - 0.03, tt + 0.3)
         if 0 < q < 1:
             paste(scr, m.ring_img(int(lerp(8, 90, ease_out(q))), 3, CREAM, 255, 1000), tx, ty, alpha=1 - q)
@@ -640,12 +673,12 @@ def synth_audio_3d(path):
         add(click(), tap, 0.55)              # tapped
         add(pop(), tap + 0.08, 0.25)         # section rises out of the phone
     add(suck(0.4), 17.95, 0.15)              # camera pushes in on the post
-    add(click(), 18.42, 0.5)                 # double tap
+    add(click(), LIKE_AT, 0.55)              # cursor clicks the heart
     for k in range(18):                      # hearts flying out
-        add(pop(), 18.45 + k * 0.075, 0.06)
+        add(pop(), LIKE_AT + 0.02 + k * 0.05, 0.06)
     for k in range(5):                       # comment bubbles
-        add(pop(), 18.9 + k * 0.2, 0.12)
-    add(click(), PROFILE_AT, 0.55)           # follow tapped -> profile
+        add(pop(), 19.6 + k * 0.12, 0.12)
+    add(click(), FOLLOW_CLICK, 0.55)         # cursor clicks follow -> profile
     add(click(), 20.92, 0.6)                 # follow pressed on the card
     add(chime(), 21.0, 0.18)                 # new follower
     for k in range(9):                       # posts flying to the wall
