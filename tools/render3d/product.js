@@ -27,15 +27,15 @@ function studioEnv() {
   return pmrem.fromScene(s, 0.015).texture;
 }
 scene.environment = studioEnv();
-const camera = new THREE.PerspectiveCamera(32, W / H, 10, 10000);
+const camera = new THREE.PerspectiveCamera(32, W / H, 10, 20000);
 
 const canvasTex = (w, h, draw, srgb = true) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.anisotropy = 8; return t; };
 // backdrop: teal to amber gradient wall
-const wall = new THREE.Mesh(new THREE.PlaneGeometry(9000, 9000), new THREE.MeshBasicMaterial({ map: canvasTex(512, 1024, (x, w, h) => {
+const wall = new THREE.Mesh(new THREE.SphereGeometry(7000, 64, 32), new THREE.MeshBasicMaterial({ side: THREE.BackSide, map: canvasTex(1024, 1024, (x, w, h) => {
   const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#070b1c'); g.addColorStop(0.5, '#101a3c'); g.addColorStop(1, '#0a0d18'); x.fillStyle = g; x.fillRect(0, 0, w, h);
   const r = x.createRadialGradient(w * 0.5, h * 0.42, 0, w * 0.5, h * 0.42, w * 0.7); r.addColorStop(0, 'rgba(255,214,160,0.32)'); r.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = r; x.fillRect(0, 0, w, h);
 }) }));
-wall.position.set(0, 400, -3200); scene.add(wall);
+wall.position.set(0, 0, 0); wall.rotation.y = Math.PI * 0.5; scene.add(wall);
 // marble plinth
 const marbleTex = canvasTex(1024, 512, (x, w, h) => {
   x.fillStyle = '#121212'; x.fillRect(0, 0, w, h);
@@ -91,9 +91,11 @@ const ready = (async () => {
   const jb = new THREE.Mesh(new THREE.CylinderGeometry(150, 152, 150, 128, 1, true), labelMat('Cire coiffante', 'Tenue forte · fini mat'));
   jar.add(jb);
   const jbot = new THREE.Mesh(new THREE.CylinderGeometry(152, 152, 4, 128), softBlack); jbot.position.y = -75; jar.add(jbot);
-  const lid = new THREE.Mesh(new THREE.CylinderGeometry(158, 158, 56, 128), gold); lid.position.y = 103; jar.add(lid);
+  const lidG = new THREE.Group(); lidG.position.y = 103; jar.add(lidG);
+  const lid = new THREE.Mesh(new THREE.CylinderGeometry(158, 158, 56, 128), gold); lidG.add(lid);
   const lidTop = new THREE.Mesh(new THREE.CircleGeometry(156, 96), new THREE.MeshPhysicalMaterial({ map: canvasTex(512, 512, (x, w, h) => { x.fillStyle = '#c9a24b'; x.fillRect(0, 0, w, h); for (let r = 30; r < w / 2; r += 3) { x.strokeStyle = `rgba(255,240,200,${0.05 + 0.08 * Math.random()})`; x.beginPath(); x.arc(w / 2, h / 2, r, 0, Math.PI * 2); x.stroke(); } x.fillStyle = '#6e5320'; x.font = '700 58px PoppinsB, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('TIM DESIGN', w / 2, h / 2); }), metalness: 1, roughness: 0.32 }));
-  lidTop.rotation.x = -Math.PI / 2; lidTop.position.y = 131.5; jar.add(lidTop);
+  lidTop.rotation.x = -Math.PI / 2; lidTop.position.y = 28.5; lidG.add(lidTop);
+  const wax = new THREE.Mesh(new THREE.CylinderGeometry(140, 140, 6, 96), new THREE.MeshPhysicalMaterial({ color: 0x2a2015, roughness: 0.35, clearcoat: 0.6 })); wax.position.y = 70; jar.add(wax);
   jar.position.set(-290, 75, 140); jb.rotation.y = -Math.PI * 0.5; g.add(jar);
   // 2. beard oil: amber glass, gold dropper
   const oil = new THREE.Group();
@@ -104,8 +106,11 @@ const ready = (async () => {
   const shoulder = new THREE.Mesh(new THREE.SphereGeometry(80, 64, 24, 0, Math.PI * 2, 0, Math.PI / 2), glass.material); shoulder.scale.y = 0.45; shoulder.position.y = 150; oil.add(shoulder);
   const lab = new THREE.Mesh(new THREE.CylinderGeometry(81.5, 81.5, 170, 96, 1, true, -Math.PI * 0.55, Math.PI * 1.1), labelMat('Huile à barbe', 'Bois de cèdre · 30 ml'));
   lab.position.y = -20; oil.add(lab);
-  const collar = new THREE.Mesh(new THREE.CylinderGeometry(40, 44, 60, 64), gold); collar.position.y = 210; oil.add(collar);
-  const bulb = new THREE.Mesh(new THREE.CapsuleGeometry(30, 60, 12, 32), new THREE.MeshPhysicalMaterial({ color: 0x0c0c0c, roughness: 0.4, clearcoat: 0.6 })); bulb.position.y = 290; oil.add(bulb);
+  const dropG = new THREE.Group(); dropG.position.y = 210; oil.add(dropG);
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(40, 44, 60, 64), gold); dropG.add(collar);
+  const bulb = new THREE.Mesh(new THREE.CapsuleGeometry(30, 60, 12, 32), new THREE.MeshPhysicalMaterial({ color: 0x0c0c0c, roughness: 0.4, clearcoat: 0.6 })); bulb.position.y = 80; dropG.add(bulb);
+  const pipette = new THREE.Mesh(new THREE.CylinderGeometry(9, 5, 200, 24), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.02, transmission: 0.95, thickness: 4, ior: 1.5 })); pipette.position.y = -130; dropG.add(pipette);
+  const drop = new THREE.Mesh(new THREE.SphereGeometry(18, 32, 16), new THREE.MeshPhysicalMaterial({ color: 0xf0a84a, roughness: 0.04, transmission: 0.35, thickness: 20, ior: 1.47, emissive: 0x6a3608, emissiveIntensity: 1.2 })); drop.scale.y = 1.25; oil.add(drop);
   oil.position.set(40, 150, -80); g.add(oil);
   const glow = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshBasicMaterial({ map: canvasTex(256, 256, (x, w, h) => { const r = x.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); r.addColorStop(0, 'rgba(255,190,120,0.55)'); r.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = r; x.fillRect(0, 0, w, h); }), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
   glow.position.set(40, 260, -700); scene.add(glow); products_glow = glow;
@@ -116,12 +121,22 @@ const ready = (async () => {
   const shl = new THREE.Mesh(new THREE.CylinderGeometry(129.5, 129.5, 220, 96, 1, true, -Math.PI * 0.5, Math.PI), labelMat('Shampoing', 'Cheveux & barbe · 250 ml', false));
   shl.position.y = -20; sh.add(shl);
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(36, 40, 40, 48), gold); neck.position.y = 262; sh.add(neck);
-  const stem = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 60, 24), gold); stem.position.y = 310; sh.add(stem);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(150, 34, 46), gold); head.position.set(40, 352, 0); sh.add(head);
+  const pumpG = new THREE.Group(); sh.add(pumpG);
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 60, 24), gold); stem.position.y = 310; pumpG.add(stem);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(150, 34, 46), gold); head.position.set(40, 352, 0); pumpG.add(head);
   sh.position.set(300, 230, 40); g.add(sh);
   g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   scene.add(g);
-  products = { g, jar, oil, sh };
+  products = { g, jar, oil, sh, lidG, dropG, drop, pumpG };
+  // turntable: plinth + products rotate together
+  const turn = new THREE.Group(); scene.remove(g); turn.add(g); scene.add(turn); products.turn = turn;
+  // gold dust drifting up through the light
+  const N = 320, pos = new Float32Array(N * 3), base = [];
+  for (let i = 0; i < N; i++) base.push([(Math.random() - 0.5) * 2200, Math.random() * 1600 - 300, (Math.random() - 0.5) * 1600, Math.random() * 6.28, 40 + Math.random() * 90]);
+  const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const dot = canvasTex(64, 64, (x, w, h) => { const r = x.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, 'rgba(255,236,190,1)'); r.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = r; x.fillRect(0, 0, w, h); });
+  products.dust = new THREE.Points(pg, new THREE.PointsMaterial({ size: 14, map: dot, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xf2cf7e, opacity: 0.6 }));
+  products.dust.userData = { base, pos }; scene.add(products.dust);
   // lights
   const key = new THREE.DirectionalLight(0xffe2b8, 2.6); key.position.set(900, 1600, 1400); key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -900, right: 900, top: 900, bottom: -900, near: 100, far: 5000 }); key.shadow.bias = -0.0005; key.shadow.radius = 6;
@@ -139,17 +154,48 @@ composer.addPass(bokeh);
 composer.addPass(new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), 0.16, 0.5, 0.97));
 composer.addPass(new OutputPass());
 
+const easeOut = p => 1 - Math.pow(1 - p, 3);
+const easeBack = (p, k = 1.6) => { p -= 1; return 1 + (k + 1) * p * p * p + k * p * p; };
 window.renderAt = async t => {
   await ready;
-  const a = lerp(-0.55, 0.55, ease(prog(t, 0, 3)));            // slow orbit around the products
-  const r = 3150;
-  camera.position.set(Math.sin(a) * r, 520 - 120 * prog(t, 0, 3), Math.cos(a) * r);
-  camera.lookAt(0, 170, 0);
-  bokeh.uniforms.focus.value = camera.position.distanceTo(new THREE.Vector3(40, 170, -80));
+  const P = products;
+  // camera: sweeping arc that pushes in on the products
+  const e = ease(prog(t, 0, 3));
+  const a = lerp(-0.75, 0.6, e), r = lerp(3500, 2950, e);
+  camera.position.set(Math.sin(a) * r, lerp(760, 430, e), Math.cos(a) * r);
+  camera.lookAt(0, lerp(220, 200, e), 0);
+  bokeh.uniforms.focus.value = camera.position.distanceTo(new THREE.Vector3(40, 200, -80));
+  // turntable
+  P.turn.rotation.y = -0.5 + t * 0.32;
+  // products rise one after the other and float
+  [[P.jar, 75, 0.15], [P.oil, 150, 0.3], [P.sh, 230, 0.45]].forEach(([o, y0, st], i) => {
+    const up = easeBack(prog(t, st, st + 0.7), 1.4);
+    o.position.y = y0 + 90 * up + 14 * Math.sin(t * 3 + i * 1.7) * up;
+    o.rotation.z = 0.05 * Math.sin(t * 2.2 + i) * up;
+  });
+  P.jar.rotation.y = -0.4 + t * 0.6;
+  // pomade lid lifts and spins open
+  const lq = easeOut(prog(t, 0.6, 1.3));
+  P.lidG.position.y = 103 + 170 * lq; P.lidG.rotation.set(0.28 * lq, t * 3.2 * lq, 0.12 * lq);
+  // dropper rises out of the beard oil, a golden drop forms and falls
+  const dq = easeOut(prog(t, 1.0, 1.6));
+  P.dropG.position.y = 210 + 240 * dq; P.dropG.rotation.z = -0.25 * dq;
+  const tipY = P.dropG.position.y - 230, tipX = Math.sin(0.25 * dq) * 230;
+  const fall = prog(t, 1.85, 2.35), form = easeOut(prog(t, 1.55, 1.85));
+  P.drop.visible = t > 1.55 && fall < 1;
+  P.drop.position.set(tipX, tipY - 14 - fall * fall * 420, 0);
+  P.drop.scale.set(form, form * (1.25 + fall * 0.4), form);
+  // shampoo pump presses on the beat
+  const pq = Math.sin(Math.PI * prog(t, 2.2, 2.55));
+  P.pumpG.position.y = -28 * pq;
+  // light sweeps and gold dust
+  const sp = prog(t, 0.3, 1.5), sp2 = prog(t, 1.9, 2.9);
+  const sv = sp > 0 && sp < 1 ? sp : sp2;
+  P.sweep.intensity = 5 * Math.sin(clamp(sv) * Math.PI); P.sweep.position.set(lerp(-1000, 1000, clamp(sv)), 520, 800);
+  const { base, pos } = P.dust.userData;
+  base.forEach(([x, y, z, ph, v], i) => { pos[i * 3] = x + 30 * Math.sin(t + ph); pos[i * 3 + 1] = ((y + v * t + 300) % 1600) - 300; pos[i * 3 + 2] = z; });
+  P.dust.geometry.attributes.position.needsUpdate = true;
   products_glow.lookAt(camera.position);
-  products.jar.rotation.y = -0.4 + t * 0.25; products.sh.rotation.y = -0.15 + t * 0.12;
-  const sp = prog(t, 0.6, 1.8);
-  products.sweep.intensity = 4 * Math.sin(sp * Math.PI); products.sweep.position.set(lerp(-900, 900, sp), 500, 700);
   composer.render();
   return true;
 };
