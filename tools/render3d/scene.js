@@ -62,7 +62,7 @@ const gold = new THREE.MeshStandardMaterial({ color: 0xd8b064, metalness: 1.0, r
 const goldBrushed = new THREE.MeshStandardMaterial({ color: 0xc9a24b, metalness: 1.0, roughness: 0.38, envMapIntensity: 1.1 });
 const blackGloss = new THREE.MeshPhysicalMaterial({ color: 0x0d0d0d, metalness: 0.5, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.06 });
 const blackMatte = new THREE.MeshStandardMaterial({ color: 0x141414, metalness: 0.2, roughness: 0.6 });
-const cream = new THREE.MeshStandardMaterial({ color: 0xcfc8ba, metalness: 0.05, roughness: 0.6 });
+const cream = new THREE.MeshPhysicalMaterial({ color: 0xa39b8d, metalness: 0.15, roughness: 0.55, clearcoat: 0.4, clearcoatRoughness: 0.3 });
 const steel = new THREE.MeshStandardMaterial({ color: 0xe9e2d2, metalness: 1.0, roughness: 0.18 });
 
 // ------------------------------------------------------------ assets
@@ -97,27 +97,143 @@ function medallion(logoTex) {
   return g;
 }
 
+// ---- realistic materials + procedural textures for the tools
+const canvasTex2 = (w, h, draw, srgb = true) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
+const knurlTex = canvasTex2(256, 256, (x, w, h) => {          // diamond knurl for clipper grips (bump)
+  x.fillStyle = '#808080'; x.fillRect(0, 0, w, h); x.lineWidth = 5;
+  for (let i = -w; i < 2 * w; i += 16) {
+    x.strokeStyle = '#ffffff'; x.beginPath(); x.moveTo(i, 0); x.lineTo(i + h, h); x.stroke();
+    x.strokeStyle = '#000000'; x.beginPath(); x.moveTo(i + 8, 0); x.lineTo(i + 8 - h, h); x.stroke();
+  }
+}, false);
+knurlTex.repeat.set(3, 5);
+const brushLines = canvasTex2(512, 64, (x, w, h) => {          // fine brushed-metal lines
+  const id = x.createImageData(w, h);
+  for (let px = 0; px < w * h; px++) { const yy = Math.floor(px / w); const v = 128 + 60 * Math.sin(yy * 1.7 + Math.sin(px * 0.013) * 2) + (Math.random() - 0.5) * 70; id.data[px * 4] = id.data[px * 4 + 1] = id.data[px * 4 + 2] = v; id.data[px * 4 + 3] = 255; }
+  x.putImageData(id, 0, 0);
+}, false);
+brushLines.repeat.set(1, 6);
+const polishedGold = new THREE.MeshPhysicalMaterial({ color: 0xdcb66a, metalness: 1, roughness: 0.11, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 1.35 });
+const brushedGold2 = new THREE.MeshPhysicalMaterial({ color: 0xcfa552, metalness: 1, roughness: 0.3, roughnessMap: brushLines, bumpMap: brushLines, bumpScale: 0.4, anisotropy: 0.7, envMapIntensity: 1.2 });
+const mirrorSteel = new THREE.MeshPhysicalMaterial({ color: 0xf2f2f4, metalness: 1, roughness: 0.05, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 1.4 });
+const knurlBlack = new THREE.MeshPhysicalMaterial({ color: 0x141414, metalness: 0.5, roughness: 0.55, bumpMap: knurlTex, bumpScale: 2.2 });
+const rubberBlack = new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: 0.85, metalness: 0 });
+const acetate = new THREE.MeshPhysicalMaterial({ color: 0x0c0c0c, metalness: 0, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.03 });
+const tube = (pts, r, mat, seg = 64) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p))), seg, r, 16, false), mat);
+
+// barber shears: mirror steel blades, offset gold rings with inserts, finger rest, adjustable pivot screw
 function scissors() {
   const g = new THREE.Group();
   const halves = [];
   for (const side of [-1, 1]) {
     const h = new THREE.Group();
     const s = new THREE.Shape();
-    s.moveTo(-14, 0); s.lineTo(-24, 70); s.lineTo(-12, 215); s.quadraticCurveTo(0, 278, 5, 272);
-    s.lineTo(16, 200); s.lineTo(18, 70); s.lineTo(14, 0); s.lineTo(-14, 0);
-    const blade = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 7, bevelEnabled: true, bevelThickness: 2, bevelSize: 2, bevelSegments: 2 }), gold);
-    if (side > 0) blade.scale.x = -1;
-    blade.position.z = side > 0 ? 9 : 0;
+    s.moveTo(-9, -6); s.lineTo(-16, 50); s.quadraticCurveTo(-18, 200, -3, 318); s.lineTo(1, 322);
+    s.quadraticCurveTo(10, 190, 9, 50); s.lineTo(9, -6); s.lineTo(-9, -6);
+    const blade = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 3, bevelEnabled: true, bevelThickness: 1.6, bevelSize: 1.8, bevelSegments: 3, curveSegments: 24 }), mirrorSteel);
+    const z0 = side > 0 ? 7 : -2;
+    blade.position.z = z0; if (side > 0) blade.scale.x = -1;
     h.add(blade);
-    const shank = new THREE.Mesh(new THREE.BoxGeometry(16, 120, 9), gold);
-    shank.position.set(-side * 18, -62, blade.position.z + 4); shank.rotation.z = side * 0.28; h.add(shank);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(50, 12, 20, 64), gold);
-    ring.position.set(-side * 50, -165, blade.position.z + 4); h.add(ring);
+    const ringR = side > 0 ? 44 : 38;                       // finger ring larger than thumb ring
+    const rc = [-side * (side > 0 ? 70 : 52), side > 0 ? -175 : -150, z0 + 2];
+    h.add(tube([[0, -4, z0 + 2], [-side * 10, -50, z0 + 2], [-side * 26, -95, z0 + 2], [rc[0] + side * ringR * 0.55, rc[1] + ringR * 0.75, z0 + 2]], 7.5, polishedGold));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(ringR, 8.5, 24, 80), polishedGold); ring.scale.set(1, 0.86, 1); ring.position.set(...rc); h.add(ring);
+    const insert = new THREE.Mesh(new THREE.TorusGeometry(ringR - 7, 3.2, 12, 64), rubberBlack); insert.scale.set(1, 0.86, 1); insert.position.set(rc[0], rc[1], rc[2]); h.add(insert);
+    if (side > 0) h.add(tube([[rc[0] - 30, rc[1] - 30, z0 + 2], [rc[0] - 48, rc[1] - 62, z0 + 2], [rc[0] - 40, rc[1] - 90, z0 + 2], [rc[0] - 22, rc[1] - 96, z0 + 2]], 6, polishedGold, 32));
     g.add(h); halves.push({ h, side });
   }
-  const screw = new THREE.Mesh(new THREE.CylinderGeometry(11, 11, 30, 32), steel);
-  screw.rotation.x = Math.PI / 2; screw.position.z = 8; g.add(screw);
+  const screw = new THREE.Mesh(new THREE.CylinderGeometry(14, 14, 22, 48), polishedGold); screw.rotation.x = Math.PI / 2; screw.position.z = 3; g.add(screw);
+  const knob = new THREE.Mesh(new THREE.CylinderGeometry(9, 11, 10, 32), mirrorSteel); knob.rotation.x = Math.PI / 2; knob.position.z = 17; g.add(knob);
+  const slot = new THREE.Mesh(new THREE.BoxGeometry(14, 2.4, 3), rubberBlack); slot.position.z = 22.5; g.add(slot);
   g.userData.setOpen = deg => { for (const { h, side } of halves) h.rotation.z = side * THREE.MathUtils.degToRad(deg / 2); };
+  return g;
+}
+
+// professional cordless clipper: pebble body in brushed gold, knurled grip, toothed steel blade set, taper lever
+function clipper() {
+  const g = new THREE.Group();
+  const prof = new THREE.Shape();
+  prof.moveTo(-58, -190); prof.lineTo(58, -190); prof.quadraticCurveTo(70, -190, 70, -170);
+  prof.lineTo(78, 140); prof.quadraticCurveTo(80, 185, 40, 190); prof.lineTo(-40, 190); prof.quadraticCurveTo(-80, 185, -78, 140);
+  prof.lineTo(-70, -170); prof.quadraticCurveTo(-70, -190, -58, -190);
+  const bodyGeo = new THREE.ExtrudeGeometry(prof, { depth: 56, bevelEnabled: true, bevelThickness: 18, bevelSize: 14, bevelSegments: 12, curveSegments: 24 });
+  bodyGeo.translate(0, 0, -28);
+  g.add(new THREE.Mesh(bodyGeo, brushedGold2));
+  const gp = new THREE.Shape(); gp.moveTo(-50, -150); gp.lineTo(50, -150); gp.lineTo(56, 70); gp.quadraticCurveTo(0, 92, -56, 70); gp.lineTo(-50, -150);
+  const gripGeo = new THREE.ExtrudeGeometry(gp, { depth: 4, bevelEnabled: true, bevelThickness: 2, bevelSize: 2, bevelSegments: 3 });
+  for (const z of [46.5, -50.5]) { const grip = new THREE.Mesh(gripGeo, knurlBlack); grip.position.z = z; g.add(grip); }
+  // blade assembly
+  const head = new THREE.Mesh(new RoundedBoxGeometry(172, 34, 66, 4, 8), rubberBlack); head.position.y = 205; g.add(head);
+  const tb = new THREE.Shape(); tb.moveTo(-86, 0); tb.lineTo(86, 0); tb.lineTo(86, 18);
+  for (let i = 0; i < 30; i++) { const x = 86 - i * (172 / 30); tb.lineTo(x - 1, 46); tb.lineTo(x - 4.5, 46); tb.lineTo(x - 172 / 30, 18); }
+  tb.lineTo(-86, 18); tb.lineTo(-86, 0);
+  const fixed = new THREE.Mesh(new THREE.ExtrudeGeometry(tb, { depth: 5, bevelEnabled: true, bevelThickness: 1, bevelSize: 0.8, bevelSegments: 2 }), mirrorSteel);
+  fixed.position.set(0, 214, 8); g.add(fixed);
+  const mv = fixed.clone(); mv.material = new THREE.MeshPhysicalMaterial({ color: 0x2a2a2a, metalness: 1, roughness: 0.2 }); mv.scale.set(0.82, 0.7, 1); mv.position.set(0, 214, 15); g.add(mv);
+  for (const x of [-48, 48]) { const sc = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 6, 24), mirrorSteel); sc.rotation.x = Math.PI / 2; sc.position.set(x, 222, 22); g.add(sc); }
+  g.add(tube([[80, 150, 0], [96, 120, 0], [100, 70, 6], [92, 40, 10]], 7, polishedGold, 32));
+  const lever = new THREE.Mesh(new THREE.SphereGeometry(12, 24, 16), polishedGold); lever.position.set(92, 38, 10); g.add(lever);
+  const sw = new THREE.Mesh(new RoundedBoxGeometry(30, 62, 14, 4, 6), polishedGold); sw.position.set(0, 112, 50); g.add(sw);
+  const led = new THREE.Mesh(new THREE.CircleGeometry(4, 16), new THREE.MeshBasicMaterial({ color: 0x9fffd0, toneMapped: false })); led.position.set(0, 160, 47.5); g.add(led);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(52, 58, 20, 48), mirrorSteel); cap.position.y = -205; cap.scale.z = 0.75; g.add(cap);
+  return g;
+}
+
+function comb() {
+  const s = new THREE.Shape();
+  const L = 380, sp = 54, teeth = 28, tw = 6.5, tl = 96;
+  s.moveTo(-L / 2 + 10, sp / 2); s.lineTo(L / 2 - 10, sp / 2); s.quadraticCurveTo(L / 2, sp / 2, L / 2, sp / 2 - 10); s.lineTo(L / 2, -sp / 2);
+  for (let i = teeth - 1; i >= 0; i--) {
+    const x = -L / 2 + 6 + i * ((L - 12) / teeth);
+    const len = i < 12 ? tl : tl * 0.78;
+    s.lineTo(x + tw, -sp / 2); s.lineTo(x + tw - 0.6, -sp / 2 - len + 3); s.quadraticCurveTo(x + tw / 2, -sp / 2 - len - 2, x + 0.6, -sp / 2 - len + 3); s.lineTo(x, -sp / 2);
+  }
+  s.lineTo(-L / 2, -sp / 2); s.lineTo(-L / 2, sp / 2 - 10); s.quadraticCurveTo(-L / 2, sp / 2, -L / 2 + 10, sp / 2);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: 8, bevelEnabled: true, bevelThickness: 2, bevelSize: 1.4, bevelSegments: 3, curveSegments: 8 });
+  geo.translate(0, 40, -4);
+  const g = new THREE.Group(); g.add(new THREE.Mesh(geo, acetate));
+  const band = new THREE.Mesh(new THREE.BoxGeometry(L - 40, 5, 11), polishedGold); band.position.set(0, 74, 0); g.add(band);
+  return g;
+}
+
+// shaving brush: lathe-turned resin handle, gold collar, two-band badger knot
+const badgerTex = canvasTex2(64, 512, (x, w, h) => {
+  const gr = x.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, '#f4eee2'); gr.addColorStop(0.28, '#efe6d6'); gr.addColorStop(0.42, '#3a2c22'); gr.addColorStop(0.62, '#2a2019'); gr.addColorStop(0.78, '#d9cfbf'); gr.addColorStop(1, '#c8bca9');
+  x.fillStyle = gr; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 900; i++) { x.strokeStyle = `rgba(${Math.random() < 0.5 ? '255,250,240' : '40,30,22'},${0.15 + Math.random() * 0.25})`; x.lineWidth = 0.6; const xx = Math.random() * w; x.beginPath(); x.moveTo(xx, 0); x.lineTo(xx + (Math.random() - 0.5) * 2, h); x.stroke(); }
+});
+badgerTex.wrapS = THREE.RepeatWrapping; badgerTex.repeat.set(8, 1);
+function brush() {
+  const g = new THREE.Group();
+  const hp = [[0, -175], [50, -175], [57, -165], [54, -150], [38, -110], [34, -60], [40, -20], [50, 0], [52, 8], [0, 8]].map(([x, y]) => new THREE.Vector2(x, y));
+  g.add(new THREE.Mesh(new THREE.LatheGeometry(hp, 96), acetate));
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(54, 54, 16, 96), polishedGold); band.position.y = 4; g.add(band);
+  const band2 = new THREE.Mesh(new THREE.TorusGeometry(51, 2.5, 12, 96), polishedGold); band2.rotation.x = Math.PI / 2; band2.position.y = -120; g.add(band2);
+  const bp = [];
+  for (let i = 0; i <= 28; i++) { const a = i / 28; bp.push(new THREE.Vector2(lerp(46, 0, Math.pow(a, 2.2)) + 30 * Math.sin(a * Math.PI) * (1 - a), 12 + a * 165)); }
+  bp[bp.length - 1].x = 0;
+  const knot = new THREE.Mesh(new THREE.LatheGeometry(bp, 96), new THREE.MeshStandardMaterial({ map: badgerTex, color: 0xb8b0a4, roughness: 0.95, bumpMap: badgerTex, bumpScale: 1.5 }));
+  knot.rotation.y = Math.PI; g.add(knot);
+  return g;
+}
+
+// pomade jar: black glass body, knurled gold lid engraved TIM DESIGN
+const lidTopTex = canvasTex2(512, 512, (x, w, h) => {
+  x.fillStyle = '#c9a24b'; x.fillRect(0, 0, w, h);
+  for (let r = 40; r < w / 2; r += 3) { x.strokeStyle = `rgba(255,240,200,${0.05 + 0.08 * Math.random()})`; x.beginPath(); x.arc(w / 2, h / 2, r, 0, Math.PI * 2); x.stroke(); }
+  x.fillStyle = '#6e5320'; x.font = 'bold 64px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('TIM DESIGN', w / 2, h / 2);
+  x.strokeStyle = '#6e5320'; x.lineWidth = 4; x.beginPath(); x.arc(w / 2, h / 2, w * 0.4, 0, Math.PI * 2); x.stroke();
+});
+function jar() {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(110, 112, 110, 128), new THREE.MeshPhysicalMaterial({ color: 0x0a0a0a, metalness: 0.1, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.02 })));
+  const ridges = canvasTex2(512, 32, (x, w, h) => { for (let i = 0; i < w; i += 6) { x.fillStyle = (i / 6) % 2 ? '#202020' : '#e0e0e0'; x.fillRect(i, 0, 6, h); } }, false);
+  ridges.repeat.set(6, 1);
+  const lidSide = new THREE.MeshPhysicalMaterial({ color: 0xd2ab5e, metalness: 1, roughness: 0.22, bumpMap: ridges, bumpScale: 1.4 });
+  const lidTop = new THREE.MeshPhysicalMaterial({ map: lidTopTex, metalness: 1, roughness: 0.2, bumpMap: lidTopTex, bumpScale: 0.8 });
+  const lid = new THREE.Mesh(new THREE.CylinderGeometry(116, 116, 40, 128), [lidSide, lidTop, lidTop]); lid.position.y = 74; g.add(lid);
+  const t = new THREE.Mesh(new THREE.TorusGeometry(116, 4, 12, 128), polishedGold); t.rotation.x = Math.PI / 2; t.position.y = 94; g.add(t);
   return g;
 }
 
@@ -125,73 +241,18 @@ function razor() {
   const g = new THREE.Group();
   const hs = new THREE.Shape();
   hs.moveTo(-320, -26); hs.lineTo(-10, -22); hs.quadraticCurveTo(10, 0, -10, 22); hs.lineTo(-320, 26); hs.quadraticCurveTo(-345, 0, -320, -26);
-  const handle = new THREE.Mesh(new THREE.ExtrudeGeometry(hs, { depth: 20, bevelEnabled: true, bevelThickness: 4, bevelSize: 4, bevelSegments: 3 }), blackGloss);
+  const handle = new THREE.Mesh(new THREE.ExtrudeGeometry(hs, { depth: 20, bevelEnabled: true, bevelThickness: 5, bevelSize: 4, bevelSegments: 6, curveSegments: 24 }), acetate);
   handle.position.z = -10; g.add(handle);
   for (const x of [-20, -300]) { const pin = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 34, 24), gold); pin.rotation.x = Math.PI / 2; pin.position.set(x, 0, 2); g.add(pin); }
   const inlay = new THREE.Mesh(new THREE.BoxGeometry(220, 5, 3), gold); inlay.position.set(-165, 0, 16); g.add(inlay);
   const bs = new THREE.Shape();
   bs.moveTo(0, -10); bs.lineTo(40, -14); bs.lineTo(250, -18); bs.quadraticCurveTo(285, -12, 280, 30); bs.lineTo(60, 40); bs.quadraticCurveTo(10, 30, 0, 10); bs.lineTo(0, -10);
   const blade = new THREE.Group();
-  const bm = new THREE.Mesh(new THREE.ExtrudeGeometry(bs, { depth: 4, bevelEnabled: true, bevelThickness: 1.5, bevelSize: 1.5, bevelSegments: 2 }), gold);
+  const bm = new THREE.Mesh(new THREE.ExtrudeGeometry(bs, { depth: 4, bevelEnabled: true, bevelThickness: 1.5, bevelSize: 1.5, bevelSegments: 2 }), mirrorSteel);
   bm.position.z = -2; blade.add(bm);
-  const edge = new THREE.Mesh(new THREE.BoxGeometry(230, 3, 7), steel); edge.position.set(150, 34, 0); edge.rotation.z = -0.03; blade.add(edge);
+  const edge = new THREE.Mesh(new THREE.BoxGeometry(230, 3, 7), polishedGold); edge.position.set(150, 34, 0); edge.rotation.z = -0.03; blade.add(edge);
   g.add(blade);
   g.userData.setOpen = o => { blade.rotation.z = THREE.MathUtils.degToRad(lerp(178, 8, o)); };
-  return g;
-}
-
-function clipper() {
-  const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(72, 250, 12, 48), goldBrushed);
-  body.scale.z = 0.62; g.add(body);
-  const grip = new THREE.Mesh(new THREE.CapsuleGeometry(56, 150, 8, 32), blackMatte);
-  grip.scale.set(1, 1, 0.3); grip.position.set(0, -50, 34); g.add(grip);
-  const head = new THREE.Mesh(new RoundedBoxGeometry(170, 50, 70, 4, 10), blackGloss); head.position.y = 210; g.add(head);
-  for (let i = 0; i < 17; i++) {
-    const tooth = new THREE.Mesh(new THREE.BoxGeometry(6, 34, 12), steel);
-    tooth.position.set(-80 + i * 10, 248, 18); g.add(tooth);
-  }
-  const blade2 = new THREE.Mesh(new THREE.BoxGeometry(172, 10, 20), steel); blade2.position.set(0, 236, 10); g.add(blade2);
-  const lever = new THREE.Mesh(new RoundedBoxGeometry(18, 70, 18, 3, 6), gold); lever.position.set(76, 120, 0); g.add(lever);
-  const sw = new THREE.Mesh(new RoundedBoxGeometry(34, 60, 14, 3, 6), gold); sw.position.set(0, 40, 46); g.add(sw);
-  const cord = new THREE.Mesh(new THREE.CylinderGeometry(14, 18, 40, 24), blackGloss); cord.position.y = -220; g.add(cord);
-  return g;
-}
-
-function comb() {
-  const s = new THREE.Shape();
-  const L = 380, sp = 52, teeth = 26, tw = 7, tl = 92;
-  s.moveTo(-L / 2, sp / 2); s.lineTo(L / 2, sp / 2); s.lineTo(L / 2, -sp / 2);
-  for (let i = teeth - 1; i >= 0; i--) {
-    const x = -L / 2 + 6 + i * ((L - 12) / teeth);
-    const len = i < 10 ? tl : tl * 0.8;
-    s.lineTo(x + tw, -sp / 2); s.lineTo(x + tw - 1, -sp / 2 - len); s.lineTo(x + 1, -sp / 2 - len); s.lineTo(x, -sp / 2);
-  }
-  s.lineTo(-L / 2, -sp / 2); s.lineTo(-L / 2, sp / 2);
-  const geo = new THREE.ExtrudeGeometry(s, { depth: 8, bevelEnabled: true, bevelThickness: 1.5, bevelSize: 1.2, bevelSegments: 2 });
-  geo.translate(0, 40, -4);
-  const g = new THREE.Group(); g.add(new THREE.Mesh(geo, blackGloss));
-  const band = new THREE.Mesh(new THREE.BoxGeometry(L - 20, 6, 12), gold); band.position.set(0, 70, 0); g.add(band);
-  return g;
-}
-
-function brush() {
-  const g = new THREE.Group();
-  const hp = [[0, -170], [52, -170], [56, -160], [40, -110], [36, -40], [48, 0], [52, 10], [0, 10]].map(([x, y]) => new THREE.Vector2(x, y));
-  g.add(new THREE.Mesh(new THREE.LatheGeometry(hp, 64), blackGloss));
-  const band = new THREE.Mesh(new THREE.CylinderGeometry(54, 54, 18, 64), gold); band.position.y = 4; g.add(band);
-  const bp = [];
-  for (let i = 0; i <= 20; i++) { const a = i / 20; bp.push(new THREE.Vector2(lerp(46, 0, Math.pow(a, 1.8)) + 22 * Math.sin(a * Math.PI) * (1 - a), 12 + a * 150)); }
-  bp[bp.length - 1].x = 0;
-  const bristles = new THREE.Mesh(new THREE.LatheGeometry(bp, 64), cream); g.add(bristles);
-  return g;
-}
-
-function jar() {
-  const g = new THREE.Group();
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(110, 110, 110, 96), blackGloss));
-  const lid = new THREE.Mesh(new THREE.CylinderGeometry(116, 116, 40, 96), gold); lid.position.y = 74; g.add(lid);
-  const t = new THREE.Mesh(new THREE.TorusGeometry(116, 4, 12, 96), gold); t.rotation.x = Math.PI / 2; t.position.y = 94; g.add(t);
   return g;
 }
 
@@ -377,6 +438,52 @@ const ready = (async () => {
     g.add(a1, a2); g.position.set(sx * (QS / 2 + 40), sy * (QS / 2 + 40), 14); O.qr.add(g); O.brackets.push(g);
   }
   O.qrSpot = new THREE.Vector3(-(qr.center[0] / qr.card[0] - 0.5) * 860, (0.5 - qr.center[1] / qr.card[1]) * 557, -5.5);
+  // ---- real-looking set for the phone: walnut counter, wall with cyan light, salon bokeh, props, stand
+  const woodTex = canvasTex2(1024, 1024, (x, w, h) => {
+    x.fillStyle = '#21150d'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 420; i++) {
+      const y0 = Math.random() * h, amp = 4 + Math.random() * 14, ph = Math.random() * 6.28, sh = Math.random();
+      x.strokeStyle = sh < 0.5 ? `rgba(70,44,24,${0.25 + Math.random() * 0.35})` : `rgba(12,7,4,${0.3 + Math.random() * 0.4})`;
+      x.lineWidth = 0.6 + Math.random() * 2.4; x.beginPath();
+      for (let xx = 0; xx <= w; xx += 16) x.lineTo(xx, y0 + Math.sin(xx * 0.008 + ph) * amp + Math.sin(xx * 0.031 + ph * 2) * amp * 0.3);
+      x.stroke();
+    }
+  });
+  woodTex.repeat.set(2, 2);
+  const desk = new THREE.Mesh(new THREE.PlaneGeometry(3600, 3000), new THREE.MeshStandardMaterial({ map: woodTex, color: 0xd8c2a8, roughness: 0.5, metalness: 0, envMapIntensity: 0.06, bumpMap: woodTex, bumpScale: 0.6 }));
+  desk.rotation.x = -Math.PI / 2; desk.position.set(0, -640, -500);
+  const wallTex = canvasTex2(1024, 1024, (x, w, h) => {
+    x.fillStyle = '#06080a'; x.fillRect(0, 0, w, h);
+    let g1 = x.createRadialGradient(w * 0.74, h * 0.38, 0, w * 0.74, h * 0.38, w * 0.55); g1.addColorStop(0, 'rgba(40,175,205,0.65)'); g1.addColorStop(0.45, 'rgba(18,90,115,0.3)'); g1.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g1; x.fillRect(0, 0, w, h);
+    let g2 = x.createRadialGradient(w * 0.18, h * 0.62, 0, w * 0.18, h * 0.62, w * 0.45); g2.addColorStop(0, 'rgba(210,140,60,0.38)'); g2.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g2; x.fillRect(0, 0, w, h);
+    x.shadowColor = 'rgba(90,230,255,1)'; x.shadowBlur = 40; x.fillStyle = 'rgba(170,245,255,0.9)'; x.fillRect(w * 0.84, h * 0.05, 8, h * 0.62);
+    const sh = x.createLinearGradient(0, h * 0.55, 0, h); sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,0.85)'); x.shadowBlur = 0; x.fillStyle = sh; x.fillRect(0, 0, w, h);
+  });
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(6400, 4400), new THREE.MeshBasicMaterial({ map: wallTex }));
+  wall.position.set(0, 600, -2700);
+  const bokehTex = canvasTex2(128, 128, (x, w, h) => { const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,0.55)'); g.addColorStop(0.7, 'rgba(255,255,255,0.35)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); });
+  O.env = new THREE.Group();
+  O.env.add(desk, wall);
+  const rb = seeded(31);
+  for (let i = 0; i < 26; i++) {
+    const warm = rb() < 0.75, sz = lerp(70, 260, rb());
+    const b = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), new THREE.MeshBasicMaterial({ map: bokehTex, color: warm ? 0xffb860 : 0x6fe0ff, transparent: true, opacity: lerp(0.05, 0.16, rb()), blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    b.position.set(lerp(-1700, 1700, rb()), lerp(-350, 1100, rb()), lerp(-2300, -1300, rb())); O.env.add(b);
+  }
+  const standMat = blackTi;
+  const standBase = new THREE.Mesh(new RoundedBoxGeometry(400, 16, 230, 4, 7), standMat); standBase.position.set(0, -632, 10); O.env.add(standBase);
+  const lip = new THREE.Mesh(new RoundedBoxGeometry(400, 30, 16, 4, 6), standMat); lip.position.set(0, -610, 50); O.env.add(lip);
+  const sup = new THREE.Mesh(new RoundedBoxGeometry(300, 300, 14, 4, 6), standMat); sup.position.set(0, -480, -70); sup.rotation.x = -0.22; O.env.add(sup);
+  const pScis = scissors(); pScis.userData.setOpen(14); pScis.rotation.set(-Math.PI / 2, 0, 0.9); pScis.position.set(-360, -628, 460); pScis.scale.setScalar(0.62); O.env.add(pScis);
+  const pComb = comb(); pComb.rotation.set(-Math.PI / 2, 0, -0.35); pComb.position.set(360, -633, 420); pComb.scale.setScalar(0.62); O.env.add(pComb);
+  const pJar = jar(); pJar.position.set(-420, -640 + 40, -320); pJar.scale.setScalar(0.72); O.env.add(pJar);
+  const pBrush = brush(); pBrush.position.set(430, -640 + 120, -380); pBrush.scale.setScalar(0.7); O.env.add(pBrush);
+  O.s5.add(O.env);
+  O.scrLight = new THREE.PointLight(0xfff2dc, 0, 2600, 1.4); O.scrLight.position.set(0, -80, 220); O.phone.add(O.scrLight);
+  O.lines = [];
+  for (let i = 0; i < 5; i++) { const l = new THREE.Mesh(new THREE.PlaneGeometry(760, 3), holoAdd(i % 2 ? 0x9eefff : 0xfff6e6, 0)); l.position.z = 29.6; O.phone.add(l); O.lines.push(l); }
   O.hud = [new THREE.Mesh(new THREE.TorusGeometry(470, 1.8, 8, 200), holoAdd(0xd8b064, 0.55)), new THREE.Mesh(new THREE.TorusGeometry(530, 1.0, 8, 200), holoAdd(0xd8b064, 0.35))];
   O.hud.forEach(h => O.s5.add(h));
   const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx; };
@@ -529,31 +636,37 @@ window.renderAt = async (t, screen) => {
     G.visible = true; ph.visible = true;
     if (screen) await setScreen(O, screen);
     G.position.copy(P(540, 1185));
-    G.rotation.set(0.04 * Math.sin((t - 17) * 0.8), 0.16 * Math.sin((t - 18.2) * 0.62), 0);
+    G.rotation.set(0.05 + 0.03 * Math.sin((t - 17) * 0.8), 0.2 * Math.sin((t - 18.2) * 0.55), 0);
+    O.env.visible = true;
     const p = easeOut(prog(t, 17.0, 17.95));
     const s = Math.max(0, t - 17.95);
     const bt = beat(t, 18.0);
     const taps = O.N.map(n => Math.sin(Math.PI * prog(t, n.tap - 0.05, n.tap + 0.15))).reduce((a, b) => Math.max(a, b), 0);
     const spin = Math.PI * 2 * easeInOut(prog(t, 21.95, 22.4));
     const exit = easeIn3(prog(t, 22.82, 23.0));
-    ph.position.set(lerp(420, 0, p) + 14 * Math.sin(s * 1.6), lerp(-1500, 0, p) + 20 * Math.sin(s * 2.2) * p, lerp(-700, 0, p) + 28 * bt - 30 * taps + 2600 * exit);
-    ph.rotation.set(lerp(0.6, 0.06, p) + 0.05 * Math.sin(s * 1.3) + 0.08 * taps - 0.5 * exit,
-                    lerp(Math.PI + 1.1, -0.1, easeInOut(prog(t, 17.0, 17.95))) + 0.15 * Math.sin(s * 1.05) + spin,
-                    lerp(-0.35, 0, p) + 0.035 * Math.sin(s * 0.9) + 0.25 * exit);
+    const land = Math.exp(-s * 7) * Math.sin(s * 22) * 18 * (s > 0 ? 1 : 0), lift = 110 * Math.sin(Math.PI * prog(t, 21.9, 22.45));
+    ph.position.set(lerp(260, 0, p), lerp(1500, 0, p) + Math.abs(land) + lift, lerp(-500, 0, p) + 14 * bt - 22 * taps + 2600 * exit);
+    ph.rotation.set(lerp(-0.6, 0.0, p) + 0.015 * Math.sin(s * 1.3) + 0.03 * taps - 0.5 * exit,
+                    lerp(Math.PI + 1.1, -0.06, easeInOut(prog(t, 17.0, 17.95))) + 0.04 * Math.sin(s * 1.05) + spin,
+                    lerp(-0.35, 0, p) + 0.01 * Math.sin(s * 0.9) + 0.25 * exit);
     ph.scale.setScalar((1 + 0.012 * bt) * (1 - 0.015 * taps));
     const on = prog(t, 17.85, 18.25);
-    ph.userData.scrMat.color.setScalar(0.9 * easeOut(on));
+    const flash = [17.95, 18.62, 20.07, 20.77, 21.42, 22.72].map(e => Math.exp(-Math.pow((t - e) / 0.07, 2))).reduce((a, b) => Math.max(a, b), 0);
+    ph.userData.scrMat.color.setScalar(0.9 * easeOut(on) + 1.3 * flash);
+    O.scrLight.intensity = (1.2 * easeOut(on) + 9 * flash) * p;
+    const lk = prog(t, 17.62, 17.98);
+    O.lines.forEach((l, i) => { l.material.opacity = lk > 0 && lk < 1 ? Math.sin(lk * Math.PI) : 0; l.rotation.z = [0.6, -0.9, 1.25, -0.35, 0.15][i]; const d = lerp(-520, 520, lk) * (i % 2 ? 1 : -1); l.position.set(Math.cos(l.rotation.z + 1.57) * d * 0.4, Math.sin(l.rotation.z + 1.57) * d, 29.6); });
     const sc = ph.userData.scan; sc.material.opacity = on > 0 && on < 1 ? 0.9 : 0; sc.position.y = lerp(600, -600, on);
     // light play on the black glass
     const Cw = P(540, 1185), la = (t - 17) * 1.5;
     amber.position.set(Cw.x + Math.cos(la) * 760, Cw.y + Math.sin(la * 0.8) * 520, 520 + 220 * Math.sin(la));
     cool.position.set(Cw.x - Math.cos(la) * 760, Cw.y - Math.sin(la * 0.8) * 520, 420);
     amber.intensity = 3.4 * p * (1 + 0.6 * bt); cool.intensity = 2.0 * p;
-    bloom.strength = 0.34 + 0.18 * bt * p + 0.2 * taps;
+    bloom.strength = 0.34 + 0.18 * bt * p + 0.2 * taps + 0.35 * flash;
     const hue = 0.09 + 0.035 * Math.sin((t - 17) * 1.7);
     O.edge.visible = false;
     O.burst.visible = true; O.burst.rotation.z = (t - 17) * 0.25; O.burst.scale.setScalar(Math.max(0.01, p) * (1 + 0.08 * bt + 0.2 * taps));
-    O.burst.material.color.setHSL(hue - 0.02, 0.85, 0.32 + 0.22 * bt + 0.3 * taps);
+    O.burst.material.color.setHSL(hue - 0.02, 0.85, 0.08 + 0.08 * bt + 0.15 * taps);
     O.burst.position.set(0, 0, -300);
     const gl = O.glare; gl.visible = true;
     const glareAt = [18.15, 19.5, 20.95, 22.2].map(g0 => prog(t, g0, g0 + 0.45)).find(q => q > 0 && q < 1);

@@ -144,8 +144,19 @@ def paste(canvas, img, cx, cy, alpha=1.0, scale=1.0, anchor="center"):
         img = img.crop((sx0, sy0, sx1, sy1))
     canvas.alpha_composite(img, (x + sx0, y + sy0))
 
+SHADOW = 0.0   # drop-shadow strength under every text (the 3D reel turns it on for legibility)
+
+def shadow_under(canvas, s, weight, size, tracking, cx, cy, alpha, scale, anchor):
+    if SHADOW <= 0 or alpha <= 0.01:
+        return
+    r = max(4, size // 7)
+    g = glow_mask(s, weight, size, tracking, r)
+    gc = {"center": cx, "left": cx - 2 * r, "right": cx + 2 * r}[anchor]
+    paste(canvas, colorize(g, (0, 0, 0), min(1.0, alpha * SHADOW * 1.6)), gc, cy + size * 0.05, scale=scale, anchor=anchor)
+
 def text(canvas, s, weight, size, cx, cy, color=CREAM, alpha=1.0, tracking=0, anchor="center",
          sweep=None, glow=0.0, scale=1.0):
+    shadow_under(canvas, s, weight, size, tracking, cx, cy, alpha, scale, anchor)
     m = text_mask(s, weight, size, tracking)
     if anchor == "center":
         x0, y0 = cx - m.width / 2, cy - m.height / 2
@@ -180,6 +191,7 @@ def letters(canvas, s, weight, size, cx, cy, t, start, color=CREAM, tracking=0, 
         else:
             sc, dy, al = 1.0, lerp(size * 0.6, 0, ease_out(p)), clamp(p * 1.6)
         m = text_mask(ch, weight, size, 0)
+        shadow_under(canvas, ch, weight, size, 0, ccx, cy + dy, al, sc, "center")
         if glow > 0 and p > 0.5:
             r = max(6, size // 6)
             paste(canvas, colorize(glow_mask(ch, weight, size, 0, r), GOLD, glow * al), ccx, cy + dy, scale=sc)

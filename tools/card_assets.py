@@ -66,14 +66,14 @@ def verso(mat):
     d.line((110, 230, 860, 230), fill=(*GOLD, 255), width=3)
     pin = icon("pin", 64, GOLD, 6)
     foil.alpha_composite(pin, (110, 300))
-    text(ink, ADDRESS, "SemiBold", 44, 200, 318, CREAM, anchor="left")
-    text(ink, "74000 Annecy", "Regular", 38, 200, 372, MUTED, anchor="left")
+    text(ink, ADDRESS, "SemiBold", 52, 200, 316, CREAM, anchor="left")
+    text(ink, "74000 Annecy", "Medium", 44, 200, 378, CREAM, anchor="left")
     clk = icon("clock", 64, GOLD, 6, 25)
     foil.alpha_composite(clk, (110, 488))
     for k, line in enumerate(HOURS_CARD):
-        text(ink, line, "Regular", 36, 200, 506 + k * 56, CREAM if k < 2 else MUTED, anchor="left")
-    text(foil, HANDLE, "Medium", 42, 110, 790, "gold", anchor="left")
-    text(ink, "Coupe nette · Barbe soignée", "Light", 32, 110, 850, MUTED, anchor="left")
+        text(ink, line, "Medium", 42, 200, 504 + k * 62, CREAM, anchor="left")
+    text(foil, HANDLE, "SemiBold", 50, 110, 800, "gold", anchor="left")
+    text(ink, "Coupe nette · Barbe soignée", "Regular", 36, 110, 864, CREAM, anchor="left")
     # printed QR on a cream plate (the 3D one rises from here)
     n = len(mat) + 8
     cell = QR_SIZE / n
@@ -86,7 +86,7 @@ def verso(mat):
                 xx, yy = x0 + (c + 4) * cell, y0 + (r + 4) * cell
                 dd.rectangle((xx, yy, xx + cell + 0.5, yy + cell + 0.5), fill=(17, 17, 17, 255))
     d.rounded_rectangle((x0 - 22, y0 - 22, x0 + QR_SIZE + 22, y0 + QR_SIZE + 22), radius=32, outline=(*GOLD, 255), width=4)
-    text(foil, "SCANNE-MOI", "SemiBold", 34, QR_CENTER[0], y0 + QR_SIZE + 76, "gold", tracking=8)
+    text(foil, "SCANNE-MOI", "Bold", 40, QR_CENTER[0], y0 + QR_SIZE + 76, "gold", tracking=8)
     return compose(ink, foil)
 
 def main():

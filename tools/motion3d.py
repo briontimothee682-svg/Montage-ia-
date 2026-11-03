@@ -44,36 +44,53 @@ def base_frame(fi):
     return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
 
 # ------------------------------------------------------------------ 2D overlays (the 3D layer carries logo, titles, tools, phone)
+# ------------------------------------------------------------------ legibility: dark plates behind every text block
+m.SHADOW = 0.9
+MUTED = (226, 220, 208)          # secondary text, brighter than the 2D reel
+
+@lru_cache(maxsize=None)
+def plate_img(w, h, r=30):
+    return panel(w, h, radius=r, fill=(10, 10, 10), border_a=110, bw=2)
+
+def plate(c, cx, cy, w, h, alpha):
+    if alpha > 0.01:
+        paste(c, plate_img(int(w), int(h)), cx, cy, alpha=clamp(alpha) * 0.84)
+
 def o_hook(c, t):
     # hook readable on the very first frame (most viewers decide in under 2 s, often with the sound off)
     hp = ease_out(prog(t, 0.0, 0.35))
+    plate(c, W / 2, 302, 800, 205, 1.0)
     sw = lerp(-300, 1400, prog(t, 0.5, 1.3)) if 0.5 < t < 1.3 else None
-    text(c, "ANNECY,", "ExtraBold", 66, W / 2, 262, "gold", tracking=8, scale=lerp(1.3, 1.0, hp) * (1 + 0.03 * beat_pulse(t, 0.0)),
+    text(c, "ANNECY,", "ExtraBold", 70, W / 2, 260, "gold", tracking=8, scale=lerp(1.3, 1.0, hp) * (1 + 0.03 * beat_pulse(t, 0.0)),
          sweep=sw, glow=0.4)
-    text(c, "TON BARBIER EST ICI", "Bold", 52, W / 2, 342, CREAM, tracking=4, scale=lerp(1.18, 1.0, hp))
+    text(c, "TON BARBIER EST ICI", "Bold", 56, W / 2, 344, CREAM, tracking=4, scale=lerp(1.18, 1.0, hp))
+    plate(c, W / 2, 1322, 900, 340, prog(t, 1.15, 1.45))
     p = ease_back(prog(t, 1.25, 1.6))
     if p > 0:
-        paste(c, icon("pin", 74), W / 2, 1185 + 6 * math.sin(t * 3), alpha=clamp(p), scale=max(0.01, p))
-    letters(c, ADDRESS.upper(), "SemiBold", 44, W / 2, 1275, t, 1.35, CREAM, tracking=5, stagger=0.018, dur=0.35)
+        paste(c, icon("pin", 74), W / 2, 1192 + 6 * math.sin(t * 3), alpha=clamp(p), scale=max(0.01, p))
+    letters(c, ADDRESS.upper(), "SemiBold", 48, W / 2, 1278, t, 1.35, CREAM, tracking=5, stagger=0.018, dur=0.35)
     sw = lerp(-200, 1400, prog(t, 2.6, 3.3)) if 2.6 < t < 3.3 else None
-    letters(c, CITY, "Bold", 88, W / 2, 1385, t, 1.75, "gold", tracking=10, stagger=0.045, dur=0.4, style="pop", sweep=sw, glow=0.35)
-    hline(c, W / 2, 1460, 520, ease_in_out(prog(t, 2.25, 2.75)), width=3)
+    letters(c, CITY, "Bold", 92, W / 2, 1388, t, 1.75, "gold", tracking=10, stagger=0.045, dur=0.4, style="pop", sweep=sw, glow=0.35)
+    hline(c, W / 2, 1462, 540, ease_in_out(prog(t, 2.25, 2.75)), width=3)
 
 def o_kinetic(c, t):
-    letters(c, "ATELIER 47", "SemiBold", 38, W / 2, 300, t, 3.6, GOLD, tracking=18, stagger=0.03, dur=0.3)
+    plate(c, W / 2, 300, 470, 88, prog(t, 3.55, 3.8))
+    letters(c, "ATELIER 47", "SemiBold", 42, W / 2, 300, t, 3.6, GOLD, tracking=18, stagger=0.03, dur=0.3)
     t0 = 3.5 if t < 5.5 else 5.5
     hline(c, W / 2, 1290, 760, ease_in_out(prog(t, t0 + 0.9, t0 + 1.3)), width=3)
     if t >= 5.5:
-        letters(c, "COUPE NETTE · BARBE SOIGNÉE", "Medium", 30, W / 2, 1390, t, 6.6, MUTED, tracking=8, stagger=0.015)
+        plate(c, W / 2, 1392, 900, 84, prog(t, 6.5, 6.75))
+        letters(c, "COUPE NETTE · BARBE SOIGNÉE", "SemiBold", 34, W / 2, 1392, t, 6.6, CREAM, tracking=8, stagger=0.015)
 
 @lru_cache(maxsize=None)
 def small_card():
-    return panel(900, 170, radius=28, fill=PANEL, border_a=90)
+    return panel(900, 170, radius=28, fill=(14, 13, 11), border_a=130)
 
 def o_salon(c, t):
-    letters(c, "LE SALON", "Bold", 40, W / 2, 300, t, 7.55, GOLD, tracking=22, stagger=0.03)
-    hline(c, W / 2, 350, 140, ease_out(prog(t, 7.8, 8.1)), width=3)
-    letters(c, "Pensé pour vous", "Light", 66, W / 2, 425, t, 7.7, CREAM, stagger=0.03, dur=0.45)
+    plate(c, W / 2, 368, 740, 225, prog(t, 7.55, 7.8))
+    letters(c, "LE SALON", "Bold", 44, W / 2, 300, t, 7.55, GOLD, tracking=22, stagger=0.03)
+    hline(c, W / 2, 352, 150, ease_out(prog(t, 7.8, 8.1)), width=3)
+    letters(c, "Pensé pour vous", "Regular", 70, W / 2, 428, t, 7.7, CREAM, stagger=0.03, dur=0.45)
     for i, (ic, title, sub) in enumerate(FEATURES):
         st = 8.4 + i * 0.5
         p = ease_out(prog(t, st, st + 0.45))
@@ -86,8 +103,8 @@ def o_salon(c, t):
         ring(c, 205 + dx, y, 56, 2, 1.0, alpha=a * 0.9)
         pul = 1 + 0.07 * beat_pulse(t, st)
         paste(c, icon(ic, 72), 205 + dx, y, alpha=a, scale=pul)
-        text(c, title, "SemiBold", 40, 295 + dx, y - 26, CREAM, alpha=a, anchor="left")
-        text(c, sub, "Regular", 28, 295 + dx, y + 30, MUTED, alpha=a, anchor="left")
+        text(c, title, "SemiBold", 42, 295 + dx, y - 28, CREAM, alpha=a, anchor="left")
+        text(c, sub, "Medium", 31, 295 + dx, y + 32, MUTED, alpha=a, anchor="left")
 
 def o_prices(c, t):
     pp = ease_out(prog(t, 12.15, 12.6))
@@ -102,21 +119,21 @@ def o_prices(c, t):
             hline(c, W / 2, y - 20, 760, ease_in_out(prog(t, 13.5, 13.9)), width=2, alpha=0.7)
             y += 40
         sp = ease_out(prog(t, 12.4 + si * 1.1, 12.75 + si * 1.1))
-        text(c, section, "SemiBold", 40, 150, y, GOLD, alpha=sp, tracking=10, anchor="left")
+        text(c, section, "Bold", 42, 150, y, GOLD, alpha=sp, tracking=10, anchor="left")
         y += 90
         for name, price in items:
             st = 12.6 + row * 0.26 + si * 0.25
             p = ease_out(prog(t, st, st + 0.35))
             if p > 0:
                 dx = lerp(-60, 0, p)
-                text(c, name, "Medium", 38, 150 + dx, y, CREAM, alpha=p, anchor="left")
+                text(c, name, "SemiBold", 40, 150 + dx, y, CREAM, alpha=p, anchor="left")
                 cnt = int(round(price * ease_out(prog(t, st + 0.05, st + 0.45))))
                 pop = 1 + 0.25 * (1 - ease_out(prog(t, st + 0.4, st + 0.65))) * (t > st + 0.4)
-                text(c, f"{cnt}€", "Bold", 46, 930, y, "gold", alpha=p, anchor="right", scale=pop)
-                _, nw = layout(name, "Medium", 38)
-                lead_x0, lead_x1 = 150 + nw + 24, 930 - 110
+                text(c, f"{cnt}€", "Bold", 50, 930, y, "gold", alpha=p, anchor="right", scale=pop)
+                _, nw = layout(name, "SemiBold", 40)
+                lead_x0, lead_x1 = 150 + nw + 24, 930 - 120
                 n = int((lead_x1 - lead_x0) / 18)
-                dot = Image.new("RGBA", (4, 4), (GOLD[0], GOLD[1], GOLD[2], 140))
+                dot = Image.new("RGBA", (4, 4), (GOLD[0], GOLD[1], GOLD[2], 160))
                 for k in range(max(0, n)):
                     if k / max(1, n) <= p:
                         paste(c, dot, lead_x0 + k * 18, y + 14)
@@ -131,6 +148,7 @@ def o_instagram(c, t):
             star(c, x, y - 20, r * (0.6 + 0.4 * a), a * 0.9)
 
 def o_hours(c, t):
+    plate(c, W / 2, 968, 940, 560, prog(t, 23.4, 23.7))
     for i, (day, hours) in enumerate(HOURS):
         st = 23.5 + i * 0.5
         p = ease_out(prog(t, st, st + 0.4))
@@ -139,41 +157,79 @@ def o_hours(c, t):
         y = 800 + i * 165
         dx = lerp(80, 0, p)
         closed = hours == "FERMÉ"
-        text(c, day, "SemiBold", 44, 150 - dx, y, CREAM if not closed else MUTED, alpha=p, anchor="left", tracking=2)
-        text(c, hours, "Bold", 52, 930 + dx, y, "gold" if not closed else MUTED, alpha=p, anchor="right", tracking=2,
+        text(c, day, "Bold", 46, 150 - dx, y, CREAM if not closed else MUTED, alpha=p, anchor="left", tracking=2)
+        text(c, hours, "Bold", 56, 930 + dx, y, "gold" if not closed else MUTED, alpha=p, anchor="right", tracking=2,
              scale=1 + 0.03 * beat_pulse(t, st + 0.5))
-        hline(c, W / 2, y + 80, 780, ease_in_out(prog(t, st + 0.15, st + 0.55)), width=2, alpha=0.45)
+        if i < len(HOURS) - 1:
+            hline(c, W / 2, y + 82, 780, ease_in_out(prog(t, st + 0.15, st + 0.55)), width=2, alpha=0.5)
     ap = ease_out(prog(t, 25.0, 25.4))
     if ap > 0:
-        paste(c, icon("pin", 52), W / 2, 1335, alpha=ap)
-        text(c, f"{ADDRESS} · 74000 Annecy", "Regular", 34, W / 2, 1405, CREAM, alpha=ap)
+        plate(c, W / 2, 1378, 940, 170, ap)
+        paste(c, icon("pin", 52), W / 2, 1340, alpha=ap)
+        text(c, f"{ADDRESS} · 74000 Annecy", "SemiBold", 38, W / 2, 1408, CREAM, alpha=ap)
 
 def o_card(c, t):
+    plate(c, W / 2, 304, 820, 108, prog(t, 26.6, 26.85))
     out = ease_in_out(prog(t, 29.1, 29.35))
     if out < 1:  # "NOTRE CARTE" first, then the scan call-to-action takes its place above the card
         if t < 29.1:
-            letters(c, "NOTRE CARTE", "SemiBold", 40, W / 2, 300, t, 26.6, GOLD, tracking=20, stagger=0.03)
+            letters(c, "NOTRE CARTE", "Bold", 44, W / 2, 300, t, 26.6, GOLD, tracking=20, stagger=0.03)
         else:
-            text(c, "NOTRE CARTE", "SemiBold", 40, W / 2, 300, GOLD, alpha=1 - out, tracking=20)
-    hline(c, W / 2, 350, 160 + 360 * ease_out(prog(t, 29.35, 29.7)), ease_out(prog(t, 26.9, 27.2)), width=3)
+            text(c, "NOTRE CARTE", "Bold", 44, W / 2, 300, GOLD, alpha=1 - out, tracking=20)
     cp = ease_back(prog(t, 29.35, 29.75))
     if cp > 0:
-        text(c, "SCANNE · ABONNE-TOI", "Bold", 44, W / 2, 300, CREAM, alpha=clamp(cp), tracking=8,
+        text(c, "SCANNE · ABONNE-TOI", "ExtraBold", 48, W / 2, 300, CREAM, alpha=clamp(cp), tracking=8,
              scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 29.5)))
 
 def o_end(c, t):
-    letters(c, HANDLE, "Medium", 46, W / 2, 1210, t, 32.1, CREAM, stagger=0.015, dur=0.3)
+    plate(c, W / 2, 1300, 940, 300, prog(t, 32.0, 32.3))
+    letters(c, HANDLE, "SemiBold", 50, W / 2, 1210, t, 32.1, CREAM, stagger=0.015, dur=0.3)
     ap = ease_out(prog(t, 32.4, 32.8))
-    text(c, f"{ADDRESS} · 74000 Annecy", "Regular", 32, W / 2, 1285, CREAM, alpha=ap * 0.85)
+    text(c, f"{ADDRESS} · 74000 Annecy", "Medium", 36, W / 2, 1288, CREAM, alpha=ap)
     cp = ease_back(prog(t, 32.5, 32.9))
     if cp > 0:
-        text(c, "ENREGISTRE · PARTAGE À UN POTE", "SemiBold", 30, W / 2, 1365, GOLD, alpha=clamp(cp), tracking=6,
+        text(c, "ENREGISTRE · PARTAGE À UN POTE", "Bold", 34, W / 2, 1370, GOLD, alpha=clamp(cp), tracking=6,
              scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 33)))
     sp = ease_out(prog(t, 32.8, 33.3))
-    text(c, "TIM DESIGN", "Light", 24, W / 2, 1450, CREAM, alpha=sp * 0.55, tracking=16)
+    text(c, "TIM DESIGN", "Light", 26, W / 2, 1468, CREAM, alpha=sp * 0.7, tracking=16)
 
 OVERLAYS = [(0.0, 3.5, o_hook), (3.5, 7.5, o_kinetic), (7.5, 12.0, o_salon), (12.0, 17.0, o_prices),
             (17.0, 23.0, o_instagram), (23.0, 26.5, o_hours), (26.5, 31.0, o_card), (31.0, DUR, o_end)]
+
+# ------------------------------------------------------------------ light-line transitions (like the reference reel)
+TRAIL_EVENTS = [(0.5, (540, 740))] + [(c_, (540, 940)) for c_ in CUTS]
+
+def light_trails(arr, t):
+    from PIL import ImageDraw, ImageFilter
+    for ev, (cx, cy) in TRAIL_EVENTS:
+        d = t - ev
+        if not (-0.36 <= d <= 0.06):
+            continue
+        k = ease_in_out(prog(t, ev - 0.36, ev))
+        core = Image.new("L", (W // 2, H // 2), 0)
+        dr = ImageDraw.Draw(core)
+        rng = np.random.default_rng(int(ev * 100))
+        for j in range(6):
+            a = rng.uniform(0, 2 * math.pi)
+            r0 = rng.uniform(1300, 1700)
+            sx, sy = cx + math.cos(a) * r0, cy + math.sin(a) * r0
+            ox, oy = cx + rng.uniform(-60, 60), cy + rng.uniform(-60, 60)
+            hk, tk = min(1.0, k * 1.15), max(0.0, k * 1.15 - 0.42)
+            hx, hy = lerp(sx, ox, hk), lerp(sy, oy, hk)
+            tx, ty = lerp(sx, ox, tk), lerp(sy, oy, tk)
+            if d > 0:
+                continue
+            dr.line((tx / 2, ty / 2, hx / 2, hy / 2), fill=255, width=2)
+        glow = core.filter(ImageFilter.GaussianBlur(7))
+        c_ = np.asarray(core.resize((W, H), Image.BILINEAR)).astype(np.float32)[..., None] / 255
+        g_ = np.asarray(glow.resize((W, H), Image.BILINEAR)).astype(np.float32)[..., None] / 255
+        arr += c_ * np.array([255, 250, 240], np.float32) * 1.4 + g_ * np.array([110, 220, 255], np.float32) * 2.2
+        burst = max(0.0, 1 - abs(d) / 0.09)          # convergence burst
+        if burst > 0:
+            yy, xx = np.ogrid[0:H, 0:W]
+            rad = np.exp(-(((xx - cx) / 260.0) ** 2 + ((yy - cy) / 260.0) ** 2))
+            arr += rad[..., None] * np.array([200, 240, 255], np.float32) * 1.3 * burst
+    return arr
 
 def streaks(img):
     """Anamorphic horizontal light streaks on the brightest highlights."""
@@ -199,6 +255,7 @@ def composite(fi):
         if a <= t < b:
             fn(c, t)
     arr = streaks(c.convert("RGB"))
+    arr = light_trails(arr, t)
     for cut in CUTS:
         d = t - cut
         if abs(d) <= 0.35:  # warm light leak sweeping across the cut
