@@ -150,7 +150,7 @@ GLOW_SCALE = 1.0   # global multiplier on gold text glow
 def shadow_under(canvas, s, weight, size, tracking, cx, cy, alpha, scale, anchor):
     if SHADOW <= 0 or alpha <= 0.01:
         return
-    r = max(4, size // 7)
+    r = int(max(4, size // 7))
     g = glow_mask(s, weight, size, tracking, r)
     gc = {"center": cx, "left": cx - 2 * r, "right": cx + 2 * r}[anchor]
     paste(canvas, colorize(g, (0, 0, 0), min(1.0, alpha * SHADOW * 1.6)), gc, cy + size * 0.05, scale=scale, anchor=anchor)
@@ -167,7 +167,7 @@ def text(canvas, s, weight, size, cx, cy, color=CREAM, alpha=1.0, tracking=0, an
         x0, y0 = cx - m.width, cy - m.height / 2
     glow *= GLOW_SCALE
     if glow > 0:
-        r = max(6, size // 6)
+        r = int(max(6, size // 6))
         g = glow_mask(s, weight, size, tracking, r)
         gc = {"center": cx, "left": cx - 2 * r, "right": cx + 2 * r}[anchor]
         paste(canvas, colorize(g, GOLD, alpha * glow), gc, cy, scale=scale, anchor=anchor)

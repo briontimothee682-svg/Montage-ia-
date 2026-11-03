@@ -743,8 +743,8 @@ def main():
         return
     silent = OUT / "atelier47_motion_3d_sans_son.mp4"
     proc = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-                             "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "slow", "-b:v", "9M", "-maxrate", "12M",
-                             "-bufsize", "18M", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(silent)], stdin=subprocess.PIPE)
+                             "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "slow", "-b:v", "16M", "-maxrate", "20M",
+                             "-bufsize", "30M", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(silent)], stdin=subprocess.PIPE)
     total = int(DUR * FPS)
     for fi in range(total):
         proc.stdin.write(composite(fi).tobytes())
@@ -759,7 +759,7 @@ def main():
                     "-af", "acompressor=threshold=0.1:ratio=3:attack=5:release=120:makeup=2,loudnorm=I=-14:TP=-1.5:LRA=9,aresample=48000,alimiter=limit=0.82:level=false", "-ar", "48000", "-c:a", "aac", "-b:a", "256k", "-shortest",
                     "-movflags", "+faststart", str(final)], check=True)
     wav.unlink()
-    # 17 s version for A/B testing (hook + kinetic + phone + end), cut on the beat
+    # short version for A/B testing (hook + phone sequence + end), cut on the beat
     short_cut(final, OUT / "atelier47_motion_3d_court.mp4", [(0.0, 3.5), (17.0, 30.5), (38.5, DUR)])
     print("done", final)
 
