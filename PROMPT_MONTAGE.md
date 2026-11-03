@@ -1,178 +1,315 @@
 # Prompt à coller dans l'IA de montage
 
-Copie tout ce qui se trouve sous la ligne et colle-le dans ton IA de montage, en même temps que tes fichiers : `shot_01.mp4` à `shot_14.mp4` (sans `shot_13`), `logo_tim_design.png` et `instagram_screenshot.png`.
+Colle le texte sous la ligne avec tes fichiers `shot_01.mp4` à `shot_17.mp4`, `logo_tim_design.png` et `instagram_screenshot.png`.
 
 ---
 
-Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe pour les réseaux sociaux.
-Monte un Reel Instagram vertical de 19 secondes pour le salon de barbier TIM DESIGN, en suivant EXACTEMENT la fiche de montage JSON ci-dessous : l'ordre des plans, les points d'entrée et de sortie, les transitions, l'étalonnage, les textes, les couleurs, le son et le format d'export.
-
-Règles strictes :
-- Aucune personne, aucune main et aucun visage, à aucun moment.
-- Chaque coupe tombe exactement sur un temps de la musique.
-- N'utilise que ces trois couleurs : noir #111111, doré #C9A24B, crème #F3EEE3.
-- Pas de modèle, de sticker, d'emoji ni de sous-titres automatiques.
-- Tous les textes restent dans la zone de sécurité Instagram.
-- Si un plan contient une erreur (texte TIM DESIGN mal écrit, objet déformé, personne visible), signale-le au lieu de le garder.
-
-Fiche de montage :
+Tu es un monteur vidéo professionnel spécialisé dans les publicités de luxe pour Instagram. Monte un Reel vertical de 30 secondes pour le salon de barbier TIM DESIGN en suivant EXACTEMENT la fiche JSON ci-dessous : ordre, durées, transitions, étalonnage, textes, police, couleurs, son et export. Aucune personne dans le salon. Coupe sur le temps. Signale tout plan défectueux au lieu de le garder.
 
 ```json
 {
   "project": {
     "name": "TIM DESIGN - Reel salon",
-    "aspect_ratio": "9:16",
     "resolution": "1080x1920",
     "fps": 30,
-    "duration_seconds": 19.0,
+    "duration_seconds": 30.0,
     "export": {
       "container": "mp4",
       "video_codec": "H.264 High",
       "bitrate_mbps": 20,
-      "audio_codec": "AAC",
-      "audio_bitrate_kbps": 320,
-      "color_space": "Rec.709",
+      "audio": "AAC 320 kbps",
       "file_name": "tim_design_reel.mp4"
     }
   },
-
   "brand": {
-    "name": "TIM DESIGN",
     "colors": {
       "black": "#111111",
       "gold": "#C9A24B",
       "cream": "#F3EEE3"
     },
-    "color_usage": {
-      "black": "backgrounds, deepest shadows of the grade",
-      "gold": "TIM DESIGN logo, ABONNEZ-VOUS text, flash transitions",
-      "cream": "secondary text only (Instagram handle, address)"
-    },
-    "fonts": {
-      "title": "Cinzel Bold (fallback: Playfair Display Bold), all caps, letter spacing +200",
-      "secondary": "Montserrat Light, all caps, letter spacing +100"
-    },
+    "font": "[POLICE CANVA]",
     "assets": {
       "logo": "logo_tim_design.png (transparent background)",
-      "instagram_screenshot": "instagram_screenshot.png (real screenshot of the TIM DESIGN Instagram profile, 1080x1920)",
-      "instagram_handle": "@TON_PSEUDO"
+      "instagram_screenshot": "instagram_screenshot.png (real screenshot of the TIM DESIGN Instagram profile)"
     }
   },
-
-  "input_clips": "shot_01.mp4 to shot_14.mp4, generated from reel_barbershop.json; each source clip is longer than its slot, so pick the best, sharpest segment with the most light movement",
-
   "global_rules": [
-    "never show any person, hand or face; reject any clip segment that contains one",
-    "cut exactly on the beat of the music; snap every cut point to the nearest beat marker while keeping the total length at 19.0s",
-    "alternate close-up and wide shots as listed",
-    "no stock transitions, no default templates, no stickers, no emojis, no automatic captions",
-    "keep all text inside the Instagram safe zone: 250px margin top, 420px margin bottom, 140px margin right, 80px margin left",
-    "only the three brand colors for any graphic element"
+    "never show a person in the salon; reject any clip with a person, hand or face (tiny players on the TV are fine)",
+    "cut on the beat; alternate close-ups and wide shots exactly as listed",
+    "keep all text inside the Instagram safe zone: 250px top, 420px bottom, 140px right, 80px left",
+    "text only in gold #C9A24B (main) or cream #F3EEE3 (secondary), font [POLICE CANVA]",
+    "if the Instagram page generated on the phone (shots 12-13) has garbled text, pin instagram_screenshot.png onto the phone screen with corner-pin tracking"
   ],
-
   "color_grade": {
-    "apply_to": "all clips, identically",
+    "apply_to": "all clips identically",
     "contrast": "+15",
-    "saturation": "-12",
-    "temperature": "warm (+8)",
-    "shadows": "crushed toward #111111, never pure #000000",
-    "highlights": "warm gold tint toward #C9A24B, soft roll-off, no clipping",
-    "midtones": "slightly warm",
-    "vignette": "subtle, -15",
-    "film_grain": "very light, 5%",
-    "sharpen": "light, on subject only"
+    "saturation": "-10 (keep plant and pitch greens natural)",
+    "temperature": "+8 warm",
+    "shadows": "toward #111111",
+    "highlights": "warm gold, soft roll-off",
+    "vignette": "-15",
+    "grain": "5%"
   },
-
-  "audio": {
-    "music": {
-      "style": "dark luxury trap / deep house instrumental, no vocals, around 150 BPM (one beat = 0.4s)",
-      "structure": "0.0-2.8s fast intro hits; 2.8-3.0s silence; 3.0s heavy bass drop; 3.0-16.0s groove; 16.0-19.0s outro, fade out over the last 1.5s",
-      "loudness": "-14 LUFS integrated, true peak -1 dBTP",
-      "license": "royalty-free or from the Instagram music library"
-    },
-    "sfx": [
-      { "time": 0.0,  "sound": "sharp metallic click (clipper switch)", "volume": "-6 dB" },
-      { "time": 1.6,  "sound": "straight razor sliding open, metallic ring", "volume": "-8 dB" },
-      { "time": 2.4,  "sound": "short reverse riser into the silence", "volume": "-10 dB" },
-      { "time": 3.0,  "sound": "deep sub impact on the drop", "volume": "-4 dB" },
-      { "time": 4.9,  "sound": "fast whoosh (zoom-in transition)", "volume": "-10 dB" },
-      { "time": 8.4,  "sound": "reverse whoosh (pull-back transition)", "volume": "-10 dB" },
-      { "time": 9.45, "sound": "soft gold shimmer (flash)", "volume": "-12 dB" },
-      { "time": 11.4, "sound": "fast whoosh (zoom-in transition)", "volume": "-10 dB" },
-      { "time": 12.5, "sound": "smooth mechanical slide (phone rising)", "volume": "-12 dB" },
-      { "time": 14.4, "sound": "whoosh through the screen", "volume": "-10 dB" },
-      { "time": 14.7, "sound": "subtle notification ding", "volume": "-12 dB" },
-      { "time": 16.2, "sound": "deep warm boom under the logo", "volume": "-8 dB" }
-    ]
-  },
-
   "timeline": [
-    { "clip": "shot_01.mp4", "in": 0.0,  "out": 0.4,  "scale": "close",  "content": "pomade jar, TIM DESIGN gold lid",           "speed": "100%", "transition_out": { "type": "hard cut", "on_beat": true } },
-    { "clip": "shot_02.mp4", "in": 0.4,  "out": 0.8,  "scale": "close",  "content": "barber pole",                               "speed": "100%", "transition_out": { "type": "hard cut", "on_beat": true } },
-    { "clip": "shot_03.mp4", "in": 0.8,  "out": 1.2,  "scale": "close",  "content": "gold clipper",                              "speed": "100%", "transition_out": { "type": "hard cut", "on_beat": true } },
-    { "clip": "shot_04.mp4", "in": 1.2,  "out": 1.6,  "scale": "wide",   "content": "brass pendant lamps",                       "speed": "100%", "transition_out": { "type": "hard cut", "on_beat": true } },
-    { "clip": "shot_05.mp4", "in": 1.6,  "out": 2.8,  "scale": "close",  "content": "straight razor opening",                    "speed": "speed ramp 100% -> 60% on the light flash", "transition_out": { "type": "cut to black", "duration": 0.2, "color": "#111111" } },
-    { "clip": "black",       "in": 2.8,  "out": 3.0,  "content": "solid #111111, silence before the drop" },
-    { "clip": "shot_06.mp4", "in": 3.0,  "out": 5.0,  "scale": "wide",   "content": "salon overview",                            "speed": "100%", "effects": ["1-frame light flash on the drop at 3.0s"], "transition_out": { "type": "zoom-in transition wide -> close", "duration": 0.2, "motion_blur": "strong", "centered_on": "nearest chair" } },
-    { "clip": "shot_07.mp4", "in": 5.0,  "out": 6.5,  "scale": "close",  "content": "chair headrest and gold armrest",           "speed": "100%", "transition_out": { "type": "hard cut", "on_beat": true } },
-    { "clip": "shot_08.mp4", "in": 6.5,  "out": 8.5,  "scale": "close",  "content": "top-down tool station",                     "speed": "100%", "transition_out": { "type": "pull-back transition close -> wide", "duration": 0.2, "motion_blur": "strong" } },
-    { "clip": "shot_09.mp4", "in": 8.5,  "out": 9.5,  "scale": "wide",   "content": "full row of stations, crane-up",            "speed": "100%", "transition_out": { "type": "flash", "duration": 0.12, "color": "white peak fading through #C9A24B" } },
-    { "clip": "shot_10.mp4", "in": 9.5,  "out": 11.5, "scale": "medium", "content": "TIM DESIGN product shelves",                "speed": "100%", "transition_out": { "type": "zoom-in transition medium -> close", "duration": 0.2, "motion_blur": "strong", "centered_on": "one bottle" } },
-    { "clip": "shot_11.mp4", "in": 11.5, "out": 12.5, "scale": "close",  "content": "TIM DESIGN bottle macro",                   "speed": "100%", "transition_out": { "type": "hard cut", "on_beat": true } },
-    { "clip": "shot_12.mp4", "in": 12.5, "out": 14.5, "scale": "medium", "content": "phone rising from the counter",             "speed": "100%",
-      "effects": ["screen replacement: track the 4 corners of the phone screen and pin instagram_screenshot.png onto it (corner pin / planar tracking), add a light glass reflection on top"],
-      "transition_out": { "type": "push through the screen", "duration": 0.3, "description": "scale up into the phone screen until instagram_screenshot.png fills the full frame" } },
-    { "clip": "instagram_screenshot.png", "in": 14.5, "out": 16.0, "scale": "close", "content": "Instagram profile full screen",
-      "effects": ["slow push-in 100% -> 108%", "dark overlay #111111 at 35% opacity so the text reads well"],
-      "transition_out": { "type": "flash then fade to dark", "duration": 0.2, "color": "#C9A24B" } },
-    { "clip": "shot_14.mp4", "in": 16.0, "out": 19.0, "scale": "close",  "content": "dark clipper end plate",                    "speed": "100%", "effects": ["exposure -0.3 to keep the center dark"], "transition_out": { "type": "fade to #111111", "duration": 0.5 } }
+    {
+      "clip": "shot_01.mp4",
+      "in": 0.0,
+      "out": 3.0,
+      "scale": "wide",
+      "content": "Façade de nuit puis entrée dans le salon",
+      "transition_out": "hard cut on the beat drop"
+    },
+    {
+      "clip": "shot_02.mp4",
+      "in": 3.0,
+      "out": 3.4,
+      "scale": "close",
+      "content": "Pot de cire TIM DESIGN",
+      "transition_out": "hard cut on beat"
+    },
+    {
+      "clip": "shot_03.mp4",
+      "in": 3.4,
+      "out": 3.8,
+      "scale": "close",
+      "content": "Ciseaux dorés",
+      "transition_out": "hard cut on beat"
+    },
+    {
+      "clip": "shot_04.mp4",
+      "in": 3.8,
+      "out": 4.2,
+      "scale": "close",
+      "content": "Rasoir qui s'ouvre",
+      "transition_out": "hard cut on beat"
+    },
+    {
+      "clip": "shot_05.mp4",
+      "in": 4.2,
+      "out": 4.6,
+      "scale": "close",
+      "content": "Enseigne de barbier",
+      "transition_out": "hard cut on beat"
+    },
+    {
+      "clip": "shot_06.mp4",
+      "in": 4.6,
+      "out": 7.0,
+      "scale": "wide",
+      "content": "Vue d'ensemble du salon",
+      "transition_out": "fast zoom-in transition (wide to close) with motion blur"
+    },
+    {
+      "clip": "shot_07.mp4",
+      "in": 7.0,
+      "out": 9.0,
+      "scale": "close",
+      "content": "Outils vus de dessus",
+      "transition_out": "fast pull-back transition (close to wide) with motion blur"
+    },
+    {
+      "clip": "shot_08.mp4",
+      "in": 9.0,
+      "out": 11.5,
+      "scale": "wide",
+      "content": "Salle d'attente, plantes et match à la télé",
+      "transition_out": "whip-pan transition with motion blur"
+    },
+    {
+      "clip": "shot_09.mp4",
+      "in": 11.5,
+      "out": 13.5,
+      "scale": "close",
+      "content": "Étagère de produits TIM DESIGN",
+      "transition_out": "fast zoom-in transition onto one bottle"
+    },
+    {
+      "clip": "shot_10.mp4",
+      "in": 13.5,
+      "out": 14.5,
+      "scale": "close",
+      "content": "Bouteille TIM DESIGN en macro",
+      "transition_out": "fast pull-back transition (close to wide)"
+    },
+    {
+      "clip": "shot_11.mp4",
+      "in": 14.5,
+      "out": 16.0,
+      "scale": "wide",
+      "content": "Accueil avec le logo",
+      "transition_out": "hard cut on the beat"
+    },
+    {
+      "clip": "shot_12.mp4",
+      "in": 16.0,
+      "out": 18.5,
+      "scale": "medium",
+      "content": "Téléphone devant le salon avec Instagram",
+      "transition_out": "slow push-in toward the screen"
+    },
+    {
+      "clip": "shot_13.mp4",
+      "in": 18.5,
+      "out": 20.5,
+      "scale": "medium",
+      "content": "Le téléphone s'efface, retour au salon",
+      "transition_out": "hard cut"
+    },
+    {
+      "clip": "shot_14.mp4",
+      "in": 20.5,
+      "out": 22.5,
+      "scale": "close",
+      "content": "Fauteuil en cuir",
+      "transition_out": "fast pull-back transition (close to wide)"
+    },
+    {
+      "clip": "shot_15.mp4",
+      "in": 22.5,
+      "out": 24.5,
+      "scale": "wide",
+      "content": "Miroir qui reflète le salon",
+      "transition_out": "zoom-in transition (wide to close)"
+    },
+    {
+      "clip": "shot_16.mp4",
+      "in": 24.5,
+      "out": 26.5,
+      "scale": "close",
+      "content": "Tondeuse dorée en macro",
+      "transition_out": "soft cross-dissolve"
+    },
+    {
+      "clip": "shot_17.mp4",
+      "in": 26.5,
+      "out": 30.0,
+      "scale": "wide",
+      "content": "Fin : mur du logo",
+      "transition_out": "gentle fade to black #111111"
+    }
   ],
-
   "text_overlays": [
     {
-      "text": "ABONNEZ-VOUS",
-      "in": 14.7, "out": 16.0,
-      "font": "Cinzel Bold", "size_px": 96, "letter_spacing": 200,
-      "color": "#C9A24B",
-      "position": "center, y = 1150px",
-      "effects": ["thin gold gradient #C9A24B -> lighter highlight", "soft drop shadow #111111 60%"],
-      "animation_in": "letters reveal left to right over 0.4s with a light shimmer sweep",
-      "animation_out": "cut with the flash"
+      "in": 0.2,
+      "out": 3.0,
+      "what": "TIM DESIGN logo",
+      "style": "gold, top center, 520px wide",
+      "anim": "fade in + scale 95%->100% over 0.5s, dissolve out at 3.0s"
     },
     {
-      "image": "logo_tim_design.png",
-      "in": 16.2, "out": 19.0,
-      "color": "#C9A24B",
-      "position": "exact center",
-      "width_px": 600,
-      "animation_in": "fade in + scale 95% -> 100% over 0.6s, then a single gold shimmer sweep at 17.0s",
-      "animation_out": "fade out with the final fade"
+      "in": 0.5,
+      "out": 3.0,
+      "what": "location pin icon + '[ADRESSE] · [VILLE]'",
+      "style": "[POLICE CANVA], cream #F3EEE3, 44px, below the logo",
+      "anim": "slide up 20px + fade in 0.4s"
     },
     {
-      "text": "ABONNEZ-VOUS",
-      "in": 16.8, "out": 19.0,
-      "font": "Cinzel Bold", "size_px": 64, "letter_spacing": 200,
-      "color": "#C9A24B",
-      "position": "centered, 160px below the logo",
-      "animation_in": "fade in 0.4s"
+      "in": 16.6,
+      "out": 20.3,
+      "what": "ABONNEZ-VOUS",
+      "style": "[POLICE CANVA], gold #C9A24B, 96px, wide letter spacing, centered above the phone",
+      "anim": "letters reveal left to right over 0.4s with a gold shimmer, ding sound"
     },
     {
-      "text": "@TON_PSEUDO",
-      "in": 17.2, "out": 19.0,
-      "font": "Montserrat Light", "size_px": 40, "letter_spacing": 100,
-      "color": "#F3EEE3",
-      "position": "centered, 90px below ABONNEZ-VOUS",
-      "animation_in": "fade in 0.4s"
+      "in": 17.0,
+      "out": 20.3,
+      "what": "[@PSEUDO]",
+      "style": "[POLICE CANVA], cream #F3EEE3, 44px, under ABONNEZ-VOUS",
+      "anim": "fade in 0.3s"
+    },
+    {
+      "in": 27.0,
+      "out": 30.0,
+      "what": "TIM DESIGN logo",
+      "style": "gold, exact center, 600px wide",
+      "anim": "fade in 0.6s, fade out with the final fade"
+    },
+    {
+      "in": 27.5,
+      "out": 30.0,
+      "what": "ABONNEZ-VOUS",
+      "style": "[POLICE CANVA], gold #C9A24B, 64px, 160px below the logo",
+      "anim": "fade in 0.4s"
+    },
+    {
+      "in": 27.9,
+      "out": 30.0,
+      "what": "[@PSEUDO] · [ADRESSE], [VILLE]",
+      "style": "[POLICE CANVA], cream #F3EEE3, 38px, under ABONNEZ-VOUS",
+      "anim": "fade in 0.4s"
     }
   ],
-
+  "audio": {
+    "music": "dark luxury deep-house instrumental, no vocals, bass drop at 3.0s, fade out over the last 1.5s, -14 LUFS",
+    "sfx": [
+      [
+        0.0,
+        "night street ambience + door opening"
+      ],
+      [
+        3.0,
+        "deep impact on the drop"
+      ],
+      [
+        3.0,
+        "metallic click"
+      ],
+      [
+        3.8,
+        "razor ring"
+      ],
+      [
+        6.9,
+        "whoosh"
+      ],
+      [
+        8.9,
+        "reverse whoosh"
+      ],
+      [
+        9.0,
+        "muffled stadium crowd from the TV, low"
+      ],
+      [
+        11.4,
+        "whip-pan whoosh"
+      ],
+      [
+        13.4,
+        "whoosh"
+      ],
+      [
+        14.4,
+        "reverse whoosh"
+      ],
+      [
+        16.0,
+        "smooth mechanical slide"
+      ],
+      [
+        16.6,
+        "notification ding"
+      ],
+      [
+        20.4,
+        "reverse whoosh"
+      ],
+      [
+        22.4,
+        "whoosh"
+      ],
+      [
+        26.5,
+        "warm low boom"
+      ]
+    ]
+  },
   "final_checks": [
-    "total duration exactly 19.0s",
-    "no person, hand or face visible on any frame",
-    "TIM DESIGN lettering readable and correctly spelled on every product shot; otherwise replace the clip",
-    "every cut lands on a beat",
-    "all text inside the safe zone and only in #C9A24B or #F3EEE3",
-    "the image stays dark and warm, blacks at #111111, no blue or green tint"
+    "duration 30.0s",
+    "no person in the salon",
+    "TIM DESIGN spelled correctly everywhere",
+    "address, ABONNEZ-VOUS and handle readable and inside the safe zone",
+    "cuts on the beat"
   ]
 }
 ```
