@@ -13,9 +13,9 @@
       "gold": "#C9A24B",
       "cream": "#F3EEE3"
     },
-    "font": "[POLICE CANVA]",
-    "address": "[ADRESSE], [VILLE]",
-    "instagram": "[@PSEUDO]"
+    "font": "Poppins",
+    "address": "12 rue de la République, Annecy",
+    "instagram": "@timdesign"
   },
   "global_style": {
     "realism": "Photorealistic live-action footage, as if shot on an ARRI Alexa 35 with anamorphic 35mm and 100mm macro lenses: true-to-life materials (leather grain and stitching, brushed metal with micro-scratches, veined marble, real glass, real plant leaves), physically accurate light and reflections, natural film grain. Absolutely no cartoon, illustration, 3D render or CGI look.",
@@ -224,22 +224,22 @@
     {
       "in": 0.5,
       "out": 3.0,
-      "what": "location pin icon + '[ADRESSE] · [VILLE]'",
-      "style": "[POLICE CANVA], cream #F3EEE3, 44px, below the logo",
+      "what": "location pin icon + '12 rue de la République · Annecy'",
+      "style": "Poppins, cream #F3EEE3, 44px, below the logo",
       "anim": "slide up 20px + fade in 0.4s"
     },
     {
       "in": 16.6,
       "out": 20.3,
       "what": "ABONNEZ-VOUS",
-      "style": "[POLICE CANVA], gold #C9A24B, 96px, wide letter spacing, centered above the phone",
+      "style": "Poppins, gold #C9A24B, 96px, wide letter spacing, centered above the phone",
       "anim": "letters reveal left to right over 0.4s with a gold shimmer, ding sound"
     },
     {
       "in": 17.0,
       "out": 20.3,
-      "what": "[@PSEUDO]",
-      "style": "[POLICE CANVA], cream #F3EEE3, 44px, under ABONNEZ-VOUS",
+      "what": "@timdesign",
+      "style": "Poppins, cream #F3EEE3, 44px, under ABONNEZ-VOUS",
       "anim": "fade in 0.3s"
     },
     {
@@ -253,14 +253,14 @@
       "in": 27.5,
       "out": 30.0,
       "what": "ABONNEZ-VOUS",
-      "style": "[POLICE CANVA], gold #C9A24B, 64px, 160px below the logo",
+      "style": "Poppins, gold #C9A24B, 64px, 160px below the logo",
       "anim": "fade in 0.4s"
     },
     {
       "in": 27.9,
       "out": 30.0,
-      "what": "[@PSEUDO] · [ADRESSE], [VILLE]",
-      "style": "[POLICE CANVA], cream #F3EEE3, 38px, under ABONNEZ-VOUS",
+      "what": "@timdesign · 12 rue de la République, Annecy",
+      "style": "Poppins, cream #F3EEE3, 38px, under ABONNEZ-VOUS",
       "anim": "fade in 0.4s"
     }
   ],

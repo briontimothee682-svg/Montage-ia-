@@ -18,7 +18,7 @@
       "gold": "#C9A24B",
       "cream": "#F3EEE3"
     },
-    "font": "[POLICE CANVA]",
+    "font": "Poppins",
     "assets": {
       "logo": "logo_tim_design.png (transparent background)",
       "instagram_screenshot": "instagram_screenshot.png (real screenshot of the TIM DESIGN Instagram profile)"
@@ -28,7 +28,7 @@
     "never show a person in the salon; reject any clip with a person, hand or face (tiny players on the TV are fine)",
     "cut on the beat; alternate close-ups and wide shots exactly as listed",
     "keep all text inside the Instagram safe zone: 250px top, 420px bottom, 140px right, 80px left",
-    "text only in gold #C9A24B (main) or cream #F3EEE3 (secondary), font [POLICE CANVA]",
+    "text only in gold #C9A24B (main) or cream #F3EEE3 (secondary), font Poppins",
     "if the Instagram page generated on the phone (shots 12-13) has garbled text, pin instagram_screenshot.png onto the phone screen with corner-pin tracking"
   ],
   "color_grade": {
@@ -190,22 +190,22 @@
     {
       "in": 0.5,
       "out": 3.0,
-      "what": "location pin icon + '[ADRESSE] · [VILLE]'",
-      "style": "[POLICE CANVA], cream #F3EEE3, 44px, below the logo",
+      "what": "location pin icon + '12 rue de la République · Annecy'",
+      "style": "Poppins, cream #F3EEE3, 44px, below the logo",
       "anim": "slide up 20px + fade in 0.4s"
     },
     {
       "in": 16.6,
       "out": 20.3,
       "what": "ABONNEZ-VOUS",
-      "style": "[POLICE CANVA], gold #C9A24B, 96px, wide letter spacing, centered above the phone",
+      "style": "Poppins, gold #C9A24B, 96px, wide letter spacing, centered above the phone",
       "anim": "letters reveal left to right over 0.4s with a gold shimmer, ding sound"
     },
     {
       "in": 17.0,
       "out": 20.3,
-      "what": "[@PSEUDO]",
-      "style": "[POLICE CANVA], cream #F3EEE3, 44px, under ABONNEZ-VOUS",
+      "what": "@timdesign",
+      "style": "Poppins, cream #F3EEE3, 44px, under ABONNEZ-VOUS",
       "anim": "fade in 0.3s"
     },
     {
@@ -219,14 +219,14 @@
       "in": 27.5,
       "out": 30.0,
       "what": "ABONNEZ-VOUS",
-      "style": "[POLICE CANVA], gold #C9A24B, 64px, 160px below the logo",
+      "style": "Poppins, gold #C9A24B, 64px, 160px below the logo",
       "anim": "fade in 0.4s"
     },
     {
       "in": 27.9,
       "out": 30.0,
-      "what": "[@PSEUDO] · [ADRESSE], [VILLE]",
-      "style": "[POLICE CANVA], cream #F3EEE3, 38px, under ABONNEZ-VOUS",
+      "what": "@timdesign · 12 rue de la République, Annecy",
+      "style": "Poppins, cream #F3EEE3, 38px, under ABONNEZ-VOUS",
       "anim": "fade in 0.4s"
     }
   ],

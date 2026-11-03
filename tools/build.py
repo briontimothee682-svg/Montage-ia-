@@ -4,7 +4,7 @@ import html, json, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PH = {"addr": "[ADRESSE]", "city": "[VILLE]", "handle": "[@PSEUDO]", "font": "[POLICE CANVA]"}
+PH = {"addr": "12 rue de la République", "city": "Annecy", "handle": "@timdesign", "font": "Poppins"}
 COLORS = {"black": "#111111", "gold": "#C9A24B", "cream": "#F3EEE3"}
 
 REALISM = ("Photorealistic live-action footage, as if shot on an ARRI Alexa 35 with anamorphic 35mm and 100mm macro lenses: "
@@ -139,7 +139,7 @@ def master_prompt():
         f"Create a {SHOTS[-1][1]:.0f}-second vertical 9:16 video (1080x1920, 30 fps): a cinematic commercial for TIM DESIGN, a luxury barbershop, for an Instagram Reel.",
         "", "LOOK: " + REALISM, "",
         "BRAND: " + PALETTE + f" The TIM DESIGN logo appears as a backlit brushed-gold sign. All on-screen text uses the font {PH['font']}: "
-        f"main text in gold {COLORS['gold']} capitals with wide letter spacing, secondary text in cream {COLORS['cream']}.",
+        f"main text in Poppins SemiBold, gold {COLORS['gold']}, capitals with wide letter spacing; secondary text in Poppins Light, cream {COLORS['cream']}.",
         "", "SET: " + SET + " " + TV, "", "LIGHT AND GRADE: " + LIGHT, "",
         "EDITING: fast cuts on the beat, constantly alternating extreme close-ups of products and tools with wide views of the whole salon, "
         "linked by smooth zoom-in, pull-back, whip-pan and rack-focus transitions with motion blur. Product close-ups are the highlight: "
@@ -164,7 +164,7 @@ def write_files():
     (ROOT / "PROMPT_COMPLET.md").write_text(
         "# Prompt complet — reel TIM DESIGN\n\n"
         "Le prompt entier, à coller d'un coup dans un outil qui accepte un long texte. "
-        "Remplace d'abord `[ADRESSE]`, `[VILLE]`, `[@PSEUDO]` et `[POLICE CANVA]`.\n\n```\n" + master + "\n```\n")
+        "\n\n```\n" + master + "\n```\n")
     md = ["# Prompts plan par plan", "",
           "Pour les générateurs qui font des clips de 5 à 10 s (Kling, Google Flow, Dreamina…). Réglages : **9:16**, durée la plus courte, qualité maximale. "
           "Nomme chaque vidéo `shot_XX.mp4`. Les textes (adresse, ABONNEZ-VOUS, pseudo) s'ajoutent au montage, pas ici.", "",

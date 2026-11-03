@@ -1,13 +1,13 @@
 # Prompt complet — reel TIM DESIGN
 
-Le prompt entier, à coller d'un coup dans un outil qui accepte un long texte. Remplace d'abord `[ADRESSE]`, `[VILLE]`, `[@PSEUDO]` et `[POLICE CANVA]`.
+Le prompt entier, à coller d'un coup dans un outil qui accepte un long texte. 
 
 ```
 Create a 30-second vertical 9:16 video (1080x1920, 30 fps): a cinematic commercial for TIM DESIGN, a luxury barbershop, for an Instagram Reel.
 
 LOOK: Photorealistic live-action footage, as if shot on an ARRI Alexa 35 with anamorphic 35mm and 100mm macro lenses: true-to-life materials (leather grain and stitching, brushed metal with micro-scratches, veined marble, real glass, real plant leaves), physically accurate light and reflections, natural film grain. Absolutely no cartoon, illustration, 3D render or CGI look.
 
-BRAND: Colors strictly matte black #111111, brushed gold #C9A24B and warm cream #F3EEE3; the only other color allowed is the natural green of the plants and of the football pitch on the TV. The TIM DESIGN logo appears as a backlit brushed-gold sign. All on-screen text uses the font [POLICE CANVA]: main text in gold #C9A24B capitals with wide letter spacing, secondary text in cream #F3EEE3.
+BRAND: Colors strictly matte black #111111, brushed gold #C9A24B and warm cream #F3EEE3; the only other color allowed is the natural green of the plants and of the football pitch on the TV. The TIM DESIGN logo appears as a backlit brushed-gold sign. All on-screen text uses the font Poppins: main text in Poppins SemiBold, gold #C9A24B, capitals with wide letter spacing; secondary text in Poppins Light, cream #F3EEE3.
 
 SET: An upscale modern barbershop called TIM DESIGN, completely empty of people: matte black walls, cream veined marble floor, dark walnut counters, brass pendant lamps, two black leather barber chairs with gold details, round gold-framed mirrors, lush green plants (monstera, olive tree, hanging pothos) in matte black pots, a dark walnut reception desk with the brushed-gold TIM DESIGN logo backlit on the black wall behind it, and a waiting lounge with a black leather sofa, two armchairs, a low marble coffee table and a wall-mounted flat TV playing a live football match. The TV shows a live football match from the wide broadcast camera: bright green pitch, players tiny and distant, no readable score, no team or channel logos.
 
@@ -36,12 +36,12 @@ SHOT LIST:
 
 ON-SCREEN TEXT:
 - 0.2s-3.0s: TIM DESIGN logo (gold, top center, 520px wide; fade in + scale 95%->100% over 0.5s, dissolve out at 3.0s).
-- 0.5s-3.0s: location pin icon + '[ADRESSE] · [VILLE]' ([POLICE CANVA], cream #F3EEE3, 44px, below the logo; slide up 20px + fade in 0.4s).
-- 16.6s-20.3s: ABONNEZ-VOUS ([POLICE CANVA], gold #C9A24B, 96px, wide letter spacing, centered above the phone; letters reveal left to right over 0.4s with a gold shimmer, ding sound).
-- 17.0s-20.3s: [@PSEUDO] ([POLICE CANVA], cream #F3EEE3, 44px, under ABONNEZ-VOUS; fade in 0.3s).
+- 0.5s-3.0s: location pin icon + '12 rue de la République · Annecy' (Poppins, cream #F3EEE3, 44px, below the logo; slide up 20px + fade in 0.4s).
+- 16.6s-20.3s: ABONNEZ-VOUS (Poppins, gold #C9A24B, 96px, wide letter spacing, centered above the phone; letters reveal left to right over 0.4s with a gold shimmer, ding sound).
+- 17.0s-20.3s: @timdesign (Poppins, cream #F3EEE3, 44px, under ABONNEZ-VOUS; fade in 0.3s).
 - 27.0s-30.0s: TIM DESIGN logo (gold, exact center, 600px wide; fade in 0.6s, fade out with the final fade).
-- 27.5s-30.0s: ABONNEZ-VOUS ([POLICE CANVA], gold #C9A24B, 64px, 160px below the logo; fade in 0.4s).
-- 27.9s-30.0s: [@PSEUDO] · [ADRESSE], [VILLE] ([POLICE CANVA], cream #F3EEE3, 38px, under ABONNEZ-VOUS; fade in 0.4s).
+- 27.5s-30.0s: ABONNEZ-VOUS (Poppins, gold #C9A24B, 64px, 160px below the logo; fade in 0.4s).
+- 27.9s-30.0s: @timdesign · 12 rue de la République, Annecy (Poppins, cream #F3EEE3, 38px, under ABONNEZ-VOUS; fade in 0.4s).
 
 AUDIO: dark luxury deep-house instrumental, no vocals, cuts on the beat, heavy bass drop at 3.0s. Sound design: metallic clicks, razor ring, whooshes on every zoom and whip-pan, muffled stadium crowd from the TV in the lounge shot, a soft notification ding when ABONNEZ-VOUS appears, a warm low boom under the final logo, fade out over the last 1.5 seconds.
 

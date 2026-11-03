@@ -2,15 +2,15 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Montserrat:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap">
 <style>
 /* Layout: one narrow column read and copied from a phone; the full prompt first, then one card per shot. Single dark look in the TIM DESIGN brand colors. */
 :root {
   color-scheme: dark;
   --black: #111111; --panel: #1A1814; --line: #3A3326;
   --gold: #C9A24B; --gold-soft: #8C733A; --cream: #F3EEE3; --muted: #B9B1A2;
-  --display: "Cinzel", "Trajan Pro", Georgia, serif;
-  --body: "Montserrat", "Helvetica Neue", Arial, sans-serif;
+  --display: "Poppins", "Helvetica Neue", Arial, sans-serif;
+  --body: "Poppins", "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
@@ -18,7 +18,7 @@ body { background: var(--black); color: var(--cream); font-family: var(--body); 
 .wrap { max-width: 680px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 28px; }
 .brand { font-family: var(--display); font-weight: 700; letter-spacing: .32em; color: var(--gold); font-size: 13px; margin: 0; }
 h1 { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 7vw, 36px); line-height: 1.15; margin: 6px 0 0; text-wrap: balance; }
-h2, h3 { font-family: var(--display); font-weight: 500; margin: 0; text-wrap: balance; }
+h2, h3 { font-family: var(--display); font-weight: 600; margin: 0; text-wrap: balance; }
 h2 { font-size: 21px; }
 h3 { font-size: 18px; }
 .intro p { color: var(--muted); margin: 10px 0 0; max-width: 60ch; }
@@ -67,8 +67,8 @@ h3 { font-size: 18px; }
 
   <section class="block">
     <h2>Le prompt complet</h2>
-    <p>Tout le reel en un seul texte. Avant de le coller, remplace ces quatre éléments par les tiens :</p>
-    <div class="fill"><code>[ADRESSE]</code><code>[VILLE]</code><code>[@PSEUDO]</code><code>[POLICE CANVA]</code></div>
+    <p>Tout le reel en un seul texte, déjà rempli avec tes infos :</p>
+    <div class="fill"><code>12 rue de la République</code><code>Annecy</code><code>@timdesign</code><code>Poppins</code></div>
     <pre class="prompt tall" id="p-master">{{MASTER}}</pre>
     <button class="copy" type="button" data-target="p-master">Copier le prompt complet</button>
   </section>
