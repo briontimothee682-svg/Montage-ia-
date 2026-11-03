@@ -320,6 +320,41 @@ const ready = (async () => {
     O.s5.add(g);
     return { ...d, g, texA: d.tex };
   });
+  // ---- business card + QR code
+  const linTex = async url => { const t = await texLoader.loadAsync(url); t.colorSpace = THREE.NoColorSpace; t.anisotropy = 8; return t; };
+  const [rectoC, rectoMe, rectoRo, rectoBu, versoC, versoMe, versoRo, versoBu] = await Promise.all([
+    tex(`${H5}card_recto.png`), linTex(`${H5}card_recto_metal.png`), linTex(`${H5}card_recto_rough.png`), linTex(`${H5}card_recto_bump.png`),
+    tex(`${H5}card_verso.png`), linTex(`${H5}card_verso_metal.png`), linTex(`${H5}card_verso_rough.png`), linTex(`${H5}card_verso_bump.png`)]);
+  const qr = await (await fetch(`${H5}qr.json`)).json();
+  const face = (map, metal, rough, bump) => new THREE.MeshPhysicalMaterial({ map, metalnessMap: metal, metalness: 1, roughnessMap: rough, roughness: 1, bumpMap: bump, bumpScale: 1.0, clearcoat: 0.08, clearcoatRoughness: 0.6, envMapIntensity: 0.75 });
+  const edgeGold = new THREE.MeshPhysicalMaterial({ color: 0xd8b064, metalness: 1, roughness: 0.18, clearcoat: 0.5 });
+  O.card = new THREE.Mesh(new RoundedBoxGeometry(860, 557, 10, 6, 26), [edgeGold, edgeGold, edgeGold, edgeGold, face(rectoC, rectoMe, rectoRo, rectoBu), face(versoC, versoMe, versoRo, versoBu)]);
+  // QR plate with raised modules (instanced)
+  const QS = qr.size / 2, mat = qr.matrix, NQ = mat.length + 8, cell = QS / NQ;
+  O.qr = new THREE.Group();
+  const plate = new THREE.Mesh(new RoundedBoxGeometry(QS + 10, QS + 10, 6, 4, 12), new THREE.MeshStandardMaterial({ color: 0xbdb6a8, roughness: 0.85, metalness: 0, envMapIntensity: 0.5 }));
+  O.qr.add(plate);
+  for (const [w, h, x, y] of [[QS + 34, 4, 0, (QS + 30) / 2], [QS + 34, 4, 0, -(QS + 30) / 2], [4, QS + 34, (QS + 30) / 2, 0], [4, QS + 34, -(QS + 30) / 2, 0]]) {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, 8), edgeGold); b.position.set(x, y, 0); O.qr.add(b);
+  }
+  const mods = [];
+  mat.forEach((row, r) => row.forEach((v, c) => { if (v) mods.push([(c + 4 + 0.5) * cell - QS / 2, QS / 2 - (r + 4 + 0.5) * cell]); }));
+  const modMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(cell * 1.02, cell * 1.02, 16), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.65, metalness: 0.1 }), mods.length);
+  O.qr.add(modMesh);
+  const maxD = Math.hypot(QS / 2, QS / 2);
+  O.qrMods = { modMesh, mods, maxD, dummy: new THREE.Object3D() };
+  O.laser = new THREE.Group();
+  O.laser.add(new THREE.Mesh(new THREE.PlaneGeometry(QS + 60, 5), holoAdd(0xffe7b0, 0.95)));
+  const lg2 = new THREE.Mesh(new THREE.PlaneGeometry(QS + 60, 40), holoAdd(0xffc860, 0.25)); O.laser.add(lg2);
+  O.laser.position.z = 22; O.qr.add(O.laser);
+  O.brackets = [];
+  for (const [sx, sy] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) {
+    const g = new THREE.Group();
+    const a1 = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 5), holoAdd(0xffd890, 0.9)); a1.position.set(-sx * 20, 0, 0);
+    const a2 = new THREE.Mesh(new THREE.BoxGeometry(5, 46, 5), holoAdd(0xffd890, 0.9)); a2.position.set(0, -sy * 20, 0);
+    g.add(a1, a2); g.position.set(sx * (QS / 2 + 40), sy * (QS / 2 + 40), 14); O.qr.add(g); O.brackets.push(g);
+  }
+  O.qrSpot = new THREE.Vector3(-(qr.center[0] / qr.card[0] - 0.5) * 860, (0.5 - qr.center[1] / qr.card[1]) * 557, -5.5);
   O.hud = [new THREE.Mesh(new THREE.TorusGeometry(470, 1.8, 8, 200), holoAdd(0xd8b064, 0.55)), new THREE.Mesh(new THREE.TorusGeometry(530, 1.0, 8, 200), holoAdd(0xd8b064, 0.35))];
   O.hud.forEach(h => O.s5.add(h));
   const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx; };
@@ -394,7 +429,7 @@ window.renderAt = async (t, screen) => {
   sweep.intensity = 0; amber.intensity = 0; cool.intensity = 0; bloom.strength = 0.32;
 
   // camera: slow handheld drift + push on every beat
-  const bp = beat(t, 3.5) * (t < 29.5 ? 1 : 0);
+  const bp = beat(t, 3.5) * (t < 34.0 ? 1 : 0);
   camera.position.set(18 * Math.sin(t * 0.7), 14 * Math.sin(t * 0.9 + 1), CAM_Z - 60 * bp);
   camera.lookAt(0, 0, 0);
   camera.rotation.z = 0.004 * Math.sin(t * 0.6);
@@ -593,31 +628,76 @@ window.renderAt = async (t, screen) => {
     h.rotation.set(lerp(-1.1, 0, easeBack(hp, 1.3)), 0.12 * Math.sin((t - 23) * 1.3), 0);
   }
 
-  // S7 end 26.5-30: medallion + orbiting tools + 3D title
-  if (t >= 26.5) {
+  // S6b business card 26.5-31: flies in, flips recto/verso, the QR code rises out in 3D and gets scanned
+  if (t >= 26.5 && t < 31.0) {
+    const cd = O.card; cd.visible = true;
+    const fin = easeOut(prog(t, 26.5, 27.3));
+    const flip = easeInOut(prog(t, 27.6, 28.15));
+    const up = easeInOut(prog(t, 28.75, 29.35));
+    place(cd, P(540, lerp(840, 700, up), lerp(-2600, 0, fin) + 160 * Math.sin(Math.PI * flip)));
+    cd.rotation.set(lerp(0.7, 0.12, fin) - 0.32 * up + 0.04 * Math.sin(t * 1.3), lerp(-Math.PI * 4, 0, fin) + Math.PI * flip + 0.1 * Math.sin((t - 27.3) * 1.1) * fin, lerp(-0.4, 0, fin) + 0.03 * Math.sin(t));
+    cd.scale.setScalar(1 + 0.015 * beat(t, 27.0));
+    const sp1 = prog(t, 27.25, 27.85), sp2 = prog(t, 28.2, 28.8);
+    const spv = sp1 > 0 && sp1 < 1 ? sp1 : sp2 > 0 && sp2 < 1 ? sp2 : -1;
+    if (spv >= 0) { sweep.intensity = 2.2 * Math.sin(spv * Math.PI); sweep.position.set(lerp(-800, 800, spv), 960 - 800 + 250, 450); }
+    amber.intensity = 1.1 * fin; cool.intensity = 0.6 * fin;
+    const la = (t - 26.5) * 1.3;
+    amber.position.set(Math.cos(la) * 800, 960 - 820 + Math.sin(la) * 400, 600); cool.position.set(-Math.cos(la) * 800, 960 - 820 - Math.sin(la) * 400, 500);
+    // QR code
+    const rise = prog(t, 28.15, 28.75);
+    const q = O.qr; q.visible = rise > 0;
+    if (q.visible) {
+      cd.updateMatrixWorld(true);
+      const spot = O.qrSpot.clone().add(new THREE.Vector3(0, 0, -6)); const spotW = cd.localToWorld(spot.clone());
+      const cq = cd.getWorldQuaternion(new THREE.Quaternion()).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0)));
+      const target = P(540, 1255, 330);
+      q.position.copy(spotW.clone().lerp(target, up));
+      q.position.z += Math.sin(Math.PI * up) * 220;
+      const tq = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.05 * Math.sin(t * 1.4), 0.12 * Math.sin(t * 0.9), 0));
+      q.quaternion.copy(cq.clone().slerp(tq, up));
+      q.scale.setScalar(lerp(1, 1.45, up) * (1 + 0.02 * beat(t, 29.5)));
+      const { modMesh, mods, maxD, dummy } = O.qrMods;
+      mods.forEach(([x, y], i) => {
+        const delay = Math.hypot(x, y) / maxD * 0.45;
+        const h = easeBack(prog(rise, delay, delay + 0.5), 2.2);
+        dummy.position.set(x, y, 3 + 8 * h);
+        dummy.scale.set(1, 1, Math.max(0.02, h));
+        dummy.updateMatrix(); modMesh.setMatrixAt(i, dummy.matrix);
+      });
+      modMesh.instanceMatrix.needsUpdate = true;
+      const sc = prog(t, 29.35, 30.55);
+      O.laser.visible = sc > 0 && sc < 1;
+      O.laser.position.y = (O.qr.children[0].geometry.parameters.height / 2) * Math.cos(sc * Math.PI * 2);
+      O.brackets.forEach((b, i) => { const bp = easeBack(prog(t, 29.3 + i * 0.05, 29.6 + i * 0.05)); b.visible = bp > 0; b.scale.setScalar(Math.max(0.01, bp) * (1 + 0.06 * beat(t, 29.5))); });
+    }
+    bloom.strength = 0.22 + 0.1 * beat(t, 27.0);
+  }
+
+  // S7 end 31-34.5: medallion + orbiting tools + 3D title
+  if (t >= 31) {
     const m = O.medal; m.visible = true;
-    const p = easeOut(prog(t, 26.5, 27.4));
+    const p = easeOut(prog(t, 31, 31.9));
     place(m, P(540, 700, lerp(-2600, 0, p)));
     m.rotation.set(0.1 * Math.sin(t), lerp(-Math.PI * 3, 0, p) + 0.2 * Math.sin(t * 1.2) * p, 0);
     m.scale.setScalar(0.92);
     const og = O.orbitG; og.visible = true; place(og, P(540, 700));
     og.rotation.set(1.22, 0, 0.12);
-    const op = easeOut(prog(t, 26.8, 27.6));
+    const op = easeOut(prog(t, 31.3, 32.1));
     O.orbit.forEach((o, i) => {
       o.visible = true;
-      const a = i / O.orbit.length * Math.PI * 2 + (t - 26.5) * 0.9;
+      const a = i / O.orbit.length * Math.PI * 2 + (t - 31) * 0.9;
       const r = lerp(150, 470, op);
       o.position.set(Math.cos(a) * r, Math.sin(a) * r, 0);
-      o.rotation.set(-1.22 + 0.3 * Math.sin(t + i), (t - 26.5) * 1.5 + i, 0.4 * Math.sin(t * 0.8 + i));
+      o.rotation.set(-1.22 + 0.3 * Math.sin(t + i), (t - 31) * 1.5 + i, 0.4 * Math.sin(t * 0.8 + i));
       o.scale.setScalar(0.42 * op);
       if (o.userData.setOpen) o.userData.setOpen(i === 0 ? 30 : 0.9);
     });
-    const a2 = O.abo2; const ap = prog(t, 27.1, 27.55);
+    const a2 = O.abo2; const ap = prog(t, 31.6, 32.05);
     a2.visible = ap > 0;
     place(a2, P(540, 1100, lerp(1400, 0, easeOut(ap))));
-    a2.rotation.set(lerp(-1.1, 0, easeBack(ap, 1.3)) + 0.04 * Math.sin(t * 2), 0.1 * Math.sin((t - 27) * 1.2), 0);
-    a2.scale.setScalar(1 + 0.035 * beat(t, 27.5));
-    const sp = prog(t, 27.6, 28.6);
+    a2.rotation.set(lerp(-1.1, 0, easeBack(ap, 1.3)) + 0.04 * Math.sin(t * 2), 0.1 * Math.sin((t - 31.5) * 1.2), 0);
+    a2.scale.setScalar(1 + 0.035 * beat(t, 32));
+    const sp = prog(t, 32.1, 33.1);
     if (sp > 0 && sp < 1) { sweep.intensity = 3.5 * Math.sin(sp * Math.PI); sweep.position.set(lerp(-700, 700, sp), 960 - 700 + 300, 420); }
   }
 

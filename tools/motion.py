@@ -32,6 +32,7 @@ HOURS = [("MARDI – VENDREDI", "9H – 19H"), ("SAMEDI", "9H – 18H"), ("DIMAN
 PRICES = [("COUPE", [("Coupe Homme", 22), ("Dégradé / Fade", 25), ("Coupe étudiant", 20), ("Enfant (-12 ans)", 15)]),
           ("BARBE + SOINS", [("Barbe", 15), ("Shampooing", 5), ("Coupe + barbe + shampoing", 38)])]
 CUTS = [3.5, 7.5, 12.0, 17.0, 23.0, 26.5]
+END_T = 26.5  # start of the end card (the 3D reel moves it to 31.0)
 
 # ------------------------------------------------------------------ easing
 def clamp(x, a=0.0, b=1.0):
@@ -800,7 +801,7 @@ def synth_audio(path):
         bass[a:b] += np.tanh(2.2 * np.sin(2 * np.pi * root * tt[a:b])) * e * 0.20
     # sidechain on the kick from the drop
     side = np.ones(n, np.float32)
-    beats = np.arange(3.5, 29.0, BEAT)
+    beats = np.arange(3.5, DUR - 1.0, BEAT)
     for bt in beats:
         i = int(bt * SR)
         L = int(0.25 * SR)
@@ -822,7 +823,7 @@ def synth_audio(path):
         add(click(), 12.6 + k * 0.26 + (0.25 if k >= 4 else 0), 0.4)
     add(ding(), 18.3, 0.28)
     add(click(), 19.5, 0.6)
-    add(ding(), 27.1, 0.22)
+    add(ding(), END_T + 0.6, 0.22)
     fade = np.clip((DUR - tt) / 1.5, 0, 1)
     out *= fade
     out /= max(1e-6, np.abs(out).max()) / 0.89

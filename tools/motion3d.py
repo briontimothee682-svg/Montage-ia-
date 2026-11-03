@@ -20,6 +20,10 @@ from motion import (W, H, FPS, DUR, CUTS, GOLD, CREAM, MUTED, PANEL, ADDRESS, CI
                     panel, star, beat_pulse, SPARKS, FEATURES)
 
 ROOT = m.ROOT
+DUR = 34.5                       # the 3D reel adds a 4.5 s business-card scene before the end
+CUTS = CUTS + [31.0]
+END_T = 31.0
+m.DUR, m.END_T = DUR, END_T
 OUT = m.OUT
 F3D = OUT / "frames3d"
 
@@ -144,19 +148,27 @@ def o_hours(c, t):
         paste(c, icon("pin", 52), W / 2, 1335, alpha=ap)
         text(c, f"{ADDRESS} · 74000 Annecy", "Regular", 34, W / 2, 1405, CREAM, alpha=ap)
 
+def o_card(c, t):
+    letters(c, "NOTRE CARTE", "SemiBold", 40, W / 2, 300, t, 26.6, GOLD, tracking=20, stagger=0.03)
+    hline(c, W / 2, 350, 160, ease_out(prog(t, 26.9, 27.2)), width=3)
+    cp = ease_back(prog(t, 29.35, 29.75))
+    if cp > 0:
+        text(c, "SCANNE · ABONNE-TOI", "SemiBold", 36, W / 2, 1488, CREAM, alpha=clamp(cp), tracking=6,
+             scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 29.5)))
+
 def o_end(c, t):
-    letters(c, HANDLE, "Medium", 46, W / 2, 1210, t, 27.6, CREAM, stagger=0.015, dur=0.3)
-    ap = ease_out(prog(t, 27.9, 28.3))
+    letters(c, HANDLE, "Medium", 46, W / 2, 1210, t, 32.1, CREAM, stagger=0.015, dur=0.3)
+    ap = ease_out(prog(t, 32.4, 32.8))
     text(c, f"{ADDRESS} · 74000 Annecy", "Regular", 32, W / 2, 1285, CREAM, alpha=ap * 0.85)
-    cp = ease_back(prog(t, 28.0, 28.4))
+    cp = ease_back(prog(t, 32.5, 32.9))
     if cp > 0:
         text(c, "ENREGISTRE · PARTAGE À UN POTE", "SemiBold", 30, W / 2, 1365, GOLD, alpha=clamp(cp), tracking=6,
-             scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 28.5)))
-    sp = ease_out(prog(t, 28.3, 28.8))
+             scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 33)))
+    sp = ease_out(prog(t, 32.8, 33.3))
     text(c, "TIM DESIGN", "Light", 24, W / 2, 1450, CREAM, alpha=sp * 0.55, tracking=16)
 
 OVERLAYS = [(0.0, 3.5, o_hook), (3.5, 7.5, o_kinetic), (7.5, 12.0, o_salon), (12.0, 17.0, o_prices),
-            (17.0, 23.0, o_instagram), (23.0, 26.5, o_hours), (26.5, 30.0, o_end)]
+            (17.0, 23.0, o_instagram), (23.0, 26.5, o_hours), (26.5, 31.0, o_card), (31.0, DUR, o_end)]
 
 def streaks(img):
     """Anamorphic horizontal light streaks on the brightest highlights."""
@@ -208,8 +220,8 @@ def composite(fi):
             fl = max(0.0, 1 - abs(d) / 0.1) * 0.5
             if fl > 0:
                 img = Image.blend(img, Image.new("RGB", (W, H), (255, 238, 200)), fl)
-    if t > 29.3:
-        img = Image.blend(img, Image.new("RGB", (W, H), m.BLACK), ease_in_out(prog(t, 29.3, 30.0)))
+    if t > DUR - 0.7:
+        img = Image.blend(img, Image.new("RGB", (W, H), m.BLACK), ease_in_out(prog(t, DUR - 0.7, DUR)))
     arr = np.asarray(img).astype(np.float32) + m.GRAIN[fi % len(m.GRAIN)] * 0.6
     return np.clip(arr, 0, 255).astype(np.uint8)
 
@@ -402,7 +414,12 @@ def synth_audio_3d(path):
         add(pop(), 21.45 + k * 0.05, 0.1)
     add(shing(0.5), 21.95, 0.22)             # phone 360 spin
     add(suck(), 22.45, 0.25)                 # everything returns into the screen
-    add(snip(), 26.9, 0.25)
+    add(snip(), 31.4, 0.25)
+    add(shing(0.9), 26.6, 0.2)               # business card spinning in
+    add(suck(0.35), 27.6, 0.18)              # card flip
+    for k in range(6):                       # QR modules rising
+        add(click(), 28.2 + k * 0.08, 0.25)
+    add(chime(), 29.35, 0.2)                 # scan
     out /= max(1e-6, np.abs(out).max()) / 0.89
     with wave.open(str(path), "wb") as wf:
         wf.setnchannels(1)
@@ -454,7 +471,7 @@ def main():
                     "-movflags", "+faststart", str(final)], check=True)
     wav.unlink()
     # 17 s version for A/B testing (hook + kinetic + phone + end), cut on the beat
-    short_cut(final, OUT / "atelier47_motion_3d_17s.mp4", [(0.0, 7.5), (17.0, 23.0), (26.5, 30.0)])
+    short_cut(final, OUT / "atelier47_motion_3d_court.mp4", [(0.0, 3.5), (17.0, 23.0), (26.5, DUR)])
     print("done", final)
 
 if __name__ == "__main__":
