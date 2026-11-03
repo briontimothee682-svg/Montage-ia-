@@ -149,11 +149,16 @@ def o_hours(c, t):
         text(c, f"{ADDRESS} · 74000 Annecy", "Regular", 34, W / 2, 1405, CREAM, alpha=ap)
 
 def o_card(c, t):
-    letters(c, "NOTRE CARTE", "SemiBold", 40, W / 2, 300, t, 26.6, GOLD, tracking=20, stagger=0.03)
-    hline(c, W / 2, 350, 160, ease_out(prog(t, 26.9, 27.2)), width=3)
+    out = ease_in_out(prog(t, 29.1, 29.35))
+    if out < 1:  # "NOTRE CARTE" first, then the scan call-to-action takes its place above the card
+        if t < 29.1:
+            letters(c, "NOTRE CARTE", "SemiBold", 40, W / 2, 300, t, 26.6, GOLD, tracking=20, stagger=0.03)
+        else:
+            text(c, "NOTRE CARTE", "SemiBold", 40, W / 2, 300, GOLD, alpha=1 - out, tracking=20)
+    hline(c, W / 2, 350, 160 + 360 * ease_out(prog(t, 29.35, 29.7)), ease_out(prog(t, 26.9, 27.2)), width=3)
     cp = ease_back(prog(t, 29.35, 29.75))
     if cp > 0:
-        text(c, "SCANNE · ABONNE-TOI", "SemiBold", 36, W / 2, 1488, CREAM, alpha=clamp(cp), tracking=6,
+        text(c, "SCANNE · ABONNE-TOI", "Bold", 44, W / 2, 300, CREAM, alpha=clamp(cp), tracking=8,
              scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 29.5)))
 
 def o_end(c, t):
@@ -467,7 +472,7 @@ def main():
     synth_audio_3d(wav)
     final = OUT / "atelier47_motion_3d.mp4"
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(silent), "-i", str(wav), "-c:v", "copy",
-                    "-af", "loudnorm=I=-14:TP=-1.5:LRA=7", "-ar", "48000", "-c:a", "aac", "-b:a", "192k", "-shortest",
+                    "-af", "loudnorm=I=-14:TP=-1.5:LRA=7,alimiter=limit=0.84:level=false", "-ar", "48000", "-c:a", "aac", "-b:a", "192k", "-shortest",
                     "-movflags", "+faststart", str(final)], check=True)
     wav.unlink()
     # 17 s version for A/B testing (hook + kinetic + phone + end), cut on the beat
