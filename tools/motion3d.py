@@ -32,7 +32,10 @@ F3D = OUT / "frames3d"
 def grade_maps():
     y, x = np.mgrid[0:H, 0:W].astype(np.float32)
     glow = np.exp(-(((x - W / 2) / (W * 0.8)) ** 2 + ((y - H * 0.4) / (H * 0.5)) ** 2))
-    add = (np.array([30, 22, 8], np.float32) * glow[..., None])
+    teal = np.exp(-(((x - W * 0.15) / (W * 0.7)) ** 2 + ((y - H * 0.18) / (H * 0.45)) ** 2))
+    amber = np.exp(-(((x - W * 0.9) / (W * 0.6)) ** 2 + ((y - H * 0.86) / (H * 0.38)) ** 2))
+    add = (np.array([18, 13, 5], np.float32) * glow[..., None] + np.array([6, 46, 54], np.float32) * teal[..., None]
+           + np.array([50, 25, 5], np.float32) * amber[..., None])
     vign = np.clip(1 - 0.5 * ((((x - W / 2) / (W / 2)) ** 2 + ((y - H / 2) / (H / 2)) ** 2) / 2) ** 1.2, 0, 1)[..., None]
     return add, vign
 
@@ -44,54 +47,64 @@ def base_frame(fi):
     return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
 
 # ------------------------------------------------------------------ 2D overlays (the 3D layer carries logo, titles, tools, phone)
-# ------------------------------------------------------------------ legibility: dark plates behind every text block
-m.SHADOW = 0.9
-m.GLOW_SCALE = 0.4
-MUTED = (226, 220, 208)          # secondary text, brighter than the 2D reel
+# ------------------------------------------------------------------ typography: solid colour tags instead of gold-framed plates
+m.SHADOW = 0.6
+m.GLOW_SCALE = 0.3
+TEAL, TEAL_D, AMBER, INK = (18, 92, 102), (9, 44, 50), (236, 158, 70), (14, 14, 14)
+MUTED = (224, 218, 206)
 
 @lru_cache(maxsize=None)
-def plate_img(w, h, r=30):
-    return panel(w, h, radius=r, fill=(10, 10, 10), border_a=110, bw=2)
+def bar_img(w, h, bg, r):
+    return panel(w, h, radius=r, fill=bg, border_a=0, bw=1)
 
-def plate(c, cx, cy, w, h, alpha):
+def tag(c, s, weight, size, cx, cy, fg, bg, alpha=1.0, reveal=1.0, padx=None, pady=None, tracking=0, anchor="center", r=None):
+    """Text on a solid rounded bar; reveal wipes the bar in from the left, the text follows."""
+    if alpha <= 0.01 or reveal <= 0:
+        return
+    _, tw = layout(s, weight, size, tracking)
+    padx = padx if padx is not None else int(size * 0.45)
+    pady = pady if pady is not None else int(size * 0.22)
+    w, h = int(tw + 2 * padx), int(size * 1.18 + 2 * pady)
+    x0 = {"center": cx - w / 2, "left": cx, "right": cx - w}[anchor]
+    bar = bar_img(w, h, bg, r if r is not None else max(8, h // 5))
+    rv = ease_out(clamp(reveal))
+    if rv < 1:
+        bar = bar.crop((0, 0, max(1, int(w * rv)), h))
+    paste(c, bar, x0, cy, alpha=alpha, anchor="left")
+    ta = alpha * clamp((reveal - 0.45) / 0.4)
+    if ta > 0.01:
+        sh, m.SHADOW = m.SHADOW, 0.0
+        text(c, s, weight, size, x0 + padx, cy + size * 0.03, fg, alpha=ta, anchor="left", tracking=tracking)
+        m.SHADOW = sh
+
+def plate(c, cx, cy, w, h, alpha):  # kept for compatibility: plain dark-teal panel, no gold border
     if alpha > 0.01:
-        paste(c, plate_img(int(w), int(h)), cx, cy, alpha=clamp(alpha) * 0.84)
+        paste(c, bar_img(int(w), int(h), TEAL_D, 28), cx, cy, alpha=clamp(alpha) * 0.88)
 
 def o_hook(c, t):
-    # hook readable on the very first frame (most viewers decide in under 2 s, often with the sound off)
     hp = ease_out(prog(t, 0.0, 0.35))
-    plate(c, W / 2, 302, 800, 205, 1.0)
-    sw = lerp(-300, 1400, prog(t, 0.5, 1.3)) if 0.5 < t < 1.3 else None
-    text(c, "ANNECY,", "ExtraBold", 70, W / 2, 260, "gold", tracking=8, scale=lerp(1.3, 1.0, hp) * (1 + 0.03 * beat_pulse(t, 0.0)),
-         sweep=sw, glow=0.4)
-    text(c, "TON BARBIER EST ICI", "Bold", 56, W / 2, 344, CREAM, tracking=4, scale=lerp(1.18, 1.0, hp))
-    plate(c, W / 2, 1322, 900, 340, prog(t, 1.15, 1.45))
-    p = ease_back(prog(t, 1.25, 1.6))
+    sc = lerp(1.12, 1.0, hp)
+    tag(c, "ANNECY,", "ExtraBold", 72 * sc, W / 2, 258, INK, GOLD)
+    tag(c, "TON BARBIER EST ICI", "Bold", 50 * sc, W / 2, 360, CREAM, TEAL)
+    p = ease_back(prog(t, 1.2, 1.55))
     if p > 0:
-        paste(c, icon("pin", 74), W / 2, 1192 + 6 * math.sin(t * 3), alpha=clamp(p), scale=max(0.01, p))
-    letters(c, ADDRESS.upper(), "SemiBold", 48, W / 2, 1278, t, 1.35, CREAM, tracking=5, stagger=0.018, dur=0.35)
+        paste(c, icon("pin", 70, AMBER, 6), W / 2, 1180 + 6 * math.sin(t * 3), alpha=clamp(p), scale=max(0.01, p))
+    tag(c, ADDRESS.upper(), "SemiBold", 44, W / 2, 1278, CREAM, TEAL_D, reveal=prog(t, 1.35, 1.75), tracking=3)
     sw = lerp(-200, 1400, prog(t, 2.6, 3.3)) if 2.6 < t < 3.3 else None
-    letters(c, CITY, "Bold", 92, W / 2, 1388, t, 1.75, "gold", tracking=10, stagger=0.045, dur=0.4, style="pop", sweep=sw, glow=0.35)
-    hline(c, W / 2, 1462, 540, ease_in_out(prog(t, 2.25, 2.75)), width=3)
+    tag(c, CITY, "ExtraBold", 84, W / 2, 1396, INK, CREAM, reveal=prog(t, 1.7, 2.1), tracking=6)
 
 def o_kinetic(c, t):
-    plate(c, W / 2, 300, 470, 88, prog(t, 3.55, 3.8))
-    letters(c, "ATELIER 47", "SemiBold", 42, W / 2, 300, t, 3.6, GOLD, tracking=18, stagger=0.03, dur=0.3)
-    t0 = 3.5 if t < 5.5 else 5.5
-    hline(c, W / 2, 1290, 760, ease_in_out(prog(t, t0 + 0.9, t0 + 1.3)), width=3)
+    tag(c, "ATELIER 47", "SemiBold", 40, W / 2, 300, CREAM, TEAL, reveal=prog(t, 3.55, 3.85), tracking=10)
     if t >= 5.5:
-        plate(c, W / 2, 1392, 900, 84, prog(t, 6.5, 6.75))
-        letters(c, "COUPE NETTE · BARBE SOIGNÉE", "SemiBold", 34, W / 2, 1392, t, 6.6, CREAM, tracking=8, stagger=0.015)
+        tag(c, "COUPE NETTE · BARBE SOIGNÉE", "Bold", 34, W / 2, 1392, INK, AMBER, reveal=prog(t, 6.5, 6.9), tracking=4)
 
 @lru_cache(maxsize=None)
 def small_card():
-    return panel(900, 170, radius=28, fill=(14, 13, 11), border_a=130)
+    return panel(900, 170, radius=28, fill=TEAL_D, border_a=0, bw=1)
 
 def o_salon(c, t):
-    plate(c, W / 2, 368, 740, 225, prog(t, 7.55, 7.8))
-    letters(c, "LE SALON", "Bold", 44, W / 2, 300, t, 7.55, GOLD, tracking=22, stagger=0.03)
-    hline(c, W / 2, 352, 150, ease_out(prog(t, 7.8, 8.1)), width=3)
-    letters(c, "Pensé pour vous", "Regular", 70, W / 2, 428, t, 7.7, CREAM, stagger=0.03, dur=0.45)
+    tag(c, "LE SALON", "Bold", 40, W / 2, 292, INK, GOLD, reveal=prog(t, 7.55, 7.85), tracking=12)
+    tag(c, "Pensé pour vous", "SemiBold", 58, W / 2, 400, CREAM, TEAL, reveal=prog(t, 7.75, 8.15))
     for i, (ic, title, sub) in enumerate(FEATURES):
         st = 8.4 + i * 0.5
         p = ease_out(prog(t, st, st + 0.45))
@@ -100,27 +113,31 @@ def o_salon(c, t):
         y = 1010 + i * 190 + 5 * math.sin(t * 2.2 + i)
         dx = lerp(700, 0, p)
         a = clamp(p * 1.5)
-        paste(c, small_card(), W / 2 + dx, y, alpha=a)
-        ring(c, 205 + dx, y, 56, 2, 1.0, alpha=a * 0.9)
+        paste(c, small_card(), W / 2 + dx, y, alpha=a * 0.94)
+        paste(c, bar_img(10, 120, AMBER, 5), 108 + dx, y, alpha=a)
         pul = 1 + 0.07 * beat_pulse(t, st)
-        paste(c, icon(ic, 72), 205 + dx, y, alpha=a, scale=pul)
-        text(c, title, "SemiBold", 42, 295 + dx, y - 28, CREAM, alpha=a, anchor="left")
-        text(c, sub, "Medium", 31, 295 + dx, y + 32, MUTED, alpha=a, anchor="left")
+        paste(c, icon(ic, 72, AMBER, 6), 195 + dx, y, alpha=a, scale=pul)
+        text(c, title, "SemiBold", 42, 285 + dx, y - 28, CREAM, alpha=a, anchor="left")
+        text(c, sub, "Medium", 31, 285 + dx, y + 32, MUTED, alpha=a, anchor="left")
+
+@lru_cache(maxsize=None)
+def price_panel2():
+    return panel(900, 1010, radius=30, fill=TEAL_D, border_a=0, bw=1)
 
 def o_prices(c, t):
     pp = ease_out(prog(t, 12.15, 12.6))
     if pp <= 0:
         return
     oy = lerp(120, 0, pp)
-    paste(c, m.price_panel(), W / 2, 960 + oy, alpha=clamp(pp * 1.4))
+    paste(c, price_panel2(), W / 2, 960 + oy, alpha=clamp(pp * 1.4) * 0.95)
     y = 540 + oy
     row = 0
     for si, (section, items) in enumerate(PRICES):
         if si == 1:
-            hline(c, W / 2, y - 20, 760, ease_in_out(prog(t, 13.5, 13.9)), width=2, alpha=0.7)
+            hline(c, W / 2, y - 20, 760, ease_in_out(prog(t, 13.5, 13.9)), width=2, alpha=0.5, color=CREAM)
             y += 40
-        sp = ease_out(prog(t, 12.4 + si * 1.1, 12.75 + si * 1.1))
-        text(c, section, "Bold", 42, 150, y, GOLD, alpha=sp, tracking=10, anchor="left")
+        sp = prog(t, 12.4 + si * 1.1, 12.75 + si * 1.1)
+        tag(c, section, "Bold", 34, 150, y, INK, AMBER, reveal=sp, tracking=6, anchor="left")
         y += 90
         for name, price in items:
             st = 12.6 + row * 0.26 + si * 0.25
@@ -130,11 +147,11 @@ def o_prices(c, t):
                 text(c, name, "SemiBold", 40, 150 + dx, y, CREAM, alpha=p, anchor="left")
                 cnt = int(round(price * ease_out(prog(t, st + 0.05, st + 0.45))))
                 pop = 1 + 0.25 * (1 - ease_out(prog(t, st + 0.4, st + 0.65))) * (t > st + 0.4)
-                text(c, f"{cnt}€", "Bold", 50, 930, y, "gold", alpha=p, anchor="right", scale=pop)
+                text(c, f"{cnt} €", "ExtraBold", 50, 930, y, AMBER, alpha=p, anchor="right", scale=pop)
                 _, nw = layout(name, "SemiBold", 40)
-                lead_x0, lead_x1 = 150 + nw + 24, 930 - 120
+                lead_x0, lead_x1 = 150 + nw + 24, 930 - 130
                 n = int((lead_x1 - lead_x0) / 18)
-                dot = Image.new("RGBA", (4, 4), (GOLD[0], GOLD[1], GOLD[2], 160))
+                dot = Image.new("RGBA", (4, 4), (CREAM[0], CREAM[1], CREAM[2], 90))
                 for k in range(max(0, n)):
                     if k / max(1, n) <= p:
                         paste(c, dot, lead_x0 + k * 18, y + 14)
@@ -142,11 +159,10 @@ def o_prices(c, t):
             row += 1
 
 def o_instagram(c, t):
-    hline(c, W / 2, 415, 560, ease_in_out(prog(t, 20.6, 21.0)), width=3)
     if t > 20.7:
         for (x, y, r, ph) in SPARKS:
             a = max(0, math.sin((t - 20.7) * 3 + ph)) ** 3
-            star(c, x, y - 20, r * (0.6 + 0.4 * a), a * 0.9)
+            star(c, x, y - 20, r * (0.6 + 0.4 * a), a * 0.7)
 
 def o_hours(c, t):
     plate(c, W / 2, 968, 940, 560, prog(t, 25.4, 25.7))
@@ -159,38 +175,30 @@ def o_hours(c, t):
         dx = lerp(80, 0, p)
         closed = hours == "FERMÉ"
         text(c, day, "Bold", 46, 150 - dx, y, CREAM if not closed else MUTED, alpha=p, anchor="left", tracking=2)
-        text(c, hours, "Bold", 56, 930 + dx, y, "gold" if not closed else MUTED, alpha=p, anchor="right", tracking=2,
-             scale=1 + 0.03 * beat_pulse(t, st + 0.5))
+        if closed:
+            text(c, hours, "Bold", 50, 930 + dx, y, MUTED, alpha=p, anchor="right", tracking=2)
+        else:
+            tag(c, hours, "ExtraBold", 46, 930 + dx, y, INK, AMBER, alpha=p, reveal=prog(t, st + 0.1, st + 0.45), anchor="right")
         if i < len(HOURS) - 1:
-            hline(c, W / 2, y + 82, 780, ease_in_out(prog(t, st + 0.15, st + 0.55)), width=2, alpha=0.5)
+            hline(c, W / 2, y + 82, 780, ease_in_out(prog(t, st + 0.15, st + 0.55)), width=2, alpha=0.35, color=CREAM)
     ap = ease_out(prog(t, 27, 27.4))
     if ap > 0:
-        plate(c, W / 2, 1378, 940, 170, ap)
-        paste(c, icon("pin", 52), W / 2, 1340, alpha=ap)
-        text(c, f"{ADDRESS} · 74000 Annecy", "SemiBold", 38, W / 2, 1408, CREAM, alpha=ap)
+        paste(c, icon("pin", 52, AMBER, 6), W / 2, 1330, alpha=ap)
+        tag(c, f"{ADDRESS} · 74000 Annecy", "SemiBold", 36, W / 2, 1408, CREAM, TEAL, reveal=prog(t, 27, 27.4))
 
 def o_card(c, t):
-    plate(c, W / 2, 304, 820, 108, prog(t, 28.6, 28.85))
     out = ease_in_out(prog(t, 31.1, 31.35))
-    if out < 1:  # "NOTRE CARTE" first, then the scan call-to-action takes its place above the card
-        if t < 31.1:
-            letters(c, "NOTRE CARTE", "Bold", 44, W / 2, 300, t, 28.6, GOLD, tracking=20, stagger=0.03)
-        else:
-            text(c, "NOTRE CARTE", "Bold", 44, W / 2, 300, GOLD, alpha=1 - out, tracking=20)
+    if out < 1:
+        tag(c, "NOTRE CARTE", "Bold", 42, W / 2, 300, INK, GOLD, alpha=1 - out, reveal=prog(t, 28.6, 28.95), tracking=12)
     cp = ease_back(prog(t, 31.35, 31.75))
     if cp > 0:
-        text(c, "SCANNE · ABONNE-TOI", "ExtraBold", 48, W / 2, 300, CREAM, alpha=clamp(cp), tracking=8,
-             scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 31.5)))
+        tag(c, "SCANNE · ABONNE-TOI", "ExtraBold", 46, W / 2, 300, CREAM, TEAL, alpha=clamp(cp), reveal=prog(t, 31.35, 31.7), tracking=4)
 
 def o_end(c, t):
-    plate(c, W / 2, 1300, 940, 300, prog(t, 34, 34.3))
-    letters(c, HANDLE, "SemiBold", 50, W / 2, 1210, t, 34.1, CREAM, stagger=0.015, dur=0.3)
+    tag(c, HANDLE, "SemiBold", 48, W / 2, 1210, CREAM, TEAL, reveal=prog(t, 34.1, 34.45))
     ap = ease_out(prog(t, 34.4, 34.8))
-    text(c, f"{ADDRESS} · 74000 Annecy", "Medium", 36, W / 2, 1288, CREAM, alpha=ap)
-    cp = ease_back(prog(t, 34.5, 34.9))
-    if cp > 0:
-        text(c, "ENREGISTRE · PARTAGE À UN POTE", "Bold", 36, W / 2, 1370, GOLD, alpha=clamp(cp), tracking=6,
-             scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 35)))
+    text(c, f"{ADDRESS} · 74000 Annecy", "Medium", 34, W / 2, 1296, CREAM, alpha=ap)
+    tag(c, "ENREGISTRE · PARTAGE À UN POTE", "Bold", 32, W / 2, 1376, INK, AMBER, reveal=prog(t, 34.5, 34.9), tracking=3)
     sp = ease_out(prog(t, 34.8, 35.3))
     text(c, "TIM DESIGN", "Light", 26, W / 2, 1468, CREAM, alpha=sp * 0.7, tracking=16)
 
@@ -295,8 +303,8 @@ IG = {"posts": 47, "followers": (1230, 1316), "following": 180, "likes": (318, 5
 NOTIFS = [(20.9, 21.3, "Nos tarifs", "Coupe Homme 22 € · Barbe 15 €"),
           (21.6, 22.0, "Atelier 47 Barbier", "12 rue de la République, Annecy")]
 BANNER_Y = 130          # banner centre on the 560x1200 screen (top, over the app)
-FOLLOW_PILL = (470, 118)
-HEART_ICON, COMMENT_ICON = (40, 770), (100, 770)
+FOLLOW_PILL = (330, 986)
+HEART_ICON, COMMENT_ICON = (515, 700), (515, 815)
 POST_START, PROFILE_AT, TILES_OUT = 18.0, 20.25, 22.3
 GRID_Y, GRID_T = 580, 172
 
@@ -359,50 +367,62 @@ def ig_icon(name, filled=False, size=44):
     return im.resize((size, size), Image.LANCZOS)
 
 def post_media(t):
-    """The post 'video' is the 3D tool showcase of the reel itself."""
-    fi = int(min(355, 238 + (t - POST_START) * FPS))
-    f = F3D / f"f{fi:04d}.png"
+    """The Reel video: the TIM DESIGN product film rendered by tools/render3d/product.js."""
+    fi = int(min(89, max(0, (t - POST_START) * FPS * 1.2)))
+    f = OUT / "postvid" / f"f{fi:04d}.png"
     if not f.exists():
-        return Image.new("RGB", (560, 560), (20, 18, 14))
-    im = Image.open(f).convert("RGB").crop((140, 320, 940, 1120)).resize((560, 560), Image.LANCZOS)
-    arr = np.asarray(im).astype(np.float32) * 1.25 + np.array([10, 8, 4], np.float32)
-    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB")
+        return Image.new("RGB", (560, 1200), (14, 40, 46))
+    im = Image.open(f).convert("RGB").resize((675, 1200), Image.LANCZOS).crop((57, 0, 617, 1200))
+    return im
+
+@lru_cache(maxsize=None)
+def reel_gradients():
+    y = np.arange(1200, dtype=np.float32)[:, None]
+    bottom = np.clip((y - 820) / 380, 0, 1) ** 1.3 * 0.85
+    top = np.clip((170 - y) / 170, 0, 1) * 0.6
+    a = np.broadcast_to(np.maximum(bottom, top), (1200, 560))
+    out = np.zeros((1200, 560, 4), np.uint8)
+    out[..., 3] = (a * 255).astype(np.uint8)
+    return Image.fromarray(out, "RGBA")
 
 def nav_bar(scr):
     for i, n in enumerate(["home", "search", "plus", "reels"]):
-        paste(scr, ig_icon(n, size=40), 70 + i * 140, 1150)
-    paste(scr, m.avatar(40), 70 + 3.85 * 140, 1150)
+        paste(scr, ig_icon(n, size=40), 70 + i * 140, 1160)
+    paste(scr, m.avatar(40), 70 + 3.85 * 140, 1160)
 
 def post_screen(t):
+    """Instagram Reel UI: full-screen video, actions on the right, account and caption at the bottom."""
     scr = Image.new("RGBA", (560, 1200), (0, 0, 0, 255))
-    text(scr, "Pour toi", "Bold", 28, 280, 55, CREAM)
-    scr.alpha_composite(m.avatar(56), (20, 90))
-    text(scr, "atelier47barbier", "SemiBold", 22, 88, 108, CREAM, anchor="left")
-    text(scr, "Annecy", "Regular", 17, 88, 134, MUTED, anchor="left")
+    scr.paste(post_media(t), (0, 0))
+    scr.alpha_composite(reel_gradients())
+    text(scr, "Reels", "Bold", 30, 26, 62, CREAM, anchor="left")
+    big = prog(t, 18.42, 18.95)                       # double-tap heart
+    if 0 < big < 1:
+        sc = ease_back(clamp(big * 2.2), 2.0) * (1 - 0.15 * big)
+        paste(scr, ig_icon("heart", True, 200), 280, 560, alpha=clamp((1 - big) * 2.5), scale=max(0.01, sc))
+    liked = t >= 18.45
+    lk = int(lerp(IG["likes"][0], IG["likes"][1], ease_in_out(prog(t, 18.45, 20.1))))
+    cm = int(lerp(IG["comments"][0], IG["comments"][1], ease_in_out(prog(t, 18.9, 20.1))))
+    paste(scr, ig_icon("heart", liked, 50), *HEART_ICON, scale=1 + 0.35 * math.sin(math.pi * prog(t, 18.45, 18.7)))
+    text(scr, fr_num(lk), "SemiBold", 18, HEART_ICON[0], HEART_ICON[1] + 44, CREAM)
+    paste(scr, ig_icon("comment", size=46), *COMMENT_ICON)
+    text(scr, fr_num(cm), "SemiBold", 18, COMMENT_ICON[0], COMMENT_ICON[1] + 44, CREAM)
+    paste(scr, ig_icon("share", size=44), 515, 925)
+    text(scr, "Partager", "Regular", 14, 515, 965, CREAM)
+    for k in range(3):
+        paste(scr, Image.new("RGBA", (6, 6), (243, 238, 227, 255)), 503 + k * 12, 1030)
+    scr.alpha_composite(m.avatar(52), (22, 960))
+    text(scr, "atelier47barbier", "SemiBold", 21, 86, 986, CREAM, anchor="left")
     followed = t >= PROFILE_AT
     pill = panel(120, 40, radius=12, fill=GOLD if not followed else (40, 38, 34), border_a=0 if not followed else 160, bw=1)
     paste(scr, pill, *FOLLOW_PILL)
     text(scr, "Abonné" if followed else "S'abonner", "SemiBold", 18, FOLLOW_PILL[0], FOLLOW_PILL[1], m.BLACK if not followed else CREAM)
-    scr.paste(post_media(t), (0, 170))
-    pr = clamp((t - POST_START) / 2.2)
-    bar = Image.new("RGBA", (int(540 * pr) + 1, 4), (243, 238, 227, 200)); paste(scr, bar, 10, 726, anchor="left")
-    big = prog(t, 18.42, 18.95)                       # double-tap heart on the media
-    if 0 < big < 1:
-        sc = ease_back(clamp(big * 2.2), 2.0) * (1 - 0.15 * big)
-        h = ig_icon("heart", True, 180)
-        paste(scr, h, 280, 450, alpha=clamp((1 - big) * 2.5), scale=max(0.01, sc))
-    liked = t >= 18.45
-    paste(scr, ig_icon("heart", liked, 44), *HEART_ICON, scale=1 + 0.35 * math.sin(math.pi * prog(t, 18.45, 18.7)))
-    paste(scr, ig_icon("comment", size=42), *COMMENT_ICON)
-    paste(scr, ig_icon("share", size=42), 160, 770)
-    paste(scr, ig_icon("save", size=42), 520, 770)
-    lk = int(lerp(IG["likes"][0], IG["likes"][1], ease_in_out(prog(t, 18.45, 20.1))))
-    cm = int(lerp(IG["comments"][0], IG["comments"][1], ease_in_out(prog(t, 18.9, 20.1))))
-    text(scr, f"{fr_num(lk)} J'aime", "Bold", 22, 22, 820, CREAM, anchor="left")
-    text(scr, "atelier47barbier", "Bold", 20, 22, 856, CREAM, anchor="left")
-    text(scr, "Coupe nette, barbe soignée.", "Regular", 20, 200, 856, CREAM, anchor="left")
-    text(scr, f"Voir les {cm} commentaires", "Regular", 19, 22, 892, MUTED, anchor="left")
-    text(scr, "12 rue de la République · Annecy", "Regular", 17, 22, 926, MUTED, anchor="left")
+    text(scr, "Nouveaux produits TIM DESIGN", "Medium", 20, 24, 1036, CREAM, anchor="left")
+    text(scr, "Disponibles au salon · Annecy", "Regular", 18, 24, 1066, MUTED, anchor="left")
+    text(scr, "Son original · atelier47barbier", "Regular", 16, 24, 1098, MUTED, anchor="left")
+    pr = clamp((t - POST_START) / 2.25)
+    paste(scr, Image.new("RGBA", (560, 3), (243, 238, 227, 70)), 0, 1128, anchor="left")
+    paste(scr, Image.new("RGBA", (int(560 * pr) + 1, 3), (243, 238, 227, 230)), 0, 1128, anchor="left")
     nav_bar(scr)
     return scr
 
@@ -456,7 +476,7 @@ def app_screen(t):
         else:
             scr = prof
     # taps (ripples) and notification banners over the app
-    for tx, ty, tt in [(280, 450, 18.42), (FOLLOW_PILL[0], FOLLOW_PILL[1], PROFILE_AT), (146, 490, 20.92)]:
+    for tx, ty, tt in [(280, 560, 18.42), (FOLLOW_PILL[0], FOLLOW_PILL[1], PROFILE_AT), (146, 490, 20.92)]:
         q = prog(t, tt - 0.03, tt + 0.3)
         if 0 < q < 1:
             paste(scr, m.ring_img(int(lerp(8, 90, ease_out(q))), 3, CREAM, 255, 1000), tx, ty, alpha=1 - q)

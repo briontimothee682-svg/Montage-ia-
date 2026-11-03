@@ -18,12 +18,13 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/pn
     if (!fs.existsSync(f)) return route.fulfill({ status: 404, body: 'nf' });
     route.fulfill({ status: 200, body: fs.readFileSync(f), contentType: MIME[path.extname(f)] || 'application/octet-stream' });
   });
-  await page.goto('http://local/tools/render3d/scene.html');
+  const PAGE = process.env.PAGE || 'scene';
+  await page.goto(`http://local/tools/render3d/${PAGE}.html`);
   await page.waitForFunction(() => window.__ready !== undefined, null, { timeout: 120000 });
   await page.evaluate(() => window.__ready);
   const shot = async (t, file) => {
     const fi = Math.round(t * FPS);
-    const scr = (t >= 17 && t < 23) ? `/exports/screen/s${String(fi).padStart(4, '0')}.png` : null;
+    const scr = (PAGE === 'scene' && t >= 17 && t < 25) ? `/exports/screen/s${String(fi).padStart(4, '0')}.png` : null;
     await page.evaluate(([t, s]) => window.renderAt(t, s), [t, scr]);
     await page.screenshot({ path: file, type: 'png', clip: { x: 0, y: 0, width: 1080, height: 1920 } });
   };

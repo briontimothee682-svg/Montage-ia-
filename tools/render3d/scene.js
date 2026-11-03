@@ -33,6 +33,7 @@ renderer.setPixelRatio(1);
 renderer.setSize(W, H);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.08;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
@@ -58,7 +59,9 @@ scene.environment = studioEnv();
 const camera = new THREE.PerspectiveCamera(FOV, W / H, 10, 12000);
 camera.position.set(0, 0, CAM_Z);
 
-const key = new THREE.DirectionalLight(0xffe4b8, 2.3); key.position.set(900, 1400, 2200); scene.add(key);
+const key = new THREE.DirectionalLight(0xffe4b8, 2.3); key.position.set(700, 1600, 1800); scene.add(key);
+key.castShadow = true; key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -1500, right: 1500, top: 1500, bottom: -1500, near: 100, far: 7000 }); key.shadow.bias = -0.0004; key.shadow.normalBias = 2; key.shadow.radius = 5;
+key.target.position.set(0, -500, 0); scene.add(key.target);
 const rim = new THREE.DirectionalLight(0xfff3dd, 1.1); rim.position.set(-1400, -400, -800); scene.add(rim);
 const fill = new THREE.AmbientLight(0x3a2c18, 0.6); scene.add(fill);
 const sweep = new THREE.PointLight(0xfff0d0, 0, 1600, 1.2); scene.add(sweep);
@@ -171,9 +174,9 @@ function scissors() {
 function clipper() {
   const g = new THREE.Group();
   const prof = new THREE.Shape();
-  prof.moveTo(-58, -190); prof.lineTo(58, -190); prof.quadraticCurveTo(70, -190, 70, -170);
-  prof.lineTo(78, 140); prof.quadraticCurveTo(80, 185, 40, 190); prof.lineTo(-40, 190); prof.quadraticCurveTo(-80, 185, -78, 140);
-  prof.lineTo(-70, -170); prof.quadraticCurveTo(-70, -190, -58, -190);
+  prof.moveTo(-46, -192); prof.lineTo(46, -192); prof.quadraticCurveTo(64, -192, 64, -170);
+  prof.bezierCurveTo(68, -60, 86, 70, 84, 150); prof.quadraticCurveTo(82, 190, 44, 194); prof.lineTo(-44, 194);
+  prof.quadraticCurveTo(-82, 190, -84, 150); prof.bezierCurveTo(-86, 70, -68, -60, -64, -170); prof.quadraticCurveTo(-64, -192, -46, -192);
   const bodyGeo = new THREE.ExtrudeGeometry(prof, { depth: 56, bevelEnabled: true, bevelThickness: 18, bevelSize: 14, bevelSegments: 12, curveSegments: 24 });
   bodyGeo.translate(0, 0, -28);
   g.add(new THREE.Mesh(bodyGeo, softTouch));
@@ -181,7 +184,7 @@ function clipper() {
   const gripGeo = new THREE.ExtrudeGeometry(gp, { depth: 4, bevelEnabled: true, bevelThickness: 2, bevelSize: 2, bevelSegments: 3 });
   for (const z of [46.5, -50.5]) { const grip = new THREE.Mesh(gripGeo, knurlGold); grip.position.z = z; g.add(grip); }
   // blade assembly
-  const head = new THREE.Mesh(new RoundedBoxGeometry(172, 34, 66, 4, 8), rubberBlack); head.position.y = 205; g.add(head);
+  const head = new THREE.Mesh(new RoundedBoxGeometry(186, 36, 70, 4, 10), rubberBlack); head.position.y = 207; g.add(head);
   const tb = new THREE.Shape(); tb.moveTo(-86, 0); tb.lineTo(86, 0); tb.lineTo(86, 18);
   for (let i = 0; i < 30; i++) { const x = 86 - i * (172 / 30); tb.lineTo(x - 1, 46); tb.lineTo(x - 4.5, 46); tb.lineTo(x - 172 / 30, 18); }
   tb.lineTo(-86, 18); tb.lineTo(-86, 0);
@@ -533,10 +536,45 @@ const ready = (async () => {
   const pComb = comb(); pComb.rotation.set(-Math.PI / 2, 0, -0.35); pComb.position.set(360, -633, 420); pComb.scale.setScalar(0.62); O.env.add(pComb);
   const pJar = jar(); pJar.position.set(-420, -640 + 40, -320); pJar.scale.setScalar(0.72); O.env.add(pJar);
   const pBrush = brush(); pBrush.position.set(430, -640 + 120, -380); pBrush.scale.setScalar(0.7); O.env.add(pBrush);
+  const solid = m => m.isMesh && (Array.isArray(m.material) || m.material.blending !== THREE.AdditiveBlending);
+  O.env.traverse(m => { if (solid(m)) { m.castShadow = true; m.receiveShadow = true; } });
+  O.phone.traverse(m => { if (solid(m)) m.castShadow = true; });
   O.s5.add(O.env);
   O.scrLight = new THREE.PointLight(0xfff2dc, 0, 2600, 1.4); O.scrLight.position.set(0, -80, 220); O.phone.add(O.scrLight);
   O.lines = [];
   for (let i = 0; i < 5; i++) { const l = new THREE.Mesh(new THREE.PlaneGeometry(760, 3), holoAdd(i % 2 ? 0x9eefff : 0xfff6e6, 0)); l.position.z = 29.6; O.phone.add(l); O.lines.push(l); }
+  // ---- logo intro: particles that assemble the medallion, shockwave, orbiting light arcs, coloured halo
+  {
+    const NP = 2200, rr = seeded(7), start = new Float32Array(NP * 3), target = new Float32Array(NP * 3);
+    for (let i = 0; i < NP; i++) {
+      const a = rr() * Math.PI * 2, R = lerp(420, 1050, rr());
+      start.set([Math.cos(a) * R, Math.sin(a) * R * 1.4, lerp(-900, 700, rr())], i * 3);
+      const k = rr(); let r;
+      if (k < 0.3) r = 300 + (rr() - 0.5) * 8; else if (k < 0.45) r = 330 + (rr() - 0.5) * 4; else if (k < 0.6) r = 245 + (rr() - 0.5) * 4; else r = Math.sqrt(rr()) * 230;
+      const b = rr() * Math.PI * 2;
+      target.set([Math.cos(b) * r, Math.sin(b) * r, 22], i * 3);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NP * 3), 3));
+    O.lp = new THREE.Points(geo, new THREE.PointsMaterial({ size: 30, color: 0xf0c878, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    O.lp.userData = { start, target, NP };
+    O.shock = new THREE.Mesh(new THREE.TorusGeometry(1, 0.01, 8, 160), holoAdd(0xbff4ff, 0));
+    O.arcs = [0, 1, 2].map(i => new THREE.Mesh(new THREE.TorusGeometry(352 + i * 14, 2.4, 8, 64, Math.PI * (0.35 + 0.1 * i)), holoAdd(i === 1 ? 0x8fe6ff : 0xffd38a, 0)));
+    const haloTex = canvasTex2(512, 512, (x, w, h) => { const g = x.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); g.addColorStop(0, 'rgba(40,170,190,0.55)'); g.addColorStop(0.45, 'rgba(200,120,40,0.25)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); });
+    O.halo = new THREE.Mesh(new THREE.PlaneGeometry(1900, 1900), new THREE.MeshBasicMaterial({ map: haloTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  }
+  // ---- barber station for the tool showcase (tools resting on walnut, cream towel, real shadows)
+  {
+    O.station = new THREE.Group();
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1700, 40, 900), [softTouch, softTouch, new THREE.MeshStandardMaterial({ map: woodTex, color: 0xd8c2a8, roughness: 0.45, envMapIntensity: 0.25, bumpMap: woodTex, bumpScale: 0.6 }), softTouch, softTouch, softTouch]);
+    top.position.y = -20; top.receiveShadow = true; O.station.add(top);
+    const towelTex = canvasTex2(256, 256, (x, w, h) => { x.fillStyle = '#e9e1d2'; x.fillRect(0, 0, w, h); for (let i = 0; i < 4000; i++) { x.fillStyle = `rgba(${Math.random() < 0.5 ? '255,255,255' : '160,150,130'},0.25)`; x.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5); } x.fillStyle = 'rgba(201,162,75,0.9)'; x.fillRect(0, h * 0.82, w, 10); });
+    const towel = new THREE.Mesh(new RoundedBoxGeometry(520, 34, 330, 4, 12), new THREE.MeshStandardMaterial({ map: towelTex, color: 0xb8ae9c, roughness: 0.97, bumpMap: towelTex, bumpScale: 1.5, envMapIntensity: 0.3 }));
+    towel.position.set(-80, 17, 200); towel.rotation.y = 0.12; towel.receiveShadow = true; towel.castShadow = true; O.station.add(towel);
+    O.st = { clip: clipper(), brush: brush(), comb: comb(), scis: scissors(), razor: razor(), jar: jar() };
+    O.st.scis.userData.setOpen(18); O.st.razor.userData.setOpen(1);
+    Object.values(O.st).forEach(o => { O.station.add(o); o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); });
+  }
   O.hud = [new THREE.Mesh(new THREE.TorusGeometry(470, 1.8, 8, 200), holoAdd(0xd8b064, 0.55)), new THREE.Mesh(new THREE.TorusGeometry(530, 1.0, 8, 200), holoAdd(0xd8b064, 0.35))];
   O.hud.forEach(h => O.s5.add(h));
   const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx; };
@@ -579,6 +617,7 @@ const ready = (async () => {
   O.fx.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(NT * 3), 3));
   O.s5.add(O.fx);
   for (const k of Object.keys(O)) if (O[k].isObject3D && !O[k].parent) scene.add(O[k]);
+  O.arcs.forEach(a => scene.add(a));
   // gold dust
   const N = 420, rnd = seeded(47), pos = new Float32Array(N * 3), base = [];
   for (let i = 0; i < N; i++) base.push([lerp(-800, 800, rnd()), lerp(-1150, 1150, rnd()), lerp(-1800, 900, rnd()), rnd() * 6.28, lerp(15, 45, rnd())]);
@@ -608,6 +647,7 @@ function place(obj, v) { obj.position.copy(v); }
 window.renderAt = async (t, screen) => {
   const O = await ready;
   for (const k of Object.keys(O)) if (O[k] && O[k].isObject3D) O[k].visible = false;
+  O.arcs.forEach(a => { a.visible = false; });
   sweep.intensity = 0; amber.intensity = 0; cool.intensity = 0; bloom.strength = 0.32;
 
   // camera: slow handheld drift + push on every beat
@@ -621,13 +661,33 @@ window.renderAt = async (t, screen) => {
     base.forEach(([x, y, z, ph, v], i) => { pos[i * 3] = x + 30 * Math.sin(t * 0.5 + ph); pos[i * 3 + 1] = ((y + v * t + 1150) % 2300) - 1150; pos[i * 3 + 2] = z; });
     dust.geometry.attributes.position.needsUpdate = true; }
 
-  // S1 hook 0-3.5: medallion flies in spinning
+  // S1 hook 0-3.5: particles assemble the medallion, shockwave, light arcs, coloured halo
   if (t < 3.5) {
-    const m = O.medal; m.visible = true;
-    const p = easeOut(prog(t, 0.0, 1.2));
-    place(m, P(540, 740, lerp(-2600, 0, p)));
-    m.rotation.set(0.12 * Math.sin(t * 0.9), lerp(Math.PI * 4, 0, p) + 0.22 * Math.sin(t * 1.3) * p, 0.03 * Math.sin(t));
-    m.scale.setScalar(1.02);
+    const m = O.medal;
+    const q = easeInOut(prog(t, 0.0, 0.62));
+    const C = P(540, 740);
+    const lp = O.lp; lp.visible = t < 1.4; place(lp, C);
+    { const { start, target, NP } = lp.userData, pos = lp.geometry.attributes.position.array;
+      const scatter = easeOut(prog(t, 0.62, 1.4)), sw = (1 - q) * Math.PI * 1.6;
+      for (let i = 0; i < NP; i++) {
+        const sx = start[i * 3], sy = start[i * 3 + 1];
+        const rx = sx * Math.cos(sw) - sy * Math.sin(sw), ry = sx * Math.sin(sw) + sy * Math.cos(sw);
+        let x = lerp(rx, target[i * 3], q), y = lerp(ry, target[i * 3 + 1], q), z = lerp(start[i * 3 + 2], target[i * 3 + 2], q);
+        const k = 1 + scatter * (0.6 + (i % 7) * 0.12);
+        pos[i * 3] = x * k; pos[i * 3 + 1] = y * k; pos[i * 3 + 2] = z + scatter * 400;
+      }
+      lp.geometry.attributes.position.needsUpdate = true;
+      lp.material.opacity = q < 1 ? 0.95 : clamp(1 - scatter * 1.3); }
+    const reveal = easeBack(prog(t, 0.55, 0.95), 1.8);
+    m.visible = t >= 0.55;
+    place(m, P(540, 740, 0));
+    m.rotation.set(0.1 * Math.sin(t * 0.9), lerp(0.7, 0, easeOut(prog(t, 0.55, 1.2))) + 0.18 * Math.sin(t * 1.3), 0.03 * Math.sin(t));
+    m.scale.setScalar(Math.max(0.01, reveal) * 1.02);
+    const sh = prog(t, 0.58, 1.15); O.shock.visible = sh > 0 && sh < 1; place(O.shock, C);
+    O.shock.scale.setScalar(lerp(300, 1150, easeOut(sh))); O.shock.material.opacity = (1 - sh) * 0.9;
+    O.arcs.forEach((a, i) => { a.visible = t > 0.4; place(a, C); a.position.z = 30; a.rotation.set(0.25 * Math.sin(t + i), 0.2 * Math.cos(t * 0.8 + i), t * (2.2 + i * 0.7) * (i % 2 ? -1 : 1)); a.material.opacity = clamp((t - 0.4) / 0.4) * 0.8; });
+    O.halo.visible = true; place(O.halo, P(540, 740, -300)); O.halo.scale.setScalar(lerp(0.4, 1, easeOut(prog(t, 0.5, 1.2))) * (1 + 0.06 * beat(t, 0)));
+    O.halo.material.opacity = clamp((t - 0.45) / 0.4);
     const sp = prog(t, 1.3, 2.3);
     if (sp > 0 && sp < 1) { sweep.intensity = 3.5 * Math.sin(sp * Math.PI); sweep.position.set(lerp(-700, 700, sp), 960 - 740 + 300, 400); }
   }
@@ -659,18 +719,30 @@ window.renderAt = async (t, screen) => {
     }
   }
 
-  // S3 salon 7.5-12: tool showcase (comb, clipper, brush)
+  // S3 salon 7.5-12: the tools land on a walnut barber station, product-photo light, real shadows
   if (t >= 7.5 && t < 12.0) {
-    const items = [[O.comb, 225, 0.72, 7.6], [O.clipper, 540, 0.92, 7.75], [O.brush, 860, 1.0, 7.9]];
-    for (const [obj, x, sc, st] of items) {
-      const p = easeOut(prog(t, st, st + 0.6));
-      if (p <= 0) continue;
-      obj.visible = true;
-      place(obj, P(lerp(x < 540 ? -400 : x > 540 ? 1480 : 540, x, p), 720 + (x === 540 ? lerp(900, 0, p) : 0), lerp(-900, 0, p)));
-      obj.position.y += 14 * Math.sin(t * 2 + x);
-      obj.scale.setScalar(sc * (1 + 0.04 * beat(t, 8.0)));
-      obj.rotation.set(0.25 * Math.sin(t * 0.9 + x), (t - st) * 1.3 + x, x === 230 ? 0.5 : x === 850 ? -0.35 : 0.15);
+    const S = O.station; S.visible = true;
+    place(S, P(540, 905, -150));
+    S.rotation.set(0.34 + 0.02 * Math.sin(t * 0.7), 0.22 * Math.sin((t - 7.5) * 0.5) - 0.08, 0);
+    const drop = (st) => { const q = prog(t, st, st + 0.5); return q <= 0 ? null : (1 - easeOut(q)) * 700 + Math.abs(Math.sin(q * Math.PI * 3)) * (1 - q) * 40; };
+    const lay = [
+      ['clip', [0, 214, -60], [0.05, 0.6, 0], 0.95, 7.6],
+      ['brush', [380, 178, -120], [0, 0, 0], 1.0, 7.75],
+      ['jar', [-430, 63, -150], [0, 0, 0], 0.62, 7.9],
+      ['comb', [-90, 36, 210], [-Math.PI / 2, 0, 0.18], 0.75, 8.0],
+      ['scis', [-300, 40, 250], [-Math.PI / 2, 0, 0.9], 0.72, 8.1],
+      ['razor', [320, 26, 250], [-Math.PI / 2, 0, -0.35], 0.62, 8.2],
+    ];
+    for (const [k, pos, rot, sc, st] of lay) {
+      const o = O.st[k], d = drop(st);
+      o.visible = d !== null;
+      if (!o.visible) continue;
+      o.position.set(pos[0], pos[1] + d, pos[2]);
+      o.rotation.set(rot[0], rot[1] + (k === 'clip' ? (t - 7.6) * 0.6 : 0), rot[2]);
+      o.scale.setScalar(sc);
     }
+    const sp = prog(t, 9.0, 10.2);
+    if (sp > 0 && sp < 1) { sweep.intensity = 3 * Math.sin(sp * Math.PI); sweep.position.set(lerp(-800, 800, sp), 960 - 700, 600); }
   }
 
   // S4 prices 12-17: 3D title
