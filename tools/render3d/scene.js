@@ -221,32 +221,54 @@ const blackTi = new THREE.MeshPhysicalMaterial({ color: 0x161616, metalness: 1, 
 const lensGlass = new THREE.MeshPhysicalMaterial({ color: 0x05060a, metalness: 0.1, roughness: 0.02, clearcoat: 1, clearcoatRoughness: 0 });
 const holoAdd = (color, opacity) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
 
+function rrShape(w, h, r) {
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  return s;
+}
+function flatShape(w, h, r) {   // rounded-rectangle plane with 0..1 UVs (for the screen texture)
+  const geo = new THREE.ShapeGeometry(rrShape(w, h, r), 32);
+  const pos = geo.attributes.position, uv = geo.attributes.uv;
+  for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) / w + 0.5, pos.getY(i) / h + 0.5);
+  return geo;
+}
+
+// iPhone Pro style smartphone, all black: continuous rounded corners, rounded titanium edges,
+// Dynamic Island, triangular triple camera, Action button. No Apple logo (trademark).
 function phone(screenTex, logoTex) {
   const g = new THREE.Group();
-  g.add(new THREE.Mesh(new RoundedBoxGeometry(612, 1252, 44, 10, 74), blackTi));
-  g.add(new THREE.Mesh(new RoundedBoxGeometry(600, 1240, 54, 10, 70), blackGlass));
+  const bodyGeo = new THREE.ExtrudeGeometry(rrShape(588, 1228, 88), { depth: 36, bevelEnabled: true, bevelThickness: 10, bevelSize: 6, bevelSegments: 10, curveSegments: 28 });
+  bodyGeo.translate(0, 0, -18);
+  g.add(new THREE.Mesh(bodyGeo, [blackGlass, blackTi]));            // caps = glass, sides = black titanium
   const scrMat = new THREE.MeshBasicMaterial({ map: screenTex, color: 0x000000, toneMapped: false });
-  const scr = new THREE.Mesh(new THREE.PlaneGeometry(560, 1200), scrMat); scr.position.z = 27.2; g.add(scr);
-  const island = new THREE.Mesh(new RoundedBoxGeometry(150, 42, 4, 4, 20), blackGlass); island.position.set(0, 562, 28); g.add(island);
-  const coat = new THREE.Mesh(new THREE.PlaneGeometry(560, 1200), new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.02, clearcoat: 1, transparent: true, opacity: 0.05 }));
-  coat.position.z = 27.6; coat.visible = false; g.add(coat);
-  const scan = new THREE.Mesh(new THREE.PlaneGeometry(560, 10), holoAdd(0xfff1c8, 0)); scan.position.z = 28; g.add(scan);
-  // side buttons
-  for (const [x, y, h] of [[307, 250, 150], [-307, 330, 90], [-307, 200, 90], [-307, 450, 50]]) {
-    const b = new THREE.Mesh(new RoundedBoxGeometry(10, h, 22, 3, 4), blackTi); b.position.set(x, y, 0); g.add(b);
+  const scr = new THREE.Mesh(flatShape(556, 1196, 72), scrMat); scr.position.z = 28.4; g.add(scr);
+  const island = new THREE.Mesh(new THREE.ShapeGeometry(rrShape(150, 44, 22), 16), new THREE.MeshBasicMaterial({ color: 0x000000 })); island.position.set(0, 556, 28.8); g.add(island);
+  const lensDot = new THREE.Mesh(new THREE.CircleGeometry(8, 24), new THREE.MeshPhysicalMaterial({ color: 0x0a0c14, roughness: 0.05, clearcoat: 1 })); lensDot.position.set(48, 556, 29); g.add(lensDot);
+  const coat = new THREE.Mesh(flatShape(556, 1196, 72), new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.02, clearcoat: 1, transparent: true, opacity: 0.05 }));
+  coat.position.z = 28.9; coat.visible = false; g.add(coat);
+  const scan = new THREE.Mesh(new THREE.PlaneGeometry(556, 10), holoAdd(0xfff1c8, 0)); scan.position.z = 29.2; g.add(scan);
+  // buttons: side button (right), Action button + volume (left)
+  for (const [x, y, h] of [[301, 260, 160], [-301, 470, 62], [-301, 345, 110], [-301, 215, 110]]) {
+    const b = new THREE.Mesh(new RoundedBoxGeometry(10, h, 18, 4, 4.5), blackTi); b.position.set(x, y, 0); g.add(b);
   }
-  // back: engraved logo + camera module
+  // back: engraved Atelier 47 logo + camera plateau
   const back = new THREE.Mesh(new THREE.CircleGeometry(120, 96), new THREE.MeshStandardMaterial({ map: logoTex, metalness: 0.4, roughness: 0.35, color: 0x3a3a3a, emissive: 0xffffff, emissiveMap: logoTex, emissiveIntensity: 0.08 }));
-  back.rotation.y = Math.PI; back.position.set(0, 40, -27.6); g.add(back);
-  const backRing = new THREE.Mesh(new THREE.TorusGeometry(124, 4, 12, 96), blackTi); backRing.position.set(0, 40, -27.6); g.add(backRing);
-  const bump = new THREE.Mesh(new RoundedBoxGeometry(240, 240, 18, 6, 56), blackGlass); bump.position.set(150, 450, -33); g.add(bump);
-  for (const [x, y] of [[105, 495], [105, 405], [195, 450]]) {
-    const ringM = new THREE.Mesh(new THREE.CylinderGeometry(46, 46, 16, 48), blackTi); ringM.rotation.x = Math.PI / 2; ringM.position.set(x, y, -44); g.add(ringM);
-    const lens = new THREE.Mesh(new THREE.CylinderGeometry(36, 36, 17, 48), lensGlass); lens.rotation.x = Math.PI / 2; lens.position.set(x, y, -45); g.add(lens);
-    const dot = new THREE.Mesh(new THREE.CircleGeometry(9, 24), holoAdd(0x6a7cff, 0.35)); dot.rotation.y = Math.PI; dot.position.set(x + 8, y + 8, -53.6); g.add(dot);
+  back.rotation.y = Math.PI; back.position.set(0, 20, -28.6); g.add(back);
+  const backRing = new THREE.Mesh(new THREE.TorusGeometry(124, 3, 12, 96), blackTi); backRing.position.set(0, 20, -28.6); g.add(backRing);
+  const bumpGeo = new THREE.ExtrudeGeometry(rrShape(250, 250, 66), { depth: 6, bevelEnabled: true, bevelThickness: 3, bevelSize: 3, bevelSegments: 6, curveSegments: 20 });
+  const bump = new THREE.Mesh(bumpGeo, [blackGlass, blackTi]); bump.position.set(150, 455, -37); g.add(bump);
+  for (const [x, y] of [[195, 500], [195, 410], [105, 455]]) {
+    const ringM = new THREE.Mesh(new THREE.CylinderGeometry(48, 48, 14, 64), blackTi); ringM.rotation.x = Math.PI / 2; ringM.position.set(x, y, -44); g.add(ringM);
+    const lens = new THREE.Mesh(new THREE.CylinderGeometry(37, 37, 15, 64), lensGlass); lens.rotation.x = Math.PI / 2; lens.position.set(x, y, -45); g.add(lens);
+    const inner = new THREE.Mesh(new THREE.CircleGeometry(16, 32), new THREE.MeshPhysicalMaterial({ color: 0x02030a, roughness: 0, clearcoat: 1 })); inner.rotation.y = Math.PI; inner.position.set(x, y, -52.7); g.add(inner);
+    const dot = new THREE.Mesh(new THREE.CircleGeometry(7, 24), holoAdd(0x6a7cff, 0.3)); dot.rotation.y = Math.PI; dot.position.set(x + 9, y + 9, -52.8); g.add(dot);
   }
-  const flash = new THREE.Mesh(new THREE.CylinderGeometry(14, 14, 6, 24), new THREE.MeshStandardMaterial({ color: 0xfff6dc, emissive: 0x7a6a40, roughness: 0.3 }));
-  flash.rotation.x = Math.PI / 2; flash.position.set(200, 520, -43); g.add(flash);
+  const flash = new THREE.Mesh(new THREE.CylinderGeometry(13, 13, 4, 32), new THREE.MeshStandardMaterial({ color: 0xfff6dc, emissive: 0x7a6a40, roughness: 0.3 }));
+  flash.rotation.x = Math.PI / 2; flash.position.set(100, 525, -41); g.add(flash);
+  const lidar = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 4, 32), lensGlass); lidar.rotation.x = Math.PI / 2; lidar.position.set(100, 385, -41); g.add(lidar);
   const ripple = new THREE.Mesh(new THREE.TorusGeometry(1, 0.025, 8, 64), holoAdd(0xf3eee3, 0)); ripple.position.set(0, 120, 120); g.add(ripple);
   g.userData = { scrMat, scan, ripple };
   return g;
@@ -385,8 +407,8 @@ const ready = (async () => {
     x.fillStyle = g; x.fillRect(0, 0, w, h);
   });
   glareTex.wrapS = THREE.ClampToEdgeWrapping;
-  O.glare = new THREE.Mesh(new THREE.PlaneGeometry(560, 1200), new THREE.MeshBasicMaterial({ map: glareTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, opacity: 0 }));
-  O.glare.position.z = 28.5; O.glare.rotation.z = 0; O.phone.add(O.glare);
+  O.glare = new THREE.Mesh(flatShape(556, 1196, 72), new THREE.MeshBasicMaterial({ map: glareTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, opacity: 0 }));
+  O.glare.position.z = 29.4; O.glare.rotation.z = 0; O.phone.add(O.glare);
   const glareGeo = O.glare.geometry; const uv = glareGeo.attributes.uv;
   for (let i = 0; i < uv.count; i++) { const u = uv.getX(i), v = uv.getY(i); uv.setXY(i, u * 0.8 + v * 0.45, v); }
   for (let k = 0; k < 24; k++) { const tick = new THREE.Mesh(new THREE.BoxGeometry(3, 18, 1), holoAdd(0xd8b064, 0.6)); const a = k / 24 * Math.PI * 2; tick.position.set(Math.cos(a) * 470, Math.sin(a) * 470, 0); tick.rotation.z = a + Math.PI / 2; O.hud[0].add(tick); }
