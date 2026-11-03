@@ -1,0 +1,7 @@
+tools/render3d/node_modules/
+tools/__pycache__/
+exports/frames3d/
+exports/screen/
+exports/test_comp/
+exports/test3d/
+exports/frames/
