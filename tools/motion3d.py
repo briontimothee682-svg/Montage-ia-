@@ -41,7 +41,12 @@ def base_frame(fi):
 
 # ------------------------------------------------------------------ 2D overlays (the 3D layer carries logo, titles, tools, phone)
 def o_hook(c, t):
-    letters(c, "VOTRE BARBIER À ANNECY", "Medium", 34, W / 2, 300, t, 0.3, CREAM, tracking=10, stagger=0.02, dur=0.4)
+    # hook readable on the very first frame (most viewers decide in under 2 s, often with the sound off)
+    hp = ease_out(prog(t, 0.0, 0.35))
+    sw = lerp(-300, 1400, prog(t, 0.5, 1.3)) if 0.5 < t < 1.3 else None
+    text(c, "ANNECY,", "ExtraBold", 66, W / 2, 262, "gold", tracking=8, scale=lerp(1.3, 1.0, hp) * (1 + 0.03 * beat_pulse(t, 0.0)),
+         sweep=sw, glow=0.4)
+    text(c, "TON BARBIER EST ICI", "Bold", 52, W / 2, 342, CREAM, tracking=4, scale=lerp(1.18, 1.0, hp))
     p = ease_back(prog(t, 1.25, 1.6))
     if p > 0:
         paste(c, icon("pin", 74), W / 2, 1185 + 6 * math.sin(t * 3), alpha=clamp(p), scale=max(0.01, p))
@@ -147,6 +152,10 @@ def o_end(c, t):
     letters(c, HANDLE, "Medium", 46, W / 2, 1210, t, 27.6, CREAM, stagger=0.015, dur=0.3)
     ap = ease_out(prog(t, 27.9, 28.3))
     text(c, f"{ADDRESS} · 74000 Annecy", "Regular", 32, W / 2, 1285, CREAM, alpha=ap * 0.85)
+    cp = ease_back(prog(t, 28.0, 28.4))
+    if cp > 0:
+        text(c, "ENREGISTRE · PARTAGE À UN POTE", "SemiBold", 30, W / 2, 1365, GOLD, alpha=clamp(cp), tracking=6,
+             scale=max(0.01, cp) * (1 + 0.04 * beat_pulse(t, 28.5)))
     sp = ease_out(prog(t, 28.3, 28.8))
     text(c, "TIM DESIGN", "Light", 24, W / 2, 1450, CREAM, alpha=sp * 0.55, tracking=16)
 
@@ -209,6 +218,87 @@ def composite(fi):
     return np.clip(arr, 0, 255).astype(np.uint8)
 
 TILES_OUT = (18.6, 20.9)   # the 9 posts leave the screen in 3D during this window
+
+def synth_audio_3d(path):
+    """Music + sound design from motion.py, plus ASMR barber sounds synced to the 3D action."""
+    import wave
+    tmp = OUT / "_base.wav"
+    m.synth_audio(tmp)
+    with wave.open(str(tmp)) as wf:
+        sr = wf.getframerate()
+        base = np.frombuffer(wf.readframes(wf.getnframes()), np.int16).astype(np.float32) / 32767
+    tmp.unlink()
+    n = len(base)
+    out = base * 0.8
+    r = np.random.default_rng(3)
+
+    def add(sig, at, gain):
+        i = int(at * sr)
+        j = min(n, i + len(sig))
+        if i < n:
+            out[i:j] += sig[: j - i] * gain
+
+    def snip():  # scissors: bright metallic transient
+        x = np.arange(int(0.09 * sr)) / sr
+        ring_ = (np.sin(2 * np.pi * 3150 * x) + 0.6 * np.sin(2 * np.pi * 4720 * x) + 0.3 * np.sin(2 * np.pi * 6900 * x)) * np.exp(-x * 55)
+        noise = np.diff(r.normal(0, 1, len(x)), prepend=0) * np.exp(-x * 160)
+        return ring_ * 0.5 + noise * 0.6
+
+    def shing(length=0.7):  # razor opening: rising metallic ring
+        x = np.arange(int(length * sr)) / sr
+        f = 2400 + 1800 * x / length
+        return np.sin(2 * np.pi * np.cumsum(f) / sr) * np.exp(-x * 4) * np.minimum(1, x / 0.01) * 0.6
+
+    def buzz(length):  # clipper motor: 110 Hz buzz with harmonics and blade hiss
+        x = np.arange(int(length * sr)) / sr
+        ph = 2 * np.pi * 110 * x + 0.3 * np.sin(2 * np.pi * 7 * x)
+        sig = sum(np.sin(ph * k) / k ** 0.8 for k in range(1, 12))
+        hiss = np.diff(r.normal(0, 1, len(x)), prepend=0) * 0.25
+        env = np.minimum(1, x / 0.08) * np.minimum(1, (length - x) / 0.25)
+        return (np.tanh(sig * 0.6) * 0.5 + hiss) * env
+
+    def pop():
+        x = np.arange(int(0.12 * sr)) / sr
+        return np.sin(2 * np.pi * (520 + 900 * np.exp(-x * 40)) * x) * np.exp(-x * 30) * 0.7
+
+    def click():
+        x = np.arange(int(0.03 * sr)) / sr
+        return (np.sin(2 * np.pi * 1800 * x) * np.exp(-x * 120) + np.diff(r.normal(0, 1, len(x)), prepend=0) * np.exp(-x * 300) * 0.5)
+
+    def suck(length=0.45):
+        s_ = r.normal(0, 1, int(length * sr))
+        x = np.linspace(0, 1, len(s_))
+        return np.convolve(s_, np.ones(40) / 40, "same") * x ** 2 * 2.2
+
+    for k in range(4):                       # scissors closing on the beat
+        add(snip(), 3.75 + k * 0.5, 0.35)
+    add(shing(), 5.7, 0.3)                   # razor
+    add(buzz(1.8), 7.8, 0.16)                # clipper arriving in the tool showcase
+    for k in range(9):                       # posts leaving the phone
+        add(pop(), 18.6 + k * 0.06, 0.12)
+    add(click(), 19.66, 0.6)                 # button pressed
+    for k in range(3):                       # info cards
+        add(pop(), 20.7 + k * 0.22, 0.22)
+    add(suck(), 22.5, 0.25)                  # everything returns into the screen
+    add(snip(), 26.9, 0.25)
+    out /= max(1e-6, np.abs(out).max()) / 0.89
+    with wave.open(str(path), "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(sr)
+        wf.writeframes((out * 32767).astype(np.int16).tobytes())
+
+def short_cut(src, dst, segments):
+    """Builds a shorter version from beat-aligned segments of the full reel."""
+    parts, labels = [], []
+    for i, (a, b) in enumerate(segments):
+        parts.append(f"[0:v]trim={a}:{b},setpts=PTS-STARTPTS[v{i}];[0:a]atrim={a}:{b},asetpts=PTS-STARTPTS,"
+                     f"afade=t=in:d=0.01,afade=t=out:st={b - a - 0.01}:d=0.01[a{i}]")
+        labels.append(f"[v{i}][a{i}]")
+    fc = ";".join(parts) + ";" + "".join(labels) + f"concat=n={len(segments)}:v=1:a=1[v][a]"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-filter_complex", fc, "-map", "[v]", "-map", "[a]",
+                    "-c:v", "libx264", "-preset", "slow", "-b:v", "9M", "-maxrate", "12M", "-bufsize", "18M", "-pix_fmt", "yuv420p",
+                    "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(dst)], check=True)
 
 def screens():
     (OUT / "screen").mkdir(parents=True, exist_ok=True)
@@ -300,12 +390,14 @@ def main():
     proc.stdin.close()
     proc.wait()
     wav = OUT / "son3d.wav"
-    m.synth_audio(wav)
+    synth_audio_3d(wav)
     final = OUT / "atelier47_motion_3d.mp4"
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(silent), "-i", str(wav), "-c:v", "copy",
                     "-af", "loudnorm=I=-14:TP=-1.5:LRA=7", "-ar", "48000", "-c:a", "aac", "-b:a", "192k", "-shortest",
                     "-movflags", "+faststart", str(final)], check=True)
     wav.unlink()
+    # 17 s version for A/B testing (hook + kinetic + phone + end), cut on the beat
+    short_cut(final, OUT / "atelier47_motion_3d_17s.mp4", [(0.0, 7.5), (17.0, 23.0), (26.5, 30.0)])
     print("done", final)
 
 if __name__ == "__main__":
