@@ -1,0 +1,16 @@
+{
+  "_note": "Valeurs à compléter : remplace les XX puis relance le rendu des plans concernés (affiche 34-42 s, carte 48-56 s) et le compositing.",
+  "name": "L'Apéretik",
+  "tagline": "Chassez le naturel, il revient à l'apéro",
+  "handle": "@laperetik",
+  "street_number": "XX",
+  "street": "Allée de Rioz Busson",
+  "city": "74600 Annecy",
+  "hours": "Horaires à venir",
+  "prices": {
+    "box": "XX",
+    "coffrets": "XX",
+    "boissons": "XX"
+  },
+  "qr_url": "https://www.instagram.com/laperetik/"
+}
