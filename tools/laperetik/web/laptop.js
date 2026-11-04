@@ -93,58 +93,83 @@ function sdEllipsoid(px, py, pz, c, r) {
   return k0 * (k0 - 1) / Math.max(k1, 1e-6);
 }
 
-// right hand, palm down, index finger on the trackpad. Local frame: x right, y up, -z toward the screen. cm.
+// Right hand, palm down, index and middle fingers resting on the trackpad for a two-finger scroll.
+// Local frame: x right, y up, -z toward the screen, cm. Anatomy from capsules/ellipsoids blended with smooth-min.
 export function makeHand() {
+  const F = (pts, r) => ({ p: pts, r });
   const fingers = [
-    // [knuckle, mid, distal, tip], radii
-    { p: [[-2.6, 1.9, -3.6], [-3.1, 1.1, -7.3], [-3.3, 0.35, -9.7], [-3.35, 0.2, -11.2]], r: [0.95, 0.82, 0.72, 0.66] },  // index (extended to the pad)
-    { p: [[-0.6, 2.1, -3.9], [-0.7, 1.6, -7.0], [-0.5, 0.6, -8.9], [-0.3, 0.15, -9.8]], r: [0.98, 0.86, 0.75, 0.68] },     // middle (relaxed curl)
-    { p: [[1.3, 1.95, -3.6], [1.6, 1.4, -6.4], [1.75, 0.5, -8.0], [1.8, 0.15, -8.8]], r: [0.92, 0.8, 0.7, 0.63] },         // ring
-    { p: [[3.0, 1.6, -3.0], [3.5, 1.05, -5.3], [3.7, 0.35, -6.6], [3.75, 0.1, -7.3]], r: [0.8, 0.7, 0.6, 0.55] },          // little
+    F([[-2.55, 1.8, -4.1], [-2.75, 1.25, -8.3], [-2.8, 0.8, -10.55], [-2.8, 0.62, -11.8]], [0.93, 0.8, 0.7, 0.62]),   // index (on the pad)
+    F([[-0.5, 1.95, -4.35], [-0.45, 1.35, -9.0], [-0.4, 0.85, -11.35], [-0.35, 0.64, -12.6]], [0.96, 0.84, 0.73, 0.64]), // middle (on the pad)
+    F([[1.45, 1.8, -4.0], [1.7, 1.3, -7.4], [1.82, 0.85, -8.95], [1.86, 0.6, -9.7]], [0.89, 0.77, 0.67, 0.6]),            // ring (relaxed)
+    F([[3.1, 1.5, -3.4], [3.5, 1.08, -6.2], [3.65, 0.72, -7.5], [3.7, 0.55, -8.2]], [0.79, 0.68, 0.6, 0.54]),               // little
   ];
-  const thumb = { p: [[-3.2, 0.8, 1.2], [-4.6, 0.5, -1.6], [-5.2, 0.4, -3.6], [-5.4, 0.35, -4.9]], r: [1.25, 1.0, 0.86, 0.75] };
+  const thumb = F([[-3.3, 1.05, 1.6], [-4.6, 0.85, -0.9], [-5.25, 0.72, -2.9], [-5.45, 0.66, -4.1]], [1.22, 1.0, 0.85, 0.74]);
+  const flat = 1.12;   // fingers are slightly flattened, not round tubes
+  const caps = (x, y, z, a, b, ra, rb) => sdCapsule(x, (y - a[1]) * flat + a[1], z, a, [b[0], (b[1] - a[1]) * flat + a[1], b[2]], ra, rb);
   const sdf = (x, y, z) => {
-    let d = sdEllipsoid(x, y, z, [0.2, 1.6, -0.6], [4.3, 1.25, 3.8]);
-    d = smin(d, sdCapsule(x, y, z, [0.6, 1.4, 2.0], [1.6, 1.8, 9.0], 2.7, 2.6), 1.6);                 // wrist / forearm
+    let d = sdEllipsoid(x, y, z, [0.1, 1.55, -0.3], [4.25, 1.2, 4.4]);                                   // palm
+    d = smin(d, sdEllipsoid(x, y, z, [-3.0, 1.1, 1.4], [1.9, 1.15, 2.6]), 1.0);                          // thenar (thumb muscle)
+    d = smin(d, sdCapsule(x, y, z, [-2.9, 1.75, -3.9], [3.2, 1.5, -3.3], 1.0, 0.85), 0.9);               // knuckle ridge
+    d = smin(d, sdCapsule(x, y, z, [0.2, 1.55, 3.0], [1.4, 2.3, 11.5], 2.35, 2.85), 1.6);                 // wrist / forearm
+    for (const kn of [[-2.55, 2.35, -4.0], [-0.5, 2.5, -4.25], [1.45, 2.35, -3.9]]) d = smin(d, sdEllipsoid(x, y, z, kn, [0.62, 0.45, 0.62]), 0.5);
     for (const f of [...fingers, thumb]) {
       let fd = 1e9;
-      for (let i = 0; i < 3; i++) fd = Math.min(fd, sdCapsule(x, y, z, f.p[i], f.p[i + 1], f.r[i], f.r[i + 1]));
-      d = smin(d, fd, f === thumb ? 1.2 : 0.9);
+      for (let i = 0; i < 3; i++) fd = Math.min(fd, caps(x, y, z, f.p[i], f.p[i + 1], f.r[i], f.r[i + 1]));
+      fd = Math.min(fd, sdEllipsoid(x, y, z, f.p[1], [f.r[1] * 1.06, f.r[1] * 0.98, f.r[1] * 1.1]));     // knuckle of the middle joint
+      d = smin(d, fd, f === thumb ? 1.1 : 0.75);
     }
     return d;
   };
-  const RES = 84, HALF = 9.5, C = v3(-0.6, 1.0, -1.0);
-  const mat = new THREE.MeshPhysicalMaterial({ color: 0xd9a083, roughness: 0.52, sheen: 0.5, sheenColor: new THREE.Color(0xffc2a8), sheenRoughness: 0.5, clearcoat: 0.08, emissive: 0x2a0c06, emissiveIntensity: 0.6 });
-  const mc = new MarchingCubes(RES, mat, false, false, 180000);
+  const RES = 112, HALF = 12.6, C = v3(-0.8, 1.2, -1.2);
+  const mat = new THREE.MeshPhysicalMaterial({ vertexColors: true, color: 0xffffff, roughness: 0.55, sheen: 0.22, sheenColor: new THREE.Color(1.0, 0.7, 0.62), sheenRoughness: 0.5, clearcoat: 0.04, clearcoatRoughness: 0.7, emissive: 0x1e0805, emissiveIntensity: 0.5 });
+  const mc = new MarchingCubes(RES, mat, false, false, 400000);
   mc.isolation = 0;
   const f = mc.field, size = mc.size;
   for (let k = 0; k < size; k++) for (let j = 0; j < size; j++) for (let i = 0; i < size; i++) {
     const x = C.x + ((i - size / 2) / (size / 2)) * HALF, y = C.y + ((j - size / 2) / (size / 2)) * HALF, z = C.z + ((k - size / 2) / (size / 2)) * HALF;
-    f[i + size * j + size * size * k] = -sdf(x, y, z);
+    f[i + size * j + size * size * k] = (y < -1.5 || y > 6) ? -1 : -sdf(x, y, z);
   }
   mc.update();
-  const src = mc.geometry;
+  const src = mc.geometry, cnt = mc.count;
   const geo = new THREE.BufferGeometry();
-  const cnt = mc.count;
   geo.setAttribute('position', new THREE.BufferAttribute(src.attributes.position.array.slice(0, cnt * 3), 3));
   geo.setAttribute('normal', new THREE.BufferAttribute(src.attributes.normal.array.slice(0, cnt * 3), 3));
   geo.scale(HALF, HALF, HALF); geo.translate(C.x, C.y, C.z);
+  // skin tone: warmer and redder at fingertips and knuckles, lighter on the palm side
+  const pos = geo.attributes.position, col = new Float32Array(cnt * 3);
+  const base = new THREE.Color().setRGB(0.70, 0.40, 0.31), red = new THREE.Color().setRGB(0.68, 0.27, 0.21), pale = new THREE.Color().setRGB(0.76, 0.48, 0.39);
+  const tips = [...fingers, thumb].map(q => v3(...q.p[3])), knuckles = [...fingers.map(q => v3(...q.p[0])), ...fingers.map(q => v3(...q.p[1]))];
+  const v = new THREE.Vector3(), c = new THREE.Color();
+  for (let i = 0; i < cnt; i++) {
+    v.fromBufferAttribute(pos, i);
+    let kr = 0;
+    for (const tp of tips) kr = Math.max(kr, 1 - v.distanceTo(tp) / 1.8);
+    for (const kn of knuckles) kr = Math.max(kr, (1 - v.distanceTo(kn) / 1.3) * 0.5);
+    const under = clamp((1.2 - v.y) / 1.2) * 0.5;
+    c.copy(base).lerp(red, clamp(kr) * 0.8).lerp(pale, under * (1 - kr));
+    const n = (Math.sin(v.x * 7.1) * Math.sin(v.z * 6.3) * Math.sin(v.y * 9.7)) * 0.02;
+    col[i * 3] = c.r + n; col[i * 3 + 1] = c.g + n * 0.7; col[i * 3 + 2] = c.b + n * 0.6;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   const g = new THREE.Group();
-  const skin = new THREE.Mesh(geo, mat); g.add(skin);
-  // fingernails
-  const nailMat = new THREE.MeshPhysicalMaterial({ color: 0xe8b7a4, roughness: 0.25, clearcoat: 0.8, clearcoatRoughness: 0.2 });
+  g.add(new THREE.Mesh(geo, mat));
+  // fingernails: curved, pink nail bed with a paler free edge
+  const nailMat = new THREE.MeshPhysicalMaterial({ color: 0xe9b9a8, roughness: 0.3, clearcoat: 0.5, clearcoatRoughness: 0.3 });
+  const edgeMat = new THREE.MeshStandardMaterial({ color: 0xf4e6dc, roughness: 0.4 });
   for (const fg of [...fingers, thumb]) {
     const a = v3(...fg.p[2]), b = v3(...fg.p[3]);
     const dir = b.clone().sub(a).normalize();
     const r = fg.r[3];
-    const nail = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), nailMat);
-    nail.scale.set(r * 0.72, r * 0.18, r * 1.05);
-    nail.position.copy(a.clone().lerp(b, 0.62)).add(v3(0, r * 0.86, 0));
-    nail.lookAt(nail.position.clone().add(dir)); nail.rotateX(0);
-    g.add(nail);
+    const holder = new THREE.Group();
+    holder.position.copy(a.clone().lerp(b, 0.55)).add(v3(0, r * 0.83, 0));
+    holder.lookAt(holder.position.clone().add(dir));
+    const nail = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), nailMat);
+    nail.scale.set(r * 0.7, r * 0.16, r * 0.95); holder.add(nail);
+    const edge = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 8), edgeMat);
+    edge.scale.set(r * 0.62, r * 0.12, r * 0.22); edge.position.z = r * 0.85; holder.add(edge);
+    g.add(holder);
   }
   g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  g.userData.indexTip = v3(...fingers[0].p[3]);
   return g;
 }
 
@@ -317,4 +342,101 @@ export function reelBackdrop(logoImg) {
   c.fillStyle = '#3a2a1f'; c.font = '400 26px Inter'; c.fillText('Fromages, charcuterie et pain grillé de nos', 90, 1130); c.fillText('producteurs locaux, réunis dans une boîte en bois.', 90, 1166);
   c.textAlign = 'right'; c.font = '600 26px Oswald'; c.fillStyle = '#a8784c'; c.fillText('100 % LOCAL · CIRCUIT COURT', 1960, 1150);
   const t = canvasTex(cv); return t;
+}
+
+
+// ------------------------------------------------------------ Instagram Reels page (desktop, dark warm theme)
+const DARK = '#120d0a', CREAM_T = '#f4ecdf', MUTE_T = '#b9a996';
+export class ReelsUI {
+  constructor(tiles, logoImg) {
+    this.cv = canvas(SCR.w, SCR.h); this.c = this.cv.getContext('2d');
+    this.tex = canvasTex(this.cv, false); this.tex.colorSpace = THREE.NoColorSpace;
+    this.tiles = tiles; this.logo = logoImg;
+    this.R = { w: 506, h: 900, x: (SCR.w - 506) / 2, y0: 50, gap: 30 }; this.ours = 2;
+  }
+  reelRect(i, p) { const R = this.R; return { x: R.x, y: R.y0 + (i - p) * (R.h + R.gap), w: R.w, h: R.h }; }
+  heartPos(p) { const r = this.reelRect(this.ours, p); return { x: r.x + r.w + 52, y: r.y + r.h - 390 }; }
+  draw(st) {
+    const c = this.c, R = this.R;
+    c.save();
+    c.fillStyle = DARK; c.fillRect(0, 0, SCR.w, SCR.h);
+    // left navigation
+    c.globalAlpha = st.chrome;
+    const nav = ['home', 'search', 'explore', 'reels', 'msg', 'heart', 'plus'];
+    nav.forEach((n, i) => icon(c, n, 34, 120 + i * 74, 30, n === 'reels' ? CREAM_T : MUTE_T, false, 2.2));
+    c.save(); c.beginPath(); c.arc(49, 120 + 7 * 74 + 15, 16, 0, Math.PI * 2); c.clip(); c.fillStyle = '#f4ecdf'; c.fill(); c.drawImage(this.logo, 33, 119 + 7 * 74, 32, 32); c.restore();
+    c.globalAlpha = 1;
+    // the feed
+    for (let i = 0; i < this.tiles.length; i++) {
+      const r = this.reelRect(i, st.p);
+      if (r.y > SCR.h || r.y + r.h < 0) continue;
+      c.save(); c.beginPath(); c.roundRect(r.x, r.y, r.w, r.h, 14); c.clip();
+      if (i === this.ours) c.clearRect(r.x, r.y, r.w, r.h);
+      else if (this.tiles[i]) c.drawImage(this.tiles[i], r.x, r.y, r.w, r.h);
+      c.restore();
+      if (i === this.ours) this.overlay(c, r, st);
+      else {
+        c.globalAlpha = st.chrome;
+        const hx = r.x + r.w + 52;
+        ['heart', 'comment', 'share', 'save'].forEach((n, k) => icon(c, n, hx - 19, r.y + r.h - 410 + k * 92, 38, CREAM_T, false, 2.1));
+        c.globalAlpha = 1;
+      }
+    }
+    if (st.cursor && st.chrome > 0.02) { c.globalAlpha = st.chrome; cursor(c, st.cursor.x, st.cursor.y, 1.1, st.press || 0); c.globalAlpha = 1; }
+    c.restore();
+    this.tex.needsUpdate = true;
+  }
+  overlay(c, r, st) {
+    c.save(); c.globalAlpha = st.chrome;
+    // soft gradient at the bottom of the video for the caption
+    c.save(); c.beginPath(); c.roundRect(r.x, r.y, r.w, r.h, 14); c.clip();
+    const g = c.createLinearGradient(0, r.y + r.h - 230, 0, r.y + r.h); g.addColorStop(0, 'rgba(18,12,8,0)'); g.addColorStop(1, 'rgba(18,12,8,0.6)');
+    c.fillStyle = g; c.fillRect(r.x, r.y + r.h - 230, r.w, 230);
+    c.restore();
+    const bx = r.x + 22, by = r.y + r.h - 118;
+    c.save(); c.beginPath(); c.arc(bx + 20, by, 20, 0, Math.PI * 2); c.clip(); c.fillStyle = '#f4ecdf'; c.fill(); c.drawImage(this.logo, bx + 2, by - 18, 36, 36); c.restore();
+    c.fillStyle = '#fff'; c.font = font(700, 19); c.fillText('laperetik', bx + 50, by + 6);
+    const fw = 74; c.beginPath(); c.roundRect(bx + 150, by - 16, fw, 32, 8); c.strokeStyle = 'rgba(255,255,255,0.9)'; c.lineWidth = 1.6; c.stroke();
+    c.font = font(600, 15); c.fillText('Suivre', bx + 163, by + 5);
+    c.font = font(400, 17); c.fillText('La Box Apéro · fromages & charcuterie locaux', bx, by + 46);
+    c.fillStyle = 'rgba(255,255,255,0.85)'; c.font = font(400, 15); c.fillText('Son original · laperetik', bx + 22, by + 76);
+    c.beginPath(); c.arc(bx + 7, by + 71, 5, 0, Math.PI * 2); c.fillStyle = 'rgba(255,255,255,0.85)'; c.fill();
+    // action column
+    const hx = r.x + r.w + 52, hy = r.y + r.h - 390;
+    const pop = st.likePop;
+    const s = 40 * (1 + 0.38 * Math.sin(Math.min(1, pop * 1.5) * Math.PI) * (pop > 0 ? 1 : 0));
+    if (st.liked) icon(c, 'heart', hx - s / 2, hy - s / 2, s, '#e0303a', true); else icon(c, 'heart', hx - s / 2, hy - s / 2, s, CREAM_T, false, 2.1);
+    c.fillStyle = CREAM_T; c.font = font(600, 15); c.textAlign = 'center';
+    c.fillText(st.liked ? '2 418' : '2 417', hx, hy + 40);
+    icon(c, 'comment', hx - 19, hy + 72, 38, CREAM_T, false, 2.1); c.fillText('186', hx, hy + 134);
+    icon(c, 'share', hx - 19, hy + 164, 38, CREAM_T, false, 2.1); c.fillText('97', hx, hy + 226);
+    icon(c, 'save', hx - 18, hy + 256, 36, CREAM_T, false, 2.1);
+    icon(c, 'more', hx - 13, hy + 330, 26, CREAM_T);
+    c.textAlign = 'left';
+    if (pop > 0 && pop < 1) {
+      const rnd = seeded(5);
+      for (let i = 0; i < 14; i++) {
+        const a = rnd() * Math.PI * 2, rr2 = (30 + rnd() * 50) * easeOut(pop);
+        c.globalAlpha = (1 - pop) * 0.8 * st.chrome; c.fillStyle = '#e0303a';
+        c.beginPath(); c.arc(hx + Math.cos(a) * rr2, hy + Math.sin(a) * rr2, 2.5 + rnd() * 2.5, 0, Math.PI * 2); c.fill();
+      }
+    }
+    c.restore();
+  }
+}
+
+// giant type lines for the vertical Reel ("premium product site" look): filled or outlined, tileable for a marquee
+export function typeLine(text, filled) {
+  const m = canvas(16, 16).getContext('2d'); m.font = '700 400px Oswald';
+  const unit = Math.ceil(m.measureText(text + '   ').width);
+  const k = Math.max(1, Math.floor(4096 / unit));
+  const cv = canvas(unit * k, 512), c = cv.getContext('2d');
+  c.font = '700 400px Oswald'; c.textBaseline = 'middle';
+  for (let i = 0; i < k; i++) {
+    if (filled) { c.fillStyle = '#3a2a1f'; c.fillText(text, i * unit, 272); }
+    else { c.strokeStyle = '#3a2a1f'; c.lineWidth = 7; c.strokeText(text, i * unit, 272); }
+  }
+  const t = canvasTex(cv); t.wrapS = THREE.RepeatWrapping;
+  t.userData = { aspect: (unit * k) / 512, k };
+  return t;
 }

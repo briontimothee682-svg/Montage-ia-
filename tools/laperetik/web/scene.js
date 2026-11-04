@@ -9,7 +9,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import * as L from './lib.js';
 import { prog, lerp, clamp, smooth, easeOut, easeInOut, easeInOut5, easeIn, easeBack, v3, deg, seeded, noise3, tex } from './lib.js';
-import { BOX, foodMaterials, makeBox, makeContents, rosemary } from './food.js';
+import { BOX, foodMaterials, makeBox, makeContents, rosemary, hideUnderLid } from './food.js';
 import { beerBottle, wineBottle, wineGlass, terrineJar, bokehLights } from './props.js';
 import * as SETS from './sets.js';
 
@@ -70,6 +70,7 @@ const dof = new BokehPass(scene, camera, { focus: 100, aperture: 0.0001, maxblur
 composer.addPass(dof);
 composer.addPass(new ShaderPass({ uniforms: { tDiffuse: { value: null } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }', fragmentShader: 'uniform sampler2D tDiffuse; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); c.rgb = clamp(c.rgb, 0.0, 60.0); if (c.r != c.r || c.g != c.g || c.b != c.b) c.rgb = vec3(0.0); gl_FragColor = c; }' }));
 const bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), 0.22, 0.55, 0.92);
+bloom.enabled = false;   // no glow, no glare
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 window.__dbg = { bloom, dof, composer, scene, renderer };
@@ -151,7 +152,7 @@ function dust(n, size, spread, seed) {
       void main(){ vec3 p = position; p.x += sin(t*0.3 + ph)*2.0; p.y += sin(t*0.21 + ph*1.7)*1.5 + t*0.4; p.z += cos(t*0.25 + ph)*2.0;
         vec4 mv = modelViewMatrix * vec4(p,1.); gl_Position = projectionMatrix * mv; gl_PointSize = size * (300.0 / -mv.z);
         vA = 0.5 + 0.5*sin(t*1.3 + ph*3.0); }`,
-    fragmentShader: 'uniform sampler2D map; uniform vec3 col; uniform float amp; varying float vA; void main(){ float a = texture2D(map, gl_PointCoord).a; gl_FragColor = vec4(col * a * vA * amp, 1.0); }',
+    fragmentShader: 'uniform sampler2D map; uniform vec3 col; uniform float amp; varying float vA; void main(){ float a = texture2D(map, gl_PointCoord).a; gl_FragColor = vec4(col * a * vA * amp * 0.45, 1.0); }',
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   });
   const pts = new THREE.Points(g, mat); pts.frustumCulled = false;
@@ -242,8 +243,8 @@ async function build() {
 
   // studio for the exploded view
   studio = new THREE.Group(); scene.add(studio);
-  sky = gradientSphere(0xf4ecdf, 0xa8784c, 0xffe7c2); studio.add(sky);
-  studioFloor = new THREE.Mesh(new THREE.CircleGeometry(900, 64), new THREE.MeshStandardMaterial({ color: 0xe9d6b8, roughness: 0.9 }));
+  sky = gradientSphere(0xe8cc9e, 0x9c6a3e, 0xf2d3a0); studio.add(sky);
+  studioFloor = new THREE.Mesh(new THREE.CircleGeometry(900, 64), new THREE.MeshStandardMaterial({ color: 0xdcbd8e, roughness: 0.9 }));
   studioFloor.rotation.x = -Math.PI / 2; studioFloor.receiveShadow = true; studio.add(studioFloor);
 
   dustA = dust(260, 0.55, [160, 90, 160], 3); scene.add(dustA);
@@ -270,7 +271,7 @@ async function build() {
   }
 
   sets = await SETS.build({ scene, renderer, M, U, box, lid, pieces, makeBox, makeContents, camera });
-  Object.assign(ctx, { box, lid, contents });
+  Object.assign(ctx, { box, lid, contents, pieces });
   // Instagram grid thumbnails are snapshots of the real 3D shots
   const snap = (t) => { setup(t); renderer.setRenderTarget(null); renderer.render(scene, camera); return renderer.domElement; };
   await sets.makeTiles(snap);
@@ -330,66 +331,23 @@ function show(names) {
 
 // ------------------------------------------------------------ shots
 function shotLogo(t) {
-  show(['walnut', 'box']);
-  scene.background = null; scene.fog = new THREE.FogExp2(0x1a110a, 0.0032);
+  // logo presentation: the closed box on the oak table, the whole logo readable, soft warm light, no glare
+  show(['oak', 'box']);
+  scene.background = null; scene.fog = new THREE.FogExp2(0x2a1c12, 0.0026);
   renderer.toneMappingExposure = 1.0;
-  contents.visible = false; lid.position.set(0, lid.userData.closedY, 0); lid.rotation.set(0, 0, 0);
-  box.position.set(0, 0, 0); box.rotation.set(0, 0, 0);
+  contents.visible = false; poseContents(0);
+  U.uReveal.value = 1.2;
+  lid.position.set(0, lid.userData.closedY, 0); lid.rotation.set(0, 0, 0);
+  box.position.set(0, 0.08, 0); box.rotation.set(0, 0, 0);
   const c = v3(0, 0, 0);
-  setKey(c, v3(-1, 1.1, 0.5), 140, 40, 3.0); setRim(c, v3(0.8, 0.5, -1), 2.0);
-  hemi.intensity = 0.35;
-  // branding
-  const rev = clamp((t - 0.25) / 2.3);
-  U.uReveal.value = rev < 1 ? rev : 1.2;
-  U.uEmber.value = 1 - prog(t, 2.6, 3.3);
-  const sw = prog(t, 2.5, 3.1);
-  U.uSweep.value = lerp(-0.3, 1.7, easeInOut(sw)); U.uSweepAmp.value = Math.sin(sw * Math.PI) * 1.4;
-  const ep = emberPos(Math.min(rev, 0.999));
-  glowLight.position.set(ep.x, lid.userData.closedY + 1.0, ep.z); glowLight.intensity = (t > 0.25 && t < 2.7 ? 1 : 0) * 14 * U.uEmber.value;
-  sparks.visible = t < 3.0; updateSparks(t, lid.userData.closedY);
-  // smoke: puffs born along the burn path, rising and widening
-  const top = lid.userData.closedY;
-  smokePuffs.forEach((m, i) => {
-    const b = 0.3 + i * 0.052, age = t - b;
-    const life = 1.8;
-    if (age < 0 || age > life) { m.visible = false; return; }
-    const r0 = emberPos(clamp((b - 0.25) / 2.3, 0, 0.999));
-    m.visible = true;
-    const k = age / life;
-    m.position.set(r0.x + Math.sin(i * 1.7 + age * 1.3) * 0.8 * k, top + 0.4 + age * 5.5, r0.z + Math.cos(i * 2.3) * 0.6 * k);
-    m.scale.setScalar(1.2 + k * 7);
-    m.quaternion.copy(camera.quaternion);
-    m.material.opacity = Math.sin(Math.PI * Math.min(1, k * 1.15)) * 0.16;
-  });
-  // camera: ECU tracking the ember, opening up to the whole logo, then a fast pull-back with a 15° rotation
-  const lidC = v3(0, top, 0);
-  const R = BOX.LOGO_D / 2;
-  let pos, at, fov = 30, roll = 0, samples = 1;
-  const pA = prog(t, 0, 2.55);
-  const eA = easeInOut(pA);
-  const at0 = v3(0, top, -R * 0.42), at1 = v3(0, top, 0);
-  at = at0.clone().lerp(at1, smooth(prog(t, 0.6, 2.4)));
-  const d0 = 34, d1 = 64;
-  const d = lerp(d0, d1, easeInOut(prog(t, 0.2, 2.7)));
-  pos = at.clone().add(v3(Math.sin(deg(-12 + 10 * eA)) * Math.cos(deg(62)) * d, Math.sin(deg(62 - 4 * eA)) * d, Math.cos(deg(-12 + 10 * eA)) * Math.cos(deg(62)) * d));
-  roll = deg(-4 + 4 * eA);
-  const pB = prog(t, 2.95, 3.75);
-  if (pB > 0) {
-    const e = easeInOut5(pB);
-    const finalAt = v3(0, 4.5, 0);
-    const finalPos = orbitPos(finalAt, deg(15), deg(30), 118);
-    const aPos = pos.clone(), aAt = at.clone();
-    pos = aPos.lerp(finalPos, e); at = aAt.lerp(finalAt, e);
-    // add an arc to the move
-    pos.y += Math.sin(e * Math.PI) * 12;
-    roll = lerp(roll, 0, e) + deg(15) * Math.sin(e * Math.PI) * 0.6;
-    samples = pB > 0.02 && pB < 0.98 ? 10 : 1;
-  }
-  look(pos, at, fov, roll);
-  setDOF(pos.distanceTo(t < 2.95 ? v3(ep.x * 0 , top, at.z) : at), t < 3.0 ? 0.0009 : 0.00025, 0.014);
-  dustA.visible = true; dustA.position.set(0, 0, 0); dustA.material.uniforms.t.value = t; dustA.material.uniforms.size.value = t < 3 ? 0.25 : 0.5;
-  crumbs.visible = false;
-  return { samples, shutter: 1 / 40 };
+  setKey(c, v3(-0.8, 1.5, 0.45), 150, 45, 2.9, 0xffd6a6); setRim(c, v3(0.6, 0.45, -1), 1.8);
+  hemi.intensity = 0.62;
+  const k = easeInOut(prog(t, 0, 4));
+  const at = v3(0, lerp(4.2, 5, k), lerp(-1.5, 0, k));
+  look(orbitPos(at, deg(lerp(4, -10, k)), deg(lerp(60, 46, k)), lerp(112, 98, k)), at, 34);
+  setDOF(lerp(112, 98, k), 0.0005, 0.016);
+  dustA.visible = true; dustA.position.set(0, 0, 0); dustA.material.uniforms.t.value = t; dustA.material.uniforms.size.value = 0.45;
+  return { samples: 1 };
 }
 
 function shotBox(t) {
@@ -402,18 +360,20 @@ function shotBox(t) {
   smokePuffs.forEach(m => (m.visible = false));
   box.position.set(0, 0.08, 0); box.rotation.set(0, 0, 0);
   const c = v3(0, 0, 0);
-  setKey(c, v3(-1, 0.9, 0.35), 150, 45, 3.2); setRim(c, v3(0.6, 0.45, -1), 2.4);
-  hemi.intensity = 0.5;
+  setKey(c, v3(-0.8, 1.5, 0.45), 150, 45, 2.9, 0xffd6a6); setRim(c, v3(0.6, 0.45, -1), 1.8);
+  hemi.intensity = 0.62;
   // lid lifts on the drop (6.0 s), floats tilted, then drifts out of frame
   const top = lid.userData.closedY;
   const l1 = easeOut(prog(t, 6.0, 6.9)), l2 = easeInOut(prog(t, 8.1, 9.3));
   lid.position.set(l2 * 34, top + l1 * 13 + Math.sin((t - 6) * 2.2) * 0.4 * l1 + l2 * 60, l2 * -10);
   lid.rotation.set(deg(-17) * l1 + Math.sin((t - 6) * 1.7) * 0.03 * l1, deg(8) * l1, deg(6) * l1 - deg(20) * l2);
+  hideUnderLid(pieces, lid);
   // camera: slow 180° orbit at table height, then rise into a perfect top-down view
-  const at = v3(0, 5.5, 0).lerp(v3(0, 4, 0), smooth(prog(t, 8, 9.8)));
-  const az = deg(lerp(-25, 155, easeInOut(prog(t, 4.0, 8.6))));
-  const el = deg(lerp(13, 89.6, easeInOut(prog(t, 7.9, 9.8))));
-  const d = lerp(112, 104, prog(t, 4, 10));
+  // continues the logo presentation: down to table height, slow orbit, then rise into a perfect top-down view
+  const at = v3(0, 5, 0).lerp(v3(0, 5.5, 0), smooth(prog(t, 4, 5.8))).lerp(v3(0, 4, 0), smooth(prog(t, 8, 9.8)));
+  const az = deg(lerp(-10, 150, easeInOut(prog(t, 4.0, 8.6))));
+  const el = deg(lerp(lerp(46, 15, easeInOut(prog(t, 4.0, 5.8))), 89.6, easeInOut(prog(t, 7.9, 9.8))));
+  const d = lerp(lerp(98, 110, easeInOut(prog(t, 4.0, 5.8))), 104, prog(t, 5.8, 10));
   look(orbitPos(at, az, el, d), at, 34);
   setDOF(d, 0.0007, 0.024);
   dustA.visible = true; dustA.material.uniforms.t.value = t; dustA.material.uniforms.size.value = 0.6;
@@ -423,7 +383,7 @@ function shotBox(t) {
 
 function studioLook() {
   show(['studio', 'box']);
-  scene.background = null; scene.fog = new THREE.Fog(0xd9c2a0, 400, 1400);
+  scene.background = null; scene.fog = new THREE.Fog(0xc89c68, 400, 1400);
   renderer.toneMappingExposure = 0.95;
   const c = v3(0, 15, 0);
   setKey(c, v3(-1, 1.0, 0.45), 200, 70, 3.4); setRim(c, v3(0.7, 0.35, -1), 3.0);
@@ -444,6 +404,7 @@ function crumbsAt(t) {
 
 function shotExplode(t) {
   studioLook();
+  pieces.forEach(pc => (pc.obj.visible = true));
   poseContents(t); crumbsAt(t);
   lid.position.set(30, 200, -40);
   const at = v3(0, 4, 0).lerp(v3(0, 19, 0), easeInOut(prog(t, 10.15, 13.6)));
@@ -461,11 +422,11 @@ function shotMacro(t) {
   poseContents(t); crumbsAt(t);
   // macro fly-through between floating pieces, rack focus from one to the next
   const pick = k => pieces.find(p => p.kind === k);
-  const tg = [pieces.filter(p => p.kind === 'cube')[3], pieces.filter(p => p.kind === 'sau')[4], pieces.filter(p => p.kind === 'toast')[2], pieces.filter(p => p.kind === 'tomme')[1]];
+  const tg = [pieces.filter(p => p.kind === 'cube')[3], pieces.filter(p => p.kind === 'sau')[22], pieces.filter(p => p.kind === 'tomme')[1], pieces.filter(p => p.kind === 'cube')[20]];
   const times = [15.0, 15.95, 16.85, 17.75, 18.45];
   let seg = 0; while (seg < 3 && t > times[seg + 1]) seg++;
   const lt = prog(t, times[seg], times[seg + 1]);
-  const DIST = { cube: 10, ham: 16, sau: 10, toast: 13, tomme: 13 };
+  const DIST = { cube: 10, ham: 18, sau: 10, toast: 13, tomme: 13 };
   const posOf = (pc, side) => {
     const p = pc.obj.position.clone();
     const out = v3(p.x, 0, p.z).normalize().applyAxisAngle(v3(0, 1, 0), side * 0.35);
@@ -508,13 +469,14 @@ function shotMacro(t) {
     lid.position.set(0, y, 0); lid.rotation.set(deg(-14) * (1 - easeIn(kl)), 0, deg(5) * (1 - kl));
     if (kl >= 1) { const b = prog(t, 19.93, 20.0); lid.position.y = top + Math.sin(b * Math.PI) * 0.35; lid.rotation.set(0, 0, 0); }
   }
+  hideUnderLid(pieces, lid);
   dustA.visible = false;
   return { samples, shutter: 1 / 48 };
 }
 
 const SHOTS = [
   [0, 4, shotLogo], [4, 10, shotBox], [10, 15, shotExplode], [15, 20, shotMacro],
-  [20, 27, t => sets.shotLaptop(t, ctx)], [27, 34, t => sets.shotFollow(t, ctx)], [34, 42, t => sets.shotPoster(t, ctx)],
+  [20, 28.6, t => sets.shotLaptop(t, ctx)], [28.6, 34, t => sets.shotFollow(t, ctx)], [34, 42, t => sets.shotPoster(t, ctx)],
   [42, 48, t => sets.shotShop(t, ctx)], [48, 56.1, t => sets.shotCard(t, ctx)],
 ];
 const ctx = { look, orbitPos, setDOF, setKey, setRim, hemi, key, rim, show, poseContents, U, glowLight, sweepLight, dust: () => dustA, scene, renderer, camera, smokePuffs };

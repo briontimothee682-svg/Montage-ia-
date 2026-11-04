@@ -192,12 +192,14 @@ def arrow_img(size, color):
     return out
 
 
-def line(canvas, base, s, fname, size, cx, cy, t, t_in, t_out, color=None, tracking=0):
+def line(canvas, base, s, fname, size, cx, cy, t, t_in, t_out, color=None, tracking=0, scrim=True):
     """whole line slides up + fades (for small copy)"""
     if t < t_in or t > t_out + 0.3: return
     k = ease_out(prog(t, t_in, t_in + 0.4)); ko = prog(t, t_out, t_out + 0.25)
     col = color or auto_color(base, cx, cy, 700, size * 1.4)
     im = text_img(s, fname, size, col, tracking)
+    tw = im.width - 100
+    if scrim: paste(canvas, scrim_img(int(tw * 1.1) // 8 * 8, int(size * 1.9) // 8 * 8, sum(col) > 380), cx, cy + size * 0.1, k * (1 - ko))
     paste(canvas, im, cx, cy, k * (1 - ko), 1.0, (1 - k) * 30 - ko * 20, (1 - k) * 4)
 
 
@@ -211,13 +213,12 @@ def gold_rule(canvas, cx, cy, w, t, t_in, t_out):
 # ------------------------------------------------------------------ end card pieces
 @lru_cache(maxsize=None)
 def logo_disc(size):
-    m = Image.open(TEX / "logo_mask.png").resize((int(size * 0.84), int(size * 0.84)), Image.LANCZOS)
+    """the logo exactly in its colours: black (#151515) on white"""
+    m = Image.open(TEX / "logo_mask.png").resize((int(size * 0.9), int(size * 0.9)), Image.LANCZOS)
     im = Image.new("RGBA", (size + 80, size + 80), (0, 0, 0, 0))
-    sh = Image.new("L", im.size, 0); ImageDraw.Draw(sh).ellipse((40, 52, 40 + size, 52 + size), fill=150)
-    im.alpha_composite(Image.merge("RGBA", (Image.new("L", im.size, 10),) * 3 + (sh.filter(ImageFilter.GaussianBlur(24)),)))
-    d = ImageDraw.Draw(im)
-    d.ellipse((40, 40, 40 + size, 40 + size), fill=(*CREAM, 255))
-    d.ellipse((40 + 10, 40 + 10, 40 + size - 10, 40 + size - 10), outline=(*GOLD, 255), width=6)
+    sh = Image.new("L", im.size, 0); ImageDraw.Draw(sh).ellipse((40, 50, 40 + size, 50 + size), fill=120)
+    im.alpha_composite(Image.merge("RGBA", (Image.new("L", im.size, 10),) * 3 + (sh.filter(ImageFilter.GaussianBlur(22)),)))
+    ImageDraw.Draw(im).ellipse((40, 40, 40 + size, 40 + size), fill=(255, 255, 255, 255))
     ink = Image.new("RGBA", m.size, (21, 21, 21, 0)); ink.putalpha(m)
     im.alpha_composite(ink, (40 + (size - m.width) // 2, 40 + (size - m.height) // 2))
     return im
@@ -245,14 +246,19 @@ def pill(canvas, cx, cy, w, h, fill, alpha):
 # ------------------------------------------------------------------ per-frame overlays
 def overlays(canvas, base, t):
     cx = (SAFE["left"] + SAFE["right"]) / 2       # 510: text centred inside the safe zone
-    # 0:00-0:04 tagline (two beats: the setup, then the punchline)
-    title(canvas, base, "Chassez le naturel,", "PlayfairDisplay-700i", 86, cx, 380, t, 0.55, 2.25)
-    title(canvas, base, "il revient à l'apéro", "PlayfairDisplay-700i", 86, cx, 380, t, 2.45, 3.75)
-    # 0:04-0:10
-    title(canvas, base, "LA BOX APÉRO", "Oswald-700", 128, cx, 360, t, 4.45, 7.35, tracking=6)
-    gold_rule(canvas, cx, 452, 300, t, 4.75, 7.35)
-    title(canvas, base, "Produits locaux", "Oswald-700", 92, cx, 340, t, 7.55, 9.75, tracking=3)
-    title(canvas, base, "circuit court", "PlayfairDisplay-700i", 78, cx, 440, t, 7.75, 9.75)
+    # 0:00-0:04 the logo on the box, with the address
+    title(canvas, base, "NOUVEAU À ANNECY", "Oswald-700", 96, cx, 300, t, 0.35, 3.7, tracking=5)
+    line(canvas, base, f"{B['street_number']} {B['street']} · {B['city']}", "Inter-600", 38, cx, 392, t, 0.75, 3.7)
+    line(canvas, base, B["hours"], "Oswald-500", 38, cx, 448, t, 1.0, 3.7, color=GOLD_L, tracking=2)
+    line(canvas, base, B["handle"], "Inter-700", 44, cx, 506, t, 1.2, 3.7, color=GOLD_L)
+    # 0:04-0:06 the tagline
+    title(canvas, base, "Chassez le naturel,", "PlayfairDisplay-700i", 82, cx, 330, t, 4.0, 5.85)
+    title(canvas, base, "il revient à l'apéro", "PlayfairDisplay-700i", 82, cx, 425, t, 4.35, 5.85)
+    # 0:06-0:10
+    title(canvas, base, "LA BOX APÉRO", "Oswald-700", 128, cx, 360, t, 6.15, 7.75, tracking=6)
+    gold_rule(canvas, cx, 452, 300, t, 6.4, 7.75)
+    title(canvas, base, "Produits locaux", "Oswald-700", 92, cx, 340, t, 7.95, 9.75, tracking=3)
+    title(canvas, base, "circuit court", "PlayfairDisplay-700i", 78, cx, 440, t, 8.15, 9.75)
     # 0:10-0:15
     title(canvas, base, "Fromages & charcuterie", "Oswald-700", 86, cx, 330, t, 10.35, 14.65, tracking=2)
     title(canvas, base, "à la découpe", "PlayfairDisplay-700i", 76, cx, 430, t, 10.6, 14.65)
@@ -260,8 +266,20 @@ def overlays(canvas, base, t):
     title(canvas, base, "Producteurs locaux", "Oswald-700", 96, cx, 330, t, 15.3, 18.35, tracking=3)
     title(canvas, base, "Bio · AOP · IGP", "Oswald-500", 70, cx, 430, t, 15.6, 18.35, color=GOLD_L if t < 18.4 else None, tracking=6)
     # 0:27-0:34
-    title(canvas, base, "Abonne-toi →", "Oswald-700", 108, cx, 330, t, 28.35, 33.1, tracking=4)
-    title(canvas, base, B["handle"], "Inter-700", 68, cx, 432, t, 28.6, 33.1, color=GOLD_L)
+    if 29.0 <= t < 33.9:
+        k = ease_out(prog(t, 29.0, 29.45)) * (1 - prog(t, 33.4, 33.8))
+        pill(canvas, cx, 1320, 760, 300, (40, 28, 20), 0.88 * k)
+        title(canvas, base, "Abonne-toi →", "Oswald-700", 92, cx, 1250, t, 29.15, 33.35, color=CREAM, tracking=4, scrim=False)
+        title(canvas, base, B["handle"], "Inter-700", 54, cx, 1330, t, 29.4, 33.35, color=GOLD_L, scrim=False)
+        followed = t >= 31.2
+        bk = ease_back(prog(t, 29.8, 30.2)) * (1 - prog(t, 33.35, 33.7))
+        if bk > 0.01:
+            press = max(0.0, 1 - abs(t - 31.2) / 0.1)
+            bw, bh = 260 * (1 - 0.06 * press), 70 * (1 - 0.06 * press)
+            fill = (239, 231, 218) if followed else GOLD
+            pill(canvas, cx, 1412, bw * bk, bh * bk, fill, 0.98)
+            label = "Suivi(e)" if followed else "Suivre"
+            line(canvas, base, label, "Inter-700", 34, cx, 1410, t, 29.9, 33.35, scrim=False, color=ESPRESSO)
     # 0:42-0:48
     title(canvas, base, "Un accueil au top", "Oswald-700", 104, cx, 330, t, 42.4, 44.75, tracking=3)
     title(canvas, base, "Un très bon rapport", "Oswald-700", 92, cx, 320, t, 45.3, 47.75, tracking=2)
@@ -270,8 +288,6 @@ def overlays(canvas, base, t):
     if t >= 51.9:
         k = ease_back(prog(t, 52.0, 52.42), 1.9)
         disc = logo_disc(352)
-        sw = prog(t, 52.35, 53.05)
-        disc = sweep_band(disc, sw) if 0 < sw < 1 else disc
         paste(canvas, disc, W / 2, 951, clamp(prog(t, 52.0, 52.08)), max(0.01, 0.9 + 0.1 * k), 0)
         title(canvas, base, "NOUVEAU À ANNECY", "Oswald-700", 96, cx, 300, t, 52.2, 99, color=CREAM, tracking=5)
         line(canvas, base, f"{B['street_number']} {B['street']} · {B['city']}", "Inter-600", 36, cx, 392, t, 52.55, 99, color=CREAM)
@@ -302,13 +318,7 @@ def punch(t):
 
 
 def flash(t):
-    f = 0.0
-    for h in HITS:
-        f = max(f, 0.38 * math.exp(-max(0, t - h) * 14) if t >= h else 0)
-    for c in CUTS:
-        if c not in HITS and t >= c: f = max(f, 0.15 * math.exp(-(t - c) * 18))
-    if 33.5 <= t < 34.0: f = max(f, 0.8 * prog(t, 33.5, 34.0) ** 2)      # through the screen into the cream void
-    return f
+    return 0.0          # no flashes or glare at all: every cut is clean
 
 
 TEST_T = None
@@ -335,7 +345,6 @@ def composite(fi):
         w2, h2 = int(W * s), int(H * s)
         im = im.resize((w2, h2), Image.BICUBIC).crop(((w2 - W) // 2, (h2 - H) // 2, (w2 - W) // 2 + W, (h2 - H) // 2 + H))
     arr = np.asarray(im).astype(np.float32) / 255
-    arr = arr + halation(im)
     arr = grade(arr, t)
     arr = end_darkening(arr, t)
     f = flash(t)

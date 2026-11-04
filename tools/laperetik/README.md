@@ -8,15 +8,17 @@ scène 3D Three.js rendue image par image, titres et étalonnage en Python, musi
 
 | Temps | Plan |
 |---|---|
-| 0–4 s | Logo gravé au fer sur le couvercle en bouleau (braise, fumée, étincelles, reflet doré), recul rapide |
-| 4–10 s | La Box Apéro sur table en chêne et nappe en lin, orbite, le couvercle s'ouvre sur le drop (6 s), vue de dessus |
-| 10–15 s | Explosion au ralenti des produits en couches au-dessus de la boîte |
-| 15–20 s | Macros (comté, saucisson poivré, pain grillé, tomme), retour dans la boîte, clap du couvercle |
-| 20–27 s | Laptop, main sur le trackpad, profil @laperetik, reel 3D façon site produit, like |
-| 27–34 s | Clic sur « Suivre », l'écran s'ouvre comme une fenêtre, les produits sortent et tournent autour |
-| 34–42 s | Affiche des prix (kraft, liseré doré), bière, vin et terrine en lévitation |
-| 42–48 s | Boutique (étagères, suspensions, ardoise « Bienvenue ! »), puis trinquage bières et vins |
-| 48–56 s | Carte de visite qui tombe, se retourne sur le QR code, vue de dessus, logo, carton de fin |
+| 0–4 s | Présentation : la box fermée, le logo entier en noir, « Nouveau à Annecy », adresse, horaires, @laperetik |
+| 4–10 s | Slogan, la caméra descend, orbite, le couvercle s'ouvre sur le drop (6 s), vue de dessus de la box pleine |
+| 10–15 s | Explosion au ralenti : comté, tomme, bleu, saucisson finement tranché, jambon |
+| 15–20 s | Macros, retour dans la boîte, le couvercle se referme (clap) |
+| 20–28,6 s | Vue extérieure du laptop : la main fait défiler les Reels à deux doigts, like, la box sort de l'écran puis y rentre, zoom qui plonge dans le Reel |
+| 28,6–34 s | À l'intérieur du Reel (plein écran) : la box tourne devant le grand titre, s'ouvre, « Abonne-toi » + bouton Suivre |
+| 34–42 s | Affiche des prix, bière, vin et terrine en lévitation |
+| 42–48 s | Boutique (box tendue sur le comptoir, ardoise « Bienvenue ! »), puis trinquage |
+| 48–56 s | Carte de visite qui tombe et se retourne sur le QR code, vue de dessus, logo noir sur blanc, carton de fin |
+
+La box ne contient que du fromage, du saucisson et du jambon. Pas de flash ni de bloom ; bois et logo mats pour éviter les reflets.
 
 ## Changer les prix, le numéro ou les horaires
 

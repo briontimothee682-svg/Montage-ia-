@@ -374,14 +374,10 @@ def build(stems=False):
     final = CH[0]
     place(brs, brass(final["br"] + [74], 1.6, 1.0), 52.0, 0.8)
     # ---------------- sound design
-    place(fx, sizzle(2.5, 0.9), 0.22, 0.7)
-    for i in range(10):
-        place(fx, paper(0.3, 0.05), 0.3 + i * 0.23 + rng.uniform(0, 0.08), 0.5, rng.uniform(-0.5, 0.5))
-    place(fx, whoosh(0.9, 200, 3000, 1.0, rev=True), 2.15, 0.6)        # into the pull-back
-    place(fx, whoosh(0.8, 3000, 300, 0.9), 2.95, 0.6, -0.3)
+    place(fx, whoosh(1.4, 200, 1800, 0.5), 0.0, 0.25)                    # soft air on the logo reveal
     place(fx, riser(1.6, 0.8), 4.4, 0.55)
     place(fx, impact(1.0), DROP, 0.9)
-    place(fx, wood_pop(1.0), DROP + 0.02, 0.6)
+    place(fx, wood_pop(1.0), DROP + 0.02, 0.6)                           # the lid lifts
     place(fx, whoosh(0.6, 400, 2500, 0.8), 6.05, 0.45, 0.4)
     place(fx, riser(1.2, 0.8), 8.8, 0.55)
     place(fx, impact(1.1), 10.0, 0.95)
@@ -391,16 +387,22 @@ def build(stems=False):
     place(fx, wood_clap(1.0), 19.93, 1.0)
     place(fx, impact(0.9), 20.0, 0.75)
     place(fx, whoosh(0.5, 4000, 300, 1.0), 19.98, 0.6, 0.3)
-    for tc in (21.2, 24.45, 27.98):
-        place(fx, click(1.0), tc - 0.01, 0.7, 0.1)
-    place(fx, like_pop(1.0), 24.47, 0.8, 0.2)
-    place(fx, whoosh(0.8, 300, 4000, 1.0), 21.22, 0.25)
-    place(fx, impact(0.7), 28.02, 0.6)
-    place(fx, whoosh(1.1, 200, 5000, 1.0), 28.05, 0.7, -0.2)
-    for i in range(5):
-        place(fx, whoosh(0.5, 600 + i * 300, 3500, 0.6), 28.4 + i * 0.35, 0.35, (-1) ** i * 0.6)
-    place(fx, riser(1.8, 0.9), 32.2, 0.6)
-    place(fx, whoosh(1.2, 300, 6000, 1.0, rev=True), 32.8, 0.6)
+    for a in (20.45, 21.15):                                             # two-finger scrolls on the trackpad
+        place(fx, whoosh(0.45, 900, 3500, 0.7), a, 0.28, 0.2)
+        place(fx, paper(0.4, 0.06), a, 0.25, 0.2)
+    place(fx, click(1.0), 22.49, 0.7, 0.15)
+    place(fx, like_pop(1.0), 22.52, 0.8, 0.2)
+    place(fx, whoosh(1.0, 300, 4200, 1.0), 22.95, 0.65, -0.1)          # the box comes out of the screen
+    place(fx, wood_pop(0.7), 24.1, 0.3)
+    place(fx, whoosh(1.0, 4200, 300, 1.0), 26.05, 0.65, 0.1)           # ...and dives back in
+    place(fx, riser(1.9, 0.9), 26.75, 0.6)                              # the zoom into the Reel
+    place(fx, whoosh(1.6, 200, 6000, 1.0, rev=True), 27.0, 0.6)
+    place(fx, whoosh(0.7, 5000, 400, 0.9), 28.58, 0.55)
+    place(fx, wood_pop(0.9), 30.42, 0.45)                               # lid opens inside the Reel
+    place(fx, click(1.0), 31.2, 0.6, 0.1)                                # follow button
+    place(fx, like_pop(0.7), 31.22, 0.5)
+    place(fx, wood_clap(0.6), 33.45, 0.5)
+    place(fx, riser(1.2, 0.7), 32.8, 0.45)
     place(fx, impact(1.1), 34.0, 0.95)
     place(fx, whoosh(0.6, 3000, 300, 0.9), 42.0, 0.5)
     place(fx, wood_pop(0.8), 42.4, 0.3)

@@ -2,9 +2,9 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { v3, deg, clamp, prog, lerp, smooth, easeOut, easeOut5, easeIn, easeInOut, easeInOut5, easeBack, seeded, noise3, tex, canvas, canvasTex } from './lib.js';
-import { BOX, pieceFactories, rosemary } from './food.js';
+import { BOX, pieceFactories, rosemary, hideUnderLid } from './food.js';
 import { beerBottle, wineBottle, wineGlass, terrineJar, bokehLights } from './props.js';
-import { makeLaptop, screenMaterial, makeHand, InstaUI, reelBackdrop, SCR, LAP } from './laptop.js';
+import { makeLaptop, screenMaterial, makeHand, InstaUI, ReelsUI, typeLine, SCR, LAP } from './laptop.js';
 
 const S = {};   // module state
 window.__S = S;
@@ -70,7 +70,7 @@ export async function build(B) {
   desk.add(plane(600, 400, new THREE.MeshStandardMaterial({ map: tex('desk', { repeat: [7, 5] }), bumpMap: tex('desk_bump', { color: false, repeat: [7, 5] }), bumpScale: 1.2, roughness: 0.55 })));
   const wall = plane(900, 400, new THREE.MeshStandardMaterial({ map: tex('wall', { repeat: [3, 1.5] }), roughness: 0.95, color: 0xcaa883 }), 0); wall.position.set(0, 150, -95); desk.add(wall);
   desk.add(gradSphere(0x3a2618, 0x1b120b, 0x8a5222));
-  S.reelRT = new THREE.WebGLRenderTarget(1280, 800, { samples: 4, type: THREE.HalfFloatType });
+  S.reelRT = new THREE.WebGLRenderTarget(720, 1280, { samples: 4, type: THREE.HalfFloatType });
   S.ui = null;
   S.screenMat = screenMaterial(null, S.reelRT.texture);
   S.laptop = makeLaptop(S.screenMat); desk.add(S.laptop);
@@ -91,42 +91,41 @@ export async function build(B) {
   }
   // hand on the trackpad
   S.hand = makeHand(); desk.add(S.hand);
-  S.handBase = v3(1.8, LAP.T + 0.05, 17.6);   // index tip lands at the trackpad centre
+  S.handBase = v3(1.6, LAP.T + 0.03, 17.4);   // index and middle fingertips rest on the trackpad
   desk.traverse(o => { if (o.isMesh && !o.material.isShaderMaterial) { o.castShadow = o.castShadow ?? true; o.receiveShadow = true; } });
 
-  // window portal behind the screen + flying elements
-  const pc = canvas(512, 320), px = pc.getContext('2d');
-  const pg = px.createRadialGradient(256, 160, 10, 256, 160, 300); pg.addColorStop(0, '#fffaf0'); pg.addColorStop(0.45, '#fbe7c6'); pg.addColorStop(1, '#e9bf86');
-  px.fillStyle = pg; px.fillRect(0, 0, 512, 320);
-  S.portal = new THREE.Mesh(new THREE.PlaneGeometry(LAP.SW, LAP.SH), new THREE.MeshBasicMaterial({ map: canvasTex(pc), color: new THREE.Color(1.5, 1.45, 1.35) }));
-  S.portal.position.copy(S.laptop.userData.screenCenterLocal).add(v3(0, 0, -0.008)); S.laptop.userData.lid.add(S.portal); S.portal.visible = false;
-  S.portalLight = new THREE.PointLight(0xffd9a0, 0, 140, 1.6); S.portal.add(S.portalLight); S.portalLight.position.set(0, 0, 9);
-  const rnd = seeded(33);
-  const fly = [];
-  const flyBox = makeBox(M, U); flyBox.userData.base.children.forEach(c => {}); flyBox.scale.setScalar(0.62);
-  fly.push({ o: flyBox, r: 36, h: 24, w: 0.55, ph: 0.0, spin: 1.2 });
-  for (let i = 0; i < 4; i++) fly.push({ o: pieceFactories.cheeseCube(M, rnd, 4.6, i % 2 === 0), r: 26 + i * 5, h: 8 + i * 7, w: 0.7 + i * 0.08, ph: 1.0 + i * 1.4, spin: 2 });
-  for (let i = 0; i < 2; i++) { const h = pieceFactories.hamRibbon(M, rnd); h.morphTargetInfluences[0] = 1; h.scale.setScalar(1.0); fly.push({ o: h, r: 30 + i * 6, h: 16 + i * 10, w: 0.6, ph: 2.2 + i * 2.6, spin: 1.2 }); }
-  const fb = beerBottle(); fb.scale.setScalar(0.9); fly.push({ o: fb, r: 38, h: 4, w: 0.45, ph: 3.6, spin: 0.8, upright: true });
-  const fw = wineBottle(); fw.scale.setScalar(0.8); fly.push({ o: fw, r: 42, h: 2, w: 0.42, ph: 5.3, spin: 0.7, upright: true });
-  const hm = heartMesh(10); fly.push({ o: hm, r: 24, h: 30, w: 0.8, ph: 4.4, spin: 1.5, icon: true });
-  const fi = followIcon(10); fly.push({ o: fi, r: 28, h: 26, w: 0.75, ph: 0.7, spin: 1.5, icon: true });
-  const hm2 = heartMesh(6.5); fly.push({ o: hm2, r: 20, h: 12, w: 0.9, ph: 2.9, spin: 1.8, icon: true });
-  S.fly = fly; S.flyGroup = new THREE.Group(); desk.add(S.flyGroup);
-  fly.forEach((f, i) => { f.o.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); S.flyGroup.add(f.o); f.delay = i * 0.11; });
+  // the box that comes out of the screen and goes back in
+  S.popBox = makeBox(M, U); S.popHolder = new THREE.Group(); S.popHolder.add(S.popBox); desk.add(S.popHolder);
+  S.popBox.rotation.x = Math.PI / 2;   // lid faces the holder's +z, logo top toward its +y
+  S.popBox.position.set(0, 0, -4.4); // pivot at the middle of the box
+  S.popHolder.visible = false;
 
-  // reel set (rendered into the laptop screen), far away from everything
+  // vertical Reel set (9:16), rendered into the laptop screen and, after the dive, directly
   S.reel = new THREE.Group(); S.reel.position.set(5000, 0, 0); scene.add(S.reel); groups.reel = S.reel;
-  const bd = new THREE.Mesh(new THREE.PlaneGeometry(210, 131), new THREE.MeshBasicMaterial({ map: reelBackdrop(logoImg) })); bd.position.set(0, 0, -70); S.reel.add(bd);
+  {
+    const bc = canvas(512, 910), bx = bc.getContext('2d');
+    const g = bx.createRadialGradient(256, 420, 40, 256, 455, 620); g.addColorStop(0, '#e6c393'); g.addColorStop(0.6, '#d6a86e'); g.addColorStop(1, '#b98450');
+    bx.fillStyle = g; bx.fillRect(0, 0, 512, 910);
+    const bd = new THREE.Mesh(new THREE.PlaneGeometry(330, 586), new THREE.MeshBasicMaterial({ map: canvasTex(bc) })); bd.position.set(0, 0, -95); S.reel.add(bd);
+    S.lines = [];
+    [[38, false, 1], [0, true, -1], [-38, false, 1]].forEach(([y, filled, dir]) => {
+      const t = typeLine("L'APÉRETIK", filled);
+      const h = 33, w = 150;
+      t.repeat.set(w / (h * t.userData.aspect) * t.userData.k, 1);
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false }));
+      m.position.set(0, y, -60); S.reel.add(m); S.lines.push({ m, t, dir });
+    });
+  }
   S.reelBox = makeBox(M, U); S.reel.add(S.reelBox);
-  const sh = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshBasicMaterial({ map: tex('softdot', { wrap: false }), color: 0x3a2a1f, transparent: true, opacity: 0.35, depthWrite: false }));
-  sh.position.set(0, -26, -40); S.reel.add(sh); S.reelShadow = sh;
-  S.reelCam = new THREE.PerspectiveCamera(34, 1.6, 1, 2000);
+  const rc = B.makeContents(M); S.reelBox.add(rc.group); S.reelContents = rc.group; S.reelPieces = rc.pieces;
+  const sh = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshBasicMaterial({ map: tex('softdot', { wrap: false }), color: 0x3a2a1f, transparent: true, opacity: 0.3, depthWrite: false }));
+  sh.rotation.x = -Math.PI / 2; sh.position.set(0, -22, 0); S.reel.add(sh); S.reelShadow = sh;
+  S.reelCam = new THREE.PerspectiveCamera(34, 9 / 16, 1, 3000);
 
   // ---------------- poster studio
   const poster = new THREE.Group(); groups.poster = poster; scene.add(poster);
-  poster.add(gradSphere(0xf4ecdf, 0xc9a77c, 0xfff0d6, v3(0, 0.2, -1)));
-  const pf = plane(1400, 1400, new THREE.MeshStandardMaterial({ color: 0xead9bd, roughness: 0.92 })); poster.add(pf);
+  poster.add(gradSphere(0xe2c08e, 0xb07a48, 0xf0cf98, v3(0, 0.2, -1)));
+  const pf = plane(1400, 1400, new THREE.MeshStandardMaterial({ color: 0xd9b585, roughness: 0.92 })); poster.add(pf);
   {
     const board = new THREE.Group();
     const front = new THREE.Mesh(new THREE.PlaneGeometry(40, 60), new THREE.MeshStandardMaterial({ map: tex('poster', { wrap: false }), roughness: 0.8 })); front.position.z = 0.36; board.add(front);
@@ -183,7 +182,7 @@ export async function build(B) {
       dome.position.set(px, 178, 62); shop.add(dome);
       const inner = new THREE.Mesh(new THREE.CircleGeometry(12.6, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 0.78, 0.5).multiplyScalar(4) })); inner.rotation.x = Math.PI / 2; inner.position.set(px, 178.2, 62); shop.add(inner);
       const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 120, 6), new THREE.MeshStandardMaterial({ color: 0x111111 })); cord.position.set(px, 251, 62); shop.add(cord);
-      const l = new THREE.SpotLight(0xffc47e, 9000, 400, deg(55), 0.6, 1.6); l.position.set(px, 174, 62); l.target.position.set(px, 0, 62); shop.add(l, l.target); S.pendants.push(l);
+      const l = new THREE.SpotLight(0xffc47e, px === 0 ? 3000 : 6500, 400, deg(55), 0.6, 1.6); l.position.set(px, 174, 62); l.target.position.set(px, 0, 62); shop.add(l, l.target); S.pendants.push(l);
     }
     // welcome slate on the counter
     const sc = canvas(1024, 640), x = sc.getContext('2d');
@@ -247,72 +246,96 @@ async function makeTiles(snap) {
   { const [c, x] = mk(); x.fillStyle = '#f4ecdf'; x.fillRect(0, 0, tw, th); x.drawImage(L, tw / 2 - 190, 150, 380, 380); x.fillStyle = '#3a2a1f'; x.textAlign = 'center'; x.font = 'italic 400 38px "Playfair Display"'; x.fillText('Chassez le naturel,', tw / 2, 620); x.fillText("il revient à l'apéro", tw / 2, 668); T.push(c); }
   { const [c, x] = mk(); crop(snap(12.6), x, 540, 900, 1000); x.fillStyle = '#3a2a1f'; x.textAlign = 'center'; x.font = '700 60px Oswald'; x.fillText('100 % LOCAL', tw / 2, 110); T.push(c); }
   { const [c, x] = mk(); x.fillStyle = '#c9a15b'; x.fillRect(0, 0, tw, th); x.fillStyle = '#3a2a1f'; x.textAlign = 'center'; x.font = '700 84px Oswald'; x.fillText('PRODUCTEURS', tw / 2, 360); x.fillText('LOCAUX', tw / 2, 460); x.font = '600 40px Oswald'; x.fillText('BIO · AOP · IGP', tw / 2, 560); T.push(c); }
-  S.ui = new InstaUI(T, S.logoImg);
+  S.ui = new ReelsUI([T[2], T[0], null, T[5]], S.logoImg);
   S.screenMat.uniforms.ui.value = S.ui.tex;
 }
 
-// ------------------------------------------------------------ screen choreography
+// ------------------------------------------------------------ screen choreography (20 - 28.6 s)
+// two-finger scroll through the Reels feed, land on the L'Apéretik Reel, like it, the box comes out of the
+// screen and goes back in as the camera dives into the Reel.
+const SCROLLS = [[20.45, 20.95, 0, 1], [21.15, 21.7, 1, 2]];
+const feedP = t => {
+  let p = 0;
+  for (const [a, b, p0, p1] of SCROLLS) if (t >= a) p = lerp(p0, p1, easeInOut5(prog(t, a, b)));
+  return p;
+};
+const CURSOR = [[20.0, 1240, 720], [21.9, 1240, 720], [22.4, 1181, 580], [30, 1181, 580]];
 const CUR = (pts, t) => {
-  // pts: [[t, x, y], ...] eased moves between keyframes
   if (t <= pts[0][0]) return { x: pts[0][1], y: pts[0][2] };
   for (let i = 0; i < pts.length - 1; i++) {
     const [ta, xa, ya] = pts[i], [tb, xb, yb] = pts[i + 1];
-    if (t <= tb) { const e = easeInOut(prog(t, ta, tb)); return { x: lerp(xa, xb, e), y: lerp(ya, yb, e) + Math.sin(e * Math.PI) * -18 }; }
+    if (t <= tb) { const e = easeInOut(prog(t, ta, tb)); return { x: lerp(xa, xb, e), y: lerp(ya, yb, e) }; }
   }
   const l = pts[pts.length - 1]; return { x: l[1], y: l[2] };
 };
-const CURSOR = [[20.0, 1240, 330], [20.4, 1240, 330], [21.05, 914, 720], [23.3, 914, 720], [24.25, 1338, 470], [26.0, 1338, 470], [26.6, 1180, 610], [27.15, 1180, 610], [27.85, 972, 114], [30, 972, 114]];
 const press = (t, at) => Math.max(0, 1 - Math.abs(t - at) / 0.07);
+const LIKE = 22.5, POP_OUT = 23.0, POP_BACK = 26.05, POP_IN = 27.0, ZOOM0 = 26.75, ZOOM1 = 28.6;
 
 function screenState(t) {
-  const st = { cursor: CUR(CURSOR, t), press: Math.max(press(t, 21.2), press(t, 24.45), press(t, 27.98)), followed: t >= 27.98 ? 1 : 0, followPress: press(t, 27.98), hover: t > 20.85 && t < 21.3 ? 1 : -1, liked: t >= 24.45, likePop: t >= 24.45 ? prog(t, 24.45, 25.3) : 0 };
-  const tile = S.ui.tileRect(1);
-  const full = { x: 0, y: 0, w: SCR.w, h: SCR.h };
-  const openK = easeInOut5(prog(t, 21.25, 21.8)), closeK = easeInOut5(prog(t, 26.25, 26.8));
-  const k = openK * (1 - closeK);
-  if (t < 21.25 || t >= 26.8) { st.mode = 'profile'; st.rectK = 0; }
-  else if (k > 0.999) st.mode = 'reel';
-  else st.mode = 'opening';
-  st.k = k;
-  st.rect = { x: lerp(tile.x, full.x, k), y: lerp(tile.y, full.y, k), w: lerp(tile.w, full.w, k), h: lerp(tile.h, full.h, k) };
-  st.reelT = clamp(t - 21.25, 0, 5.6);
-  if (st.mode === 'opening' && k < 0.02) st.mode = 'profile';
+  const p = feedP(t);
+  const st = { p, cursor: CUR(CURSOR, t), press: press(t, LIKE), liked: t >= LIKE, likePop: t >= LIKE ? prog(t, LIKE, LIKE + 0.7) : 0,
+    chrome: 1 - smooth(prog(t, 27.25, 28.2)) };
+  st.rect = S.ui.reelRect(S.ui.ours, p);
+  st.reelT = t - 21.0;
   return st;
 }
 
-function renderReel(t, st) {
-  const { renderer, scene } = S.B;
+function reelPose(rt, boxVisible = true) {
+  // box rotating 360° in front of the giant type, slow push of the Reel camera
   const b = S.reelBox;
-  const rt = st.reelT;
-  b.position.set(0, -6 + Math.sin(rt * 1.6) * 1.2, -4);
-  b.rotation.set(deg(28) + Math.sin(rt * 0.9) * 0.05, -deg(20) + (rt / 4.6) * Math.PI * 2, deg(-6));
+  b.visible = boxVisible;
+  b.position.set(0, -8 + Math.sin(rt * 1.4) * 1.0, 0);
+  b.rotation.set(deg(24), -deg(25) + (rt / 6.5) * Math.PI * 2, 0);
+  const lid = b.userData.lid;
+  const lo = smooth(prog(rt, 9.4, 10.3)) * (1 - smooth(prog(rt, 11.9, 12.5)));
+  lid.position.set(0, lid.userData.closedY + lo * 13, -lo * 3); lid.rotation.set(-deg(16) * lo, 0, 0);
+  S.reelContents.visible = lo > 0.001 || rt > 9.3;
+  hideUnderLid(S.reelPieces, lid);
+  S.reelShadow.material.opacity = boxVisible ? 0.3 : 0;
+  S.lines.forEach((l, i) => { l.t.offset.x = (rt * 0.035 * l.dir + i * 0.17) % 1; });
   const cam = S.reelCam;
-  cam.position.set(5000, 4 - rt * 0.4, 112 - rt * 3.5); cam.lookAt(5000, -2, -10); cam.updateProjectionMatrix();
+  const k = Math.max(0, rt);
+  cam.position.set(5000, 6 - k * 0.25, 150 - k * 2.4); cam.up.set(0, 1, 0); cam.lookAt(5000, -4 - k * 0.15, 0);
+  cam.fov = 34; cam.aspect = 9 / 16; cam.updateProjectionMatrix();
+}
+
+function renderReel(t, st, boxVisible) {
+  const { renderer, scene } = S.B;
+  reelPose(st.reelT, boxVisible);
+  const big = t > 27.3;
+  const w = big ? 1080 : 720, h = big ? 1920 : 1280;
+  if (S.reelRT.width !== w) S.reelRT.setSize(w, h);
   const vis = [];
   scene.children.forEach(c => { if (c !== S.reel && c.visible && !c.isLight) { vis.push(c); c.visible = false; } });
   S.reel.visible = true;
   const bg = scene.background, fog = scene.fog; scene.background = null; scene.fog = null;
-  renderer.setRenderTarget(S.reelRT); renderer.render(scene, cam); renderer.setRenderTarget(null);
+  renderer.setRenderTarget(S.reelRT); renderer.render(scene, S.reelCam); renderer.setRenderTarget(null);
   scene.background = bg; scene.fog = fog;
   vis.forEach(c => (c.visible = true)); S.reel.visible = false;
 }
 
-function screenUpdate(t) {
+function screenUpdate(t, boxVisible) {
   const st = screenState(t);
   S.ui.draw(st);
   const r = st.rect;
   S.screenMat.uniforms.rect.value.set(r.x / SCR.w, 1 - (r.y + r.h) / SCR.h, r.w / SCR.w, r.h / SCR.h);
-  if (st.mode !== 'profile') renderReel(t, st);
-  S.screenMat.uniforms.gain.value = 1.15;
+  if (r.y < SCR.h && r.y + r.h > 0) renderReel(t, st, boxVisible);
+  S.screenMat.uniforms.gain.value = 1.0;
   return st;
 }
 
 function placeHand(st, t) {
-  const c0 = { x: 1240, y: 330 };
-  const dx = (st.cursor.x - c0.x) * 0.0062, dz = (st.cursor.y - c0.y) * 0.0062;
-  const tap = st.press * 0.18;
-  S.hand.position.set(S.handBase.x + dx, S.handBase.y - tap + 0.02, S.handBase.z + dz - 0);
-  S.hand.rotation.set(0, deg(8) + dx * 0.02, 0);
+  // two fingers slide toward the screen during each scroll, lift slightly and come back
+  let dz = 0, lift = 0;
+  for (const [a, b] of SCROLLS) {
+    const k = prog(t, a - 0.05, b - 0.1), back = prog(t, b - 0.1, b + 0.2);
+    dz += -2.6 * easeInOut(k) * (1 - easeInOut(back));
+    lift += Math.sin(Math.PI * back) * 0.35;
+  }
+  const dx = (st.cursor.x - 1240) * 0.0062, dzc = (st.cursor.y - 720) * 0.0062;
+  const tap = st.press * 0.16;
+  S.hand.position.set(S.handBase.x + dx, S.handBase.y + lift - tap, S.handBase.z + dz + dzc);
+  S.hand.rotation.set(0, deg(7) + dx * 0.02, 0);
 }
 
 // ------------------------------------------------------------ shots
@@ -337,89 +360,83 @@ function povCam(D, elev, side = 4, lowerAim = 2.5) {
   return { pos, at: c.clone().add(v3(0, -lowerAim, 0)) };
 }
 
-function resetLaptop() {
-  S.laptop.userData.halves.forEach(h => (h.rotation.y = 0));
-  S.portal.visible = false; S.portalLight.intensity = 0;
-  S.screenMat.uniforms.flash.value = 0;
+function popPose(t, ctx) {
+  // the box leaves the Reel, hovers in front of the laptop facing the camera, then dives back into the screen
+  const { c, n } = screenWorld();
+  const lidUp = v3(0, 1, 0).applyQuaternion(S.laptop.userData.lid.getWorldQuaternion(new THREE.Quaternion()));
+  const out = easeInOut(prog(t, POP_OUT, POP_OUT + 1.15)), back = easeInOut5(prog(t, POP_BACK, POP_IN));
+  const k = out * (1 - back);
+  S.popHolder.visible = t >= POP_OUT && t < POP_IN;
+  const start = c.clone().add(n.clone().multiplyScalar(0.6)).add(lidUp.clone().multiplyScalar(-1.2));
+  const hover = c.clone().add(n.clone().multiplyScalar(15)).add(lidUp.clone().multiplyScalar(-1.0)).add(v3(Math.sin(t * 0.9) * 0.6, Math.sin(t * 1.3) * 0.5, 0));
+  const pos = start.clone().lerp(hover, k);
+  pos.add(n.clone().multiplyScalar(Math.sin(k * Math.PI) * 2.0));
+  S.popHolder.position.copy(pos);
+  S.popHolder.scale.setScalar(lerp(0.17, 0.4, k));
+  // face the camera (lid toward the lens, logo upright), with a gentle sway
+  const camPos = ctx.camera.position.clone();
+  S.popHolder.up.copy(lidUp); S.popHolder.lookAt(camPos);
+  S.popHolder.rotateY(Math.sin(t * 1.1) * 0.22 * k); S.popHolder.rotateX(Math.sin(t * 0.8) * 0.12 * k);
+  S.popBox.rotation.set(Math.PI / 2, 0, (1 - k) * deg(25) + Math.sin(t * 0.7) * 0.08);
+  return t >= POP_OUT && t < POP_IN;   // true while the box is outside the Reel
 }
-
-function hideFly() { S.flyGroup.visible = false; }
 
 const api = {
   get groups() { return S.groups; },
   makeTiles,
   shotLaptop(t, ctx) {
-    ctx.show(['desk']); deskLights(ctx, t); resetLaptop(); hideFly();
-    const st = screenUpdate(t); placeHand(st, t); S.hand.visible = true;
-    const k = easeInOut(prog(t, 20.0, 27.0));
-    const { pos, at } = povCam(lerp(66, 47, k), lerp(14, 9, k), lerp(5, 2, k), lerp(4.5, 1.5, k));
-    pos.add(ctx.dust ? v3(Math.sin(t * 0.7) * 0.25, Math.sin(t * 0.9) * 0.2, 0) : v3(0, 0, 0));
-    ctx.look(pos, at, 46);
-    ctx.setDOF(pos.distanceTo(at), 0.0011, 0.016);
-    const d = ctx.dust(); d.visible = true; d.position.set(0, 0, 0); d.material.uniforms.t.value = t; d.material.uniforms.size.value = 0.5;
-    // whoosh-in from the clap: fast push for the first frames
-    const w = prog(t, 20.0, 20.35);
+    ctx.show(['desk']); deskLights(ctx, t);
+    S.laptop.userData.halves.forEach(h => (h.rotation.y = 0));
+    const outside = popPose(t, ctx);
+    const st = screenUpdate(t, !outside);
+    placeHand(st, t); S.hand.visible = true;
+    // exterior view, slow dolly, then the dive into the Reel (camera ends square to the screen, Reel filling the frame)
+    const k = easeInOut(prog(t, 20.0, ZOOM0));
+    let { pos, at } = povCam(lerp(62, 52, k), lerp(15, 11, k), lerp(5, 3, k), lerp(5.5, 3.5, k));
+    const w = prog(t, 20.0, 20.4);
     let samples = 1;
-    if (w < 1) { const e = easeOut5(w); pos.add(v3(0, (1 - e) * 26, (1 - e) * 40)); ctx.look(pos, at, 46); samples = w < 0.9 ? 6 : 1; }
+    if (w < 1) { const e = easeOut5(w); pos.add(v3(0, (1 - e) * 20, (1 - e) * 30)); samples = w < 0.9 ? 5 : 1; }
+    const z = easeInOut5(prog(t, ZOOM0, ZOOM1));
+    const { c, n } = screenWorld();
+    const lidQ = S.laptop.userData.lid.getWorldQuaternion(new THREE.Quaternion());
+    const lidUp = v3(0, 1, 0).applyQuaternion(lidQ);
+    const rr = st.rect, rc = c.clone()
+      .add(v3(1, 0, 0).applyQuaternion(lidQ).multiplyScalar(((rr.x + rr.w / 2) / SCR.w - 0.5) * LAP.SW))
+      .add(lidUp.clone().multiplyScalar(-((rr.y + rr.h / 2) / SCR.h - 0.5) * LAP.SH));
+    const fillD = (rr.h / SCR.h * LAP.SH / 2) / Math.tan(deg(23));
+    if (z > 0) {
+      ctx.look(pos, at, 46);
+      const q0 = ctx.camera.quaternion.clone();
+      const endPos = rc.clone().add(n.clone().multiplyScalar(fillD));
+      const m = new THREE.Matrix4().lookAt(endPos, rc, lidUp); const q1 = new THREE.Quaternion().setFromRotationMatrix(m);
+      pos = pos.clone().lerp(endPos, z);
+      ctx.camera.position.copy(pos); ctx.camera.quaternion.slerpQuaternions(q0, q1, z);
+      ctx.camera.fov = 46; ctx.camera.updateProjectionMatrix();
+      samples = z > 0.08 && z < 0.92 ? 4 : 1;
+    } else ctx.look(pos, at, 46);
+    ctx.setDOF(ctx.camera.position.distanceTo(c), lerp(0.0009, 0.0, smooth(prog(t, ZOOM0, ZOOM0 + 1.0))), 0.014);
+    const d = ctx.dust(); d.visible = z < 0.5; d.position.set(0, 0, 0); d.material.uniforms.t.value = t; d.material.uniforms.size.value = 0.45;
     return { samples, shutter: 1 / 40 };
   },
   shotFollow(t, ctx) {
-    ctx.show(['desk']); deskLights(ctx, t);
-    const st = screenUpdate(t); placeHand(st, t); S.hand.visible = true;
-    // the screen breaks open like a window at the follow click
-    const o = easeOut5(prog(t, 28.02, 28.75));
-    const [L, R] = S.laptop.userData.halves;
-    L.rotation.y = -deg(72) * o; R.rotation.y = deg(72) * o;
-    S.portal.visible = o > 0.01; S.portalLight.intensity = 700 * smooth(prog(t, 28.0, 28.6));
-    S.screenMat.uniforms.flash.value = Math.max(0, 1 - Math.abs(t - 28.02) / 0.12) * 0.6;
-    // flying elements: out of the screen toward the camera, then orbiting around the laptop
-    const { c, n } = screenWorld();
-    S.flyGroup.visible = t > 28.1;
-    const centre = v3(0, 0, -2);
-    S.fly.forEach((f, i) => {
-      const t0 = 28.2 + f.delay;
-      const k = easeOut(prog(t, t0, t0 + 1.25));
-      const age = Math.max(0, t - t0);
-      const ang = f.ph + age * f.w;
-      const orbit = v3(centre.x + Math.sin(ang) * f.r, f.h + Math.sin(age * 1.3 + f.ph) * 2.5, centre.z + Math.cos(ang) * f.r * 0.8);
-      const start = c.clone().add(n.clone().multiplyScalar(-2));
-      const mid = c.clone().add(n.clone().multiplyScalar(26)).add(v3((i % 3 - 1) * 10, (i % 2) * 8, 0));
-      const p1 = start.clone().lerp(mid, smooth(clamp(k * 1.6)));
-      const pos = k < 1 ? p1.lerp(orbit, smooth(clamp((k - 0.35) / 0.65))) : orbit;
-      f.o.position.copy(pos);
-      const s = lerp(0.15, 1, easeOut(clamp(k * 1.8)));
-      f.o.scale.setScalar((f.base || (f.base = f.o.scale.x)) * s);
-      if (f.upright) f.o.rotation.set(Math.sin(age * 1.1 + f.ph) * 0.35, ang * f.spin + age, Math.cos(age * 0.9) * 0.3);
-      else if (f.icon) f.o.rotation.set(Math.sin(age) * 0.2, age * f.spin, 0);
-      else f.o.rotation.set(age * f.spin * 0.7 + f.ph, age * f.spin, age * 0.4);
-      f.o.visible = t >= t0;
-    });
-    // camera: hold for the click, pull back to watch the orbit, then push through the screen
-    let { pos, at } = povCam(47, 9, 2, 1.5);
-    const pb = easeInOut(prog(t, 28.35, 30.8));
-    const back = povCam(84, 22, -12, -4);
-    pos = pos.clone().lerp(back.pos, pb); at = at.clone().lerp(back.at.clone().add(v3(0, 8, 0)), pb);
-    const orb = prog(t, 30.8, 32.6);
-    if (orb > 0) { const a = deg(-16) * easeInOut(orb); const rel = pos.clone().sub(v3(0, 0, -5)).applyAxisAngle(v3(0, 1, 0), a); pos = rel.add(v3(0, 0, -5)); }
-    const push = easeIn(prog(t, 32.55, 33.95));
-    let samples = 1;
-    if (push > 0) {
-      const thru = c.clone().add(n.clone().multiplyScalar(-6));
-      const pre = pos.clone();
-      pos = pre.lerp(thru, push); at = at.clone().lerp(c.clone().add(n.clone().multiplyScalar(-60)), Math.min(1, push * 1.5));
-      samples = push > 0.05 ? 6 : 1;
-    }
-    ctx.look(pos, at, 46);
-    ctx.setDOF(pos.distanceTo(c), push > 0 ? 0 : 0.0005, 0.012);
-    const d = ctx.dust(); d.visible = true; d.material.uniforms.t.value = t;
-    return { samples, shutter: 1 / 40 };
+    // inside the Reel: the same set and camera as the screen texture, now rendered full frame
+    ctx.show([]); S.reel.visible = true;
+    deskLights(ctx, t);                       // identical lighting to the screen render, so the cut is seamless
+    ctx.scene.background = new THREE.Color(0xb98450); ctx.scene.fog = null;
+    ctx.dust().visible = false;
+    reelPose(t - 21.0, true);
+    const cam = S.reelCam;
+    ctx.camera.position.copy(cam.position); ctx.camera.quaternion.copy(cam.quaternion);
+    ctx.camera.fov = cam.fov; ctx.camera.updateProjectionMatrix();
+    ctx.setDOF(0, 0, 0);
+    return { samples: 1 };
   },
   shotPoster(t, ctx) {
     ctx.show(['poster']);
     const c = v3(0, 35, 0);
     ctx.setKey(c, v3(-1, 1.1, 0.8), 260, 90, 3.0, 0xffd6a4); ctx.setRim(c, v3(0.3, 0.6, -1), 4.5, 0xffc070);
     ctx.hemi.intensity = 0.75;
-    ctx.scene.background = null; ctx.scene.fog = new THREE.Fog(0xe5d1b2, 500, 1500);
+    ctx.scene.background = null; ctx.scene.fog = new THREE.Fog(0xc99a64, 500, 1500);
     ctx.renderer.toneMappingExposure = 0.84;
     S.posterProducts.forEach((p, i) => {
       const a = t - 34;
@@ -460,7 +477,7 @@ const api = {
     }
     // the toast at golden hour
     ctx.show(['toast', 'box']);
-    ctx.box.position.set(0, 0.08, 0); ctx.box.rotation.set(0, deg(30), 0); ctx.contents.visible = true; ctx.poseContents(0);
+    ctx.box.position.set(0, 0.08, 0); ctx.box.rotation.set(0, deg(30), 0); ctx.contents.visible = true; ctx.poseContents(0); ctx.pieces.forEach(pc => (pc.obj.visible = true));
     const lid = ctx.lid; lid.position.set(-34, 1.6, -12); lid.rotation.set(deg(4), 0, deg(-3));   // lid leaning on the table
     const c = v3(0, 10, 0);
     ctx.setKey(c, v3(-1, 0.42, -0.35), 260, 80, 3.6, 0xffb562); ctx.setRim(c, v3(0.5, 0.35, -1), 3.4, 0xff9a40);
@@ -519,7 +536,7 @@ const api = {
     }
     // golden sweep across the card foil
     const sw = prog(t, 50.2, 51.1);
-    ctx.sweepLight.intensity = Math.sin(sw * Math.PI) * 900; ctx.sweepLight.distance = 60;
+    ctx.sweepLight.intensity = 0; ctx.sweepLight.distance = 60;
     ctx.sweepLight.position.set(lerp(-6, 22, sw), top + 9, lerp(18, 2, sw));
     // camera: 3/4 view of the fall, then rise to a top-down shot, settle, hold still for the last 2 s
     const rise = easeInOut(prog(t, 50.4, 52.0));

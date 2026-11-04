@@ -226,7 +226,7 @@ def t_charcuterie():
     m = fbm(H_, W_, 112, (3, 10), 5)
     lean = lerpc((196, 70, 78), (128, 30, 40), m)
     flecks = np.clip((fbm(H_, W_, 113, (5, 20), 4) - 0.6) / 0.12, 0, 1) * (y < edge - 0.04) * 0.35
-    lean = lerpc((206, 84, 92), (150, 40, 50), m * 0.9 + (fbm(H_, W_, 115, (2, 6), 3) - 0.5) * 0.4)
+    lean = lerpc((184, 62, 72), (124, 30, 42), m * 0.9 + (fbm(H_, W_, 115, (2, 6), 3) - 0.5) * 0.4)
     lean = lean * (1 - flecks[..., None]) + np.array([232, 170, 166]) * flecks[..., None]
     fatc = lerpc((246, 226, 218), (232, 196, 188), fbm(H_, W_, 114, (4, 16), 3))
     col = lean * (1 - fat[..., None]) + fatc * fat[..., None]
