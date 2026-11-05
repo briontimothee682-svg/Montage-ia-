@@ -8,17 +8,17 @@ scène 3D Three.js rendue image par image, titres et étalonnage en Python, musi
 
 | Temps | Plan |
 |---|---|
-| 0–4 s | Présentation : la box fermée, le logo entier en noir, « Nouveau à Annecy », adresse, horaires, @laperetik |
-| 4–10 s | Slogan, la caméra descend, orbite, le couvercle s'ouvre sur le drop (6 s), vue de dessus de la box pleine |
-| 10–15 s | Explosion au ralenti : comté, tomme, bleu, saucisson finement tranché, jambon |
-| 15–20 s | Macros, retour dans la boîte, le couvercle se referme (clap) |
-| 20–28,6 s | Vue extérieure du laptop : la main fait défiler les Reels à deux doigts, like, la box sort de l'écran puis y rentre, zoom qui plonge dans le Reel |
-| 28,6–34 s | À l'intérieur du Reel (plein écran) : la box tourne devant le grand titre, s'ouvre, « Abonne-toi » + bouton Suivre |
-| 34–42 s | Affiche des prix, bière, vin et terrine en lévitation |
-| 42–48 s | Boutique (box tendue sur le comptoir, ardoise « Bienvenue ! »), puis trinquage |
-| 48–56 s | Carte de visite qui tombe et se retourne sur le QR code, vue de dessus, logo noir sur blanc, carton de fin |
+| 0–4 s | Présentation : la box fermée dans une salle à manger chaleureuse (plantes, eucalyptus, olivier), logo noir entier, « Nouveau à Annecy », adresse, horaires, @laperetik |
+| 4–10 s | Slogan, orbite, le couvercle s'ouvre sur le drop (6 s), vue de dessus de la box pleine |
+| 10–15 s | Explosion au ralenti, étiquettes 3D « Fromages », « Saucisson sec », « Jambon cru » |
+| 15–20 s | Zooms secs sur le temps (fromages, saucisson, jambon), retour dans la boîte, le couvercle se referme |
+| 20–25,4 s | Le Mac : défilement des Reels à deux doigts, la box sort de l'écran, tourne en rond, puis zoom en spirale qui aspire dans l'écran |
+| 25,4–34 s | À l'intérieur : le Reel défile, double-tap like, visite du profil @laperetik, abonnement, défilement de la grille, ouverture d'une publication qui devient l'affiche |
+| 34–42 s | Affiche des prix dans un décor avec olivier et eucalyptus |
+| 42–48 s | Boutique (plantes suspendues), puis trinquage |
+| 48–56 s | Carte de visite qui tombe et se retourne, le QR code sort de la carte en 3D, carton de fin |
 
-La box ne contient que du fromage, du saucisson et du jambon. Pas de flash ni de bloom ; bois et logo mats pour éviter les reflets.
+La box ne contient que du fromage, du saucisson et du jambon. Pas de flash ni de bloom ; bois et logo mats.
 
 ## Changer les prix, le numéro ou les horaires
 

@@ -237,7 +237,7 @@ async function build() {
   const deco = () => { const g = new THREE.Group(); g.add(sideboard()); const v = eucalyptusVase(7); v.position.set(-30, 82, 0); g.add(v); const v2 = eucalyptusVase(8, 55); v2.position.set(40, 82, 4); v2.scale.setScalar(0.8); g.add(v2); return g; };
   const hang = () => { const g = pothosHanging(5, 80); g.position.y = 205; return g; };
   oak.add(room({ radius: 300, floorY: -76, windowAz: -62, plants: [[() => oliveTree(11, 140), 165, 120, 0.4], [deco, 205, 240, deg(25)], [() => ficus(12, 125), 140, 135, 0.8], [() => ficus(13, 120), 292, 140, 2.1], [hang, 238, 150, 0], [() => oliveTree(14, 135), 222, 135, 1.7], [() => oliveTree(15, 160), 60, 200, 1.1]] }));
-  { const v = eucalyptusVase(16, 62); v.position.set(-30, 0, -46); oak.add(v); const v2 = eucalyptusVase(17, 50); v2.position.set(44, 0, -16); v2.scale.setScalar(0.75); oak.add(v2); }
+  { const v = eucalyptusVase(16, 62); v.position.set(-30, 0, -46); oak.add(v); const v2 = eucalyptusVase(17, 50); v2.position.set(-46, 0, -17); v2.scale.setScalar(0.75); oak.add(v2); }
   oak.add(linenCloth());
   propsS2 = new THREE.Group(); oak.add(propsS2);
   const wg = wineGlass(0.42); wg.position.set(-16, 0, -38); propsS2.add(wg);
