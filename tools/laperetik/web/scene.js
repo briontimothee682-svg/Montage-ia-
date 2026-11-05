@@ -8,10 +8,12 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import * as L from './lib.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { prog, lerp, clamp, smooth, easeOut, easeInOut, easeInOut5, easeIn, easeBack, v3, deg, seeded, noise3, tex } from './lib.js';
 import { BOX, foodMaterials, makeBox, makeContents, rosemary, hideUnderLid } from './food.js';
 import { beerBottle, wineBottle, wineGlass, terrineJar, bokehLights } from './props.js';
 import * as SETS from './sets.js';
+import { room, oliveTree, ficus, eucalyptusVase, pothosHanging, sideboard, tableSprig } from './plants.js';
 
 const W = 1080, H = 1920;
 const params = new URLSearchParams(location.search);
@@ -218,7 +220,8 @@ async function build() {
     'linen', 'linen_bump', 'comte', 'comte_bump', 'comte_rind', 'comte_rind_bump', 'tomme', 'tomme_bump', 'tomme_rind', 'tomme_rind_bump', 'blue', 'blue_bump', 'ham', 'ham_bump',
     'saucisson_face', 'saucisson_face_bump', 'saucisson_skin', 'saucisson_skin_bump', 'coppa', 'coppa_bump', 'toast', 'toast_bump', 'crust', 'crust_bump', 'walnut_kernel', 'walnut_kernel_bump',
     'apricot', 'apricot_bump', 'terrine', 'terrine_bump', 'smoke', 'softdot', 'droplets', 'wall', 'poster', 'card_front', 'card_front_foil', 'card_front_deboss', 'card_back', 'card_back_foil',
-    'label_beer', 'label_beer_neck', 'label_wine', 'label_terrine', 'logo_mask']);
+    'label_beer', 'label_beer_neck', 'label_wine', 'label_terrine', 'logo_mask',
+    'leaf_olive', 'leaf_olive_bump', 'leaf_ficus', 'leaf_ficus_bump', 'leaf_euca', 'leaf_euca_bump', 'leaf_pothos', 'leaf_pothos_bump', 'wall_leafy', 'wall_plain', 'terracotta', 'terracotta_bump']);
   M = foodMaterials();
   box = makeBox(M, U); scene.add(box); lid = box.userData.lid;
   ({ group: contents, pieces } = makeContents(M)); box.add(contents);
@@ -229,8 +232,12 @@ async function build() {
   walnut.add(texturedPlane(1600, 1600, 'walnut', [24, 24], 'walnut_bump', 1.2, 0.42, { color: 0xffffff }));
   walnut.add(gradientSphere(0x2e1d12, 0x140d08, 0x7a4a20));
   oak = new THREE.Group(); scene.add(oak);
-  oak.add(texturedPlane(1600, 1600, 'oak', [20, 20], 'oak_bump', 2.0, 0.7));
-  oak.add(gradientSphere(0x3b2718, 0x1d140c, 0x9a5c26));
+  oak.add(texturedPlane(240, 170, 'oak', [3, 2.1], 'oak_bump', 2.0, 0.7));
+  // a warm dining room around the table: plants, a sideboard with eucalyptus, a window with late sun
+  const deco = () => { const g = new THREE.Group(); g.add(sideboard()); const v = eucalyptusVase(7); v.position.set(-30, 82, 0); g.add(v); const v2 = eucalyptusVase(8, 55); v2.position.set(40, 82, 4); v2.scale.setScalar(0.8); g.add(v2); return g; };
+  const hang = () => { const g = pothosHanging(5, 80); g.position.y = 205; return g; };
+  oak.add(room({ radius: 300, floorY: -76, windowAz: -62, plants: [[() => oliveTree(11, 140), 165, 120, 0.4], [deco, 205, 240, deg(25)], [() => ficus(12, 125), 140, 135, 0.8], [() => ficus(13, 120), 292, 140, 2.1], [hang, 238, 150, 0], [() => oliveTree(14, 135), 222, 135, 1.7], [() => oliveTree(15, 160), 60, 200, 1.1]] }));
+  { const v = eucalyptusVase(16, 62); v.position.set(-30, 0, -46); oak.add(v); const v2 = eucalyptusVase(17, 50); v2.position.set(44, 0, -16); v2.scale.setScalar(0.75); oak.add(v2); }
   oak.add(linenCloth());
   propsS2 = new THREE.Group(); oak.add(propsS2);
   const wg = wineGlass(0.42); wg.position.set(-16, 0, -38); propsS2.add(wg);
@@ -238,14 +245,17 @@ async function build() {
   const wb = wineBottle(); wb.position.set(-30, 0, 38); wb.rotation.y = 2.2; propsS2.add(wb);
   const tj = terrineJar(); tj.position.set(-50, 0, 29); propsS2.add(tj);
   const wg2 = wineGlass(0.35); wg2.position.set(-30, 0, -10); propsS2.add(wg2);
-  const bk = bokehLights(40, 7, [600, 120, 60], 0xffbe70, 4.5); bk.position.set(0, 40, -420); oak.add(bk);
-  const bk2 = bk.clone(); bk2.rotation.y = Math.PI; bk2.position.set(0, 40, 420); oak.add(bk2);
+
 
   // studio for the exploded view
   studio = new THREE.Group(); scene.add(studio);
   sky = gradientSphere(0xe8cc9e, 0x9c6a3e, 0xf2d3a0); studio.add(sky);
-  studioFloor = new THREE.Mesh(new THREE.CircleGeometry(900, 64), new THREE.MeshStandardMaterial({ color: 0xdcbd8e, roughness: 0.9 }));
-  studioFloor.rotation.x = -Math.PI / 2; studioFloor.receiveShadow = true; studio.add(studioFloor);
+  // warm plaster set with leaf shadows and plants behind the floating products
+  const plinth = () => { const g = new THREE.Group(); const b = new THREE.Mesh(new RoundedBoxGeometry(40, 70, 40, 2, 1), new THREE.MeshStandardMaterial({ color: 0xd9c4a2, roughness: 0.9 })); b.position.y = 35; b.castShadow = b.receiveShadow = true; g.add(b); const v = eucalyptusVase(21, 80); v.position.y = 70; g.add(v); return g; };
+  const sroom = room({ radius: 250, floorY: 0, windowAz: -70, tableTop: false, plants: [[() => oliveTree(22, 150), 343, 205, 0.3], [plinth, 18, 150, 0.4], [() => ficus(23, 125), 305, 215, 1.2], [() => ficus(24, 115), 48, 215, 2.6]] });
+  sroom.children[0].material.color.set(0xd8b48a);    // lighter floor for the floating products
+  studio.add(sroom);
+  studioFloor = new THREE.Group();
 
   dustA = dust(260, 0.55, [160, 90, 160], 3); scene.add(dustA);
 
@@ -403,7 +413,7 @@ function show(names) {
 function shotLogo(t) {
   // logo presentation: the closed box on the oak table, the whole logo readable, soft warm light, no glare
   show(['oak', 'box']);
-  scene.background = null; scene.fog = new THREE.FogExp2(0x2a1c12, 0.0026);
+  scene.background = null; scene.fog = new THREE.FogExp2(0x9a7a58, 0.0011);
   renderer.toneMappingExposure = 1.0;
   contents.visible = false; poseContents(0);
   U.uReveal.value = 1.2;
@@ -415,14 +425,14 @@ function shotLogo(t) {
   const k = easeInOut(prog(t, 0, 4));
   const at = v3(0, lerp(4.2, 5, k), lerp(-1.5, 0, k));
   look(orbitPos(at, deg(lerp(4, -10, k)), deg(lerp(60, 46, k)), lerp(112, 98, k)), at, 34);
-  setDOF(lerp(112, 98, k), 0.0005, 0.016);
+  setDOF(lerp(112, 98, k), 0.00042, 0.014);
   dustA.visible = true; dustA.position.set(0, 0, 0); dustA.material.uniforms.t.value = t; dustA.material.uniforms.size.value = 0.45;
   return { samples: 1 };
 }
 
 function shotBox(t) {
   show(['oak', 'box']);
-  scene.background = null; scene.fog = new THREE.FogExp2(0x2a1c12, 0.0026);
+  scene.background = null; scene.fog = new THREE.FogExp2(0x9a7a58, 0.0011);
   renderer.toneMappingExposure = 1.0;
   contents.visible = t > 5.9;
   poseContents(0);
@@ -445,7 +455,7 @@ function shotBox(t) {
   const el = deg(lerp(lerp(46, 15, easeInOut(prog(t, 4.0, 5.8))), 89.6, easeInOut(prog(t, 7.9, 9.8))));
   const d = lerp(lerp(98, 110, easeInOut(prog(t, 4.0, 5.8))), 104, prog(t, 5.8, 10));
   look(orbitPos(at, az, el, d), at, 34);
-  setDOF(d, 0.0007, 0.024);
+  setDOF(d, 0.0005, 0.016);
   dustA.visible = true; dustA.material.uniforms.t.value = t; dustA.material.uniforms.size.value = 0.6;
   crumbs.visible = false;
   return { samples: 1 };
@@ -456,8 +466,8 @@ function studioLook() {
   scene.background = null; scene.fog = new THREE.Fog(0xc89c68, 400, 1400);
   renderer.toneMappingExposure = 0.95;
   const c = v3(0, 15, 0);
-  setKey(c, v3(-1, 1.0, 0.45), 200, 70, 3.4); setRim(c, v3(0.7, 0.35, -1), 3.0);
-  hemi.intensity = 0.7;
+  setKey(c, v3(-1, 1.0, 0.45), 200, 70, 3.2); setRim(c, v3(0.7, 0.45, -1), 4.2, 0xffb45e);
+  hemi.intensity = 0.62;
   U.uReveal.value = 1.2; U.uEmber.value = 0; U.uSweepAmp.value = 0; glowLight.intensity = 0;
   smokePuffs.forEach(m => (m.visible = false));
   box.position.set(0, 0, 0); box.rotation.set(0, 0, 0);

@@ -245,6 +245,12 @@ def t_charcuterie():
     col = col * (1 - fatd[..., None]) + lerpc((246, 236, 224), (226, 210, 196), fbm(N, N, 123, (20, 20), 2)) * fatd[..., None]
     pep = dots(N, N, 60, 2, 4, 124, 0.8)
     col *= (1 - 0.8 * pep)[..., None]
+    yy, xx = np.mgrid[0:N, 0:N].astype(np.float32)
+    rr = np.sqrt((xx - N / 2) ** 2 + (yy - N / 2) ** 2) / (N / 2)
+    ring = np.clip((rr - 0.93) / 0.02, 0, 1)
+    dark = np.clip((rr - 0.86) / 0.07, 0, 1) * (1 - ring)
+    col *= (1 - 0.25 * dark)[..., None]
+    col = col * (1 - ring[..., None]) + lerpc((226, 220, 206), (120, 110, 98), fbm(N, N, 129, (40, 40), 2))[...] * ring[..., None]
     save(col, "saucisson_face"); save(gray(0.5 + 0.25 * fatd - 0.1 * pep + 0.1 * (m - 0.5)), "saucisson_face_bump")
     # peppered skin: grey-white bloom with crushed black pepper
     H2, W2 = 256, 1024
@@ -332,7 +338,79 @@ def t_misc():
     save(col, "wall")
 
 
-ALL = {"birch": t_birch, "logo": t_logo_fx, "tables": t_tables, "linen": t_linen, "cheese": t_cheese,
+def leaf_shape(N, kind):
+    """alpha mask of a single leaf (tip at the top, petiole at the bottom) and its midrib/vein height"""
+    yy, xx = np.mgrid[0:N, 0:N].astype(np.float32)
+    v = 1 - yy / N                    # 0 bottom -> 1 top
+    u = (xx - N / 2) / (N / 2)        # -1 .. 1
+    if kind == "olive":   width = 0.17 * np.sin(np.pi * np.clip(v, 0, 1)) ** 0.8
+    elif kind == "ficus": width = 0.62 * (np.sin(np.pi * np.clip(v, 0, 1)) ** 0.7) * (1 + 0.18 * np.sin(np.pi * v * 2 - 0.4))
+    elif kind == "euca":  width = 0.7 * np.sqrt(np.clip(1 - ((v - 0.5) / 0.48) ** 2, 0, 1))
+    else:                 width = 0.55 * np.sin(np.pi * np.clip(v, 0, 1)) ** 0.6 * (1.2 - 0.5 * v)
+    edge = np.abs(u) / np.maximum(width, 1e-3)
+    a = np.clip((1 - edge) * N * 0.02, 0, 1) * (v > 0.03) * (v < 0.985)
+    stem = (np.abs(u) < 0.025) * (v < 0.06)
+    a = np.maximum(a, stem.astype(np.float32))
+    mid = np.exp(-(u / 0.018) ** 2)
+    veins = np.clip(1 - np.abs(np.sin((v * 9 - np.abs(u) * 3.5) * np.pi)) / 0.09, 0, 1) * (np.abs(u) < width * 0.92) * (kind != "olive")
+    return a, mid, veins, edge
+
+
+def t_leaves():
+    N = 512
+    pal = {"olive": ((128, 132, 92), (98, 104, 70), (170, 172, 140)),
+           "ficus": ((66, 92, 44), (40, 62, 28), (98, 122, 64)),
+           "euca": ((122, 140, 118), (96, 112, 94), (160, 172, 150)),
+           "pothos": ((84, 116, 50), (58, 88, 34), (150, 168, 90))}
+    for kind, (c0, c1, cv) in pal.items():
+        a, mid, veins, edge = leaf_shape(N, kind)
+        n = fbm(N, N, hash(kind) % 1000, (6, 6), 4)
+        col = lerpc(c0, c1, n * 0.8 + edge * 0.25)
+        col = col * (1 - 0.6 * mid[..., None]) + np.array(cv) * 0.6 * mid[..., None]
+        col = col * (1 - 0.35 * veins[..., None]) + np.array(cv) * 0.35 * veins[..., None]
+        if kind == "pothos":
+            var = np.clip((fbm(N, N, 7, (5, 5), 3) - 0.55) / 0.1, 0, 1)
+            col = col * (1 - 0.5 * var[..., None]) + np.array([214, 206, 150]) * 0.5 * var[..., None]
+        save(np.dstack([col, a * 255]), f"leaf_{kind}", "RGBA")
+        save(gray(0.5 + 0.3 * mid + 0.15 * veins - 0.1 * edge), f"leaf_{kind}_bump")
+
+
+def t_walls():
+    """warm plaster walls with a patch of late sun and soft leaf shadows (baked gobo)"""
+    Wd, Hd = 2048, 1024
+    base = fbm(Hd, Wd, 301, (3, 6), 6)
+    col = lerpc((226, 200, 164), (196, 164, 124), base)
+    trowel = fbm(Hd, Wd, 302, (10, 30), 3)
+    col *= (0.96 + 0.08 * trowel)[..., None]
+    yy, xx = np.mgrid[0:Hd, 0:Wd].astype(np.float32)
+    sun = np.exp(-(((xx - Wd * 0.38) / (Wd * 0.22)) ** 2 + ((yy - Hd * 0.42) / (Hd * 0.32)) ** 2))
+    rng = np.random.default_rng(303)
+    sh = Image.new("L", (Wd // 2, Hd // 2), 0); d = ImageDraw.Draw(sh)
+    for _ in range(140):            # branches of leaves crossing the sun patch
+        cx, cy = rng.uniform(0.1, 0.7) * Wd / 2, rng.uniform(0.0, 0.9) * Hd / 2
+        ang = rng.uniform(0, np.pi); L = rng.uniform(25, 60); w = L * rng.uniform(0.18, 0.32)
+        pts = []
+        for k in range(16):
+            t = k / 15 * 2 * np.pi
+            px, py = np.cos(t) * L, np.sin(t) * w
+            pts.append((cx + px * np.cos(ang) - py * np.sin(ang), cy + px * np.sin(ang) + py * np.cos(ang)))
+        d.polygon(pts, fill=255)
+    for _ in range(10):
+        x0, y0 = rng.uniform(0, Wd / 2), rng.uniform(0, Hd / 2)
+        d.line((x0, y0, x0 + rng.uniform(-200, 200), y0 + rng.uniform(-150, 150)), fill=255, width=4)
+    leaf = np.asarray(sh.filter(ImageFilter.GaussianBlur(9)).resize((Wd, Hd), Image.BILINEAR)).astype(np.float32) / 255
+    light = 1 + sun * (0.55 - 0.45 * leaf)
+    col = col * light[..., None] * np.array([1.0, 0.95, 0.86])[None, None, :] ** sun[..., None]
+    save(col, "wall_leafy")
+    col2 = lerpc((214, 186, 150), (180, 148, 110), fbm(Hd, Wd, 304, (3, 6), 6)) * (0.96 + 0.08 * trowel)[..., None]
+    save(col2, "wall_plain")
+    # terracotta for the pots
+    N = 512
+    tc = lerpc((196, 112, 70), (160, 86, 52), fbm(N, N, 305, (6, 6), 5))
+    save(tc, "terracotta"); save(gray(0.5 + 0.3 * (fbm(N, N, 306, (30, 30), 3) - 0.5)), "terracotta_bump")
+
+
+ALL = {"leaves": t_leaves, "walls": t_walls, "birch": t_birch, "logo": t_logo_fx, "tables": t_tables, "linen": t_linen, "cheese": t_cheese,
        "charcuterie": t_charcuterie, "bread": t_bread, "misc": t_misc}
 
 if __name__ == "__main__":

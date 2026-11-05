@@ -5,6 +5,7 @@ import { v3, deg, clamp, prog, lerp, smooth, easeOut, easeOut5, easeIn, easeInOu
 import { BOX, pieceFactories, rosemary, hideUnderLid } from './food.js';
 import { beerBottle, wineBottle, wineGlass, terrineJar, bokehLights } from './props.js';
 import { makeLaptop, screenMaterial, makeHand, InstaUI, ReelsUI, typeLine, SCR, LAP } from './laptop.js';
+import { room, oliveTree, ficus, eucalyptusVase, pothosHanging, sideboard, tableSprig } from './plants.js';
 
 const S = {};   // module state
 window.__S = S;
@@ -68,7 +69,10 @@ export async function build(B) {
   // ---------------- desk + laptop
   const desk = new THREE.Group(); groups.desk = desk; scene.add(desk);
   desk.add(plane(600, 400, new THREE.MeshStandardMaterial({ map: tex('desk', { repeat: [7, 5] }), bumpMap: tex('desk_bump', { color: false, repeat: [7, 5] }), bumpScale: 1.2, roughness: 0.55 })));
-  const wall = plane(900, 400, new THREE.MeshStandardMaterial({ map: tex('wall', { repeat: [3, 1.5] }), roughness: 0.95, color: 0xcaa883 }), 0); wall.position.set(0, 150, -95); desk.add(wall);
+  const wall = plane(900, 400, new THREE.MeshStandardMaterial({ map: tex('wall_leafy', { repeat: [1.6, 1] }), roughness: 0.95 }), 0); wall.position.set(0, 150, -95); desk.add(wall);
+  { const f = ficus(31, 95); f.position.set(-66, 0, -70); f.scale.setScalar(0.75); desk.add(f);
+    const h = pothosHanging(32, 70); h.position.set(52, 82, -78); h.scale.setScalar(0.8); desk.add(h);
+    const e = eucalyptusVase(33, 55); e.position.set(58, 0, -40); e.scale.setScalar(0.6); desk.add(e); }
   desk.add(gradSphere(0x3a2618, 0x1b120b, 0x8a5222));
   S.reelRT = new THREE.WebGLRenderTarget(720, 1280, { samples: 4, type: THREE.HalfFloatType });
   S.ui = null;
@@ -125,7 +129,8 @@ export async function build(B) {
   // ---------------- poster studio
   const poster = new THREE.Group(); groups.poster = poster; scene.add(poster);
   poster.add(gradSphere(0xe2c08e, 0xb07a48, 0xf0cf98, v3(0, 0.2, -1)));
-  const pf = plane(1400, 1400, new THREE.MeshStandardMaterial({ color: 0xd9b585, roughness: 0.92 })); poster.add(pf);
+  { const plinth = () => { const g = new THREE.Group(); const b = new THREE.Mesh(new RoundedBoxGeometry(36, 60, 36, 2, 1), new THREE.MeshStandardMaterial({ color: 0xd9c4a2, roughness: 0.9 })); b.position.y = 30; b.castShadow = b.receiveShadow = true; g.add(b); const v = eucalyptusVase(41, 80); v.position.y = 60; g.add(v); return g; };
+    poster.add(room({ radius: 260, floorY: 0, windowAz: 230, tableTop: false, plants: [[() => oliveTree(42, 175), 207, 150, 0.5], [plinth, 158, 150, 0.2], [() => ficus(43, 140), 235, 200, 1.4], [() => ficus(44, 130), 132, 205, 2.4]] })); }
   {
     const board = new THREE.Group();
     const front = new THREE.Mesh(new THREE.PlaneGeometry(40, 60), new THREE.MeshStandardMaterial({ map: tex('poster', { wrap: false }), roughness: 0.8 })); front.position.z = 0.36; board.add(front);
@@ -195,12 +200,17 @@ export async function build(B) {
       const mb = makeBox(M, U); mb.scale.setScalar(0.46); mb.position.set(x, S.counterTop + y, z); mb.rotation.y = r; shop.add(mb);
     }
     shop.add(bokehLights(20, 63, [400, 60, 20], 0xffc078, 2.5).translateY(240).translateZ(-30));
+    for (const [x, sd] of [[-92, 51], [96, 52]]) { const h = pothosHanging(sd, 90); h.position.set(x, 215, 15); shop.add(h); }
+    const o = oliveTree(53, 160); o.position.set(132, 0, 100); o.scale.setScalar(0.85); shop.add(o);
+    const ev = eucalyptusVase(54, 55); ev.position.set(-78, S.counterTop, 76); ev.scale.setScalar(0.62); shop.add(ev);
     shop.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   }
   // the toast: open box on the table at golden hour, bottles and glasses clinking
   const toast = new THREE.Group(); groups.toast = toast; scene.add(toast);
   toast.add(gradSphere(0x5a3418, 0x1c110a, 0xffa040, v3(-0.6, 0.15, -1)));
-  toast.add(plane(1600, 1600, new THREE.MeshStandardMaterial({ map: tex('oak', { repeat: [20, 20] }), bumpMap: tex('oak_bump', { color: false, repeat: [20, 20] }), bumpScale: 2, roughness: 0.65 })));
+  toast.add(plane(240, 170, new THREE.MeshStandardMaterial({ map: tex('oak', { repeat: [3, 2.1] }), bumpMap: tex('oak_bump', { color: false, repeat: [3, 2.1] }), bumpScale: 2, roughness: 0.65 })));
+  { const deco = () => { const g = new THREE.Group(); g.add(sideboard()); const v = eucalyptusVase(61, 70); v.position.set(-25, 82, 0); g.add(v); return g; };
+    toast.add(room({ radius: 290, floorY: -76, windowAz: 120, plants: [[() => oliveTree(62, 165), 195, 200, 0.2], [deco, 165, 250, 0], [() => ficus(63, 130), 222, 230, 1.0], [() => ficus(64, 120), 140, 220, 2.2]] })); }
   S.clink = { b1: beerBottle(), b2: beerBottle(), g1: wineGlass(0.45), g2: wineGlass(0.4) };
   for (const o of Object.values(S.clink)) toast.add(o);
   const sl = bokehLights(36, 71, [520, 70, 40], 0xffc070, 2.8); sl.position.set(0, 70, -260); toast.add(sl);
@@ -227,6 +237,8 @@ export async function build(B) {
     }
     const rm = rosemary(M, 5); rm.scale.setScalar(1.5); rm.position.set(14, 0.4, 19); rm.rotation.y = deg(30); cardSet.add(rm);
     const rm2 = rosemary(M, 9); rm2.scale.setScalar(1.3); rm2.position.set(-24, 0.4, -12); rm2.rotation.y = deg(-70); cardSet.add(rm2);
+    const sp1 = tableSprig(71, 'olive', 16); sp1.position.set(-30, 0, 20); sp1.rotation.y = deg(20); sp1.scale.setScalar(1.2); cardSet.add(sp1);
+    const sp2 = tableSprig(72, 'euca', 12); sp2.position.set(18, 0, -24); sp2.rotation.y = deg(-35); sp2.scale.setScalar(1.3); cardSet.add(sp2);
     cardSet.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   }
   // 3D QR code that comes out of the business card at the end (modules extruded on a cream plate, scannable)
@@ -476,7 +488,7 @@ const api = {
     const c = v3(0, 35, 0);
     ctx.setKey(c, v3(-1, 1.1, 0.8), 260, 90, 3.0, 0xffd6a4); ctx.setRim(c, v3(0.3, 0.6, -1), 4.5, 0xffc070);
     ctx.hemi.intensity = 0.75;
-    ctx.scene.background = null; ctx.scene.fog = new THREE.Fog(0xc99a64, 500, 1500);
+    ctx.scene.background = null; ctx.scene.fog = new THREE.Fog(0xc99a64, 600, 1600);
     ctx.renderer.toneMappingExposure = 0.84;
     S.posterProducts.forEach((p, i) => {
       const a = t - 34;
@@ -522,7 +534,7 @@ const api = {
     const c = v3(0, 10, 0);
     ctx.setKey(c, v3(-1, 0.42, -0.35), 260, 80, 3.6, 0xffb562); ctx.setRim(c, v3(0.5, 0.35, -1), 3.4, 0xff9a40);
     ctx.hemi.intensity = 0.35;
-    ctx.scene.background = null; ctx.scene.fog = new THREE.FogExp2(0x3a2210, 0.0016);
+    ctx.scene.background = null; ctx.scene.fog = new THREE.FogExp2(0x6a4a30, 0.0010);
     ctx.renderer.toneMappingExposure = 1.0;
     const { b1, b2, g1, g2 } = S.clink;
     const cb = easeOut(prog(t, 45.3, 46.25)), rb = prog(t, 46.25, 46.9);
