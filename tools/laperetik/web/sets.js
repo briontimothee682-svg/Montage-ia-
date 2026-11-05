@@ -454,24 +454,25 @@ const api = {
       const endPos = rc.clone().add(n.clone().multiplyScalar(fillD));
       const m = new THREE.Matrix4().lookAt(endPos, rc, lidUp); const q1 = new THREE.Quaternion().setFromRotationMatrix(m);
       // spiral: the path curls around the axis of the dive while the camera rolls a full turn
-      const curl = Math.sin(z * Math.PI) * 9;
+      const curl = Math.sin(z * Math.PI) * 15;
       const side = v3(1, 0, 0).applyQuaternion(lidQ);
       const spiralOff = side.clone().multiplyScalar(Math.cos(z * Math.PI * 2) * curl).add(lidUp.clone().multiplyScalar(Math.sin(z * Math.PI * 2) * curl));
       pos = pos.clone().lerp(endPos, z).add(spiralOff);
       ctx.camera.position.copy(pos); ctx.camera.quaternion.slerpQuaternions(q0, q1, z);
-      ctx.camera.rotateZ(Math.PI * 2 * easeInOut(prog(t, ZOOM0 + 0.1, ZOOM1)));
-      ctx.camera.fov = 46; ctx.camera.updateProjectionMatrix();
-      samples = z > 0.04 && z < 0.97 ? 6 : 1;
+      // two full turns, fastest in the middle, with a wide-angle warp (dolly zoom) at the peak
+      ctx.camera.rotateZ(Math.PI * 4 * easeInOut5(prog(t, ZOOM0 + 0.05, ZOOM1)));
+      ctx.camera.fov = 46 + 22 * Math.sin(Math.PI * z); ctx.camera.updateProjectionMatrix();
+      samples = z > 0.03 && z < 0.98 ? (z > 0.2 && z < 0.85 ? 12 : 6) : 1;
     }
     popPose(t, ctx);                          // after the camera, so the box faces this frame's lens
     ctx.setDOF(ctx.camera.position.distanceTo(c), lerp(0.0009, 0.0, smooth(prog(t, ZOOM0, ZOOM0 + 0.8))), 0.014);
     const d = ctx.dust(); d.visible = z < 0.5; d.position.set(0, 0, 0); d.material.uniforms.t.value = t; d.material.uniforms.size.value = 0.45;
-    return { samples, shutter: 1 / 36 };
+    return { samples, shutter: z > 0.03 && z < 0.98 ? 1 / 22 : 1 / 36 };
   },
   shotFollow(t, ctx) {
     // inside the Reel: the same set and camera as the screen texture, now rendered full frame
     ctx.show([]);
-    if (t > 28.9) { ctx.scene.background = new THREE.Color(0xfffaf3); ctx.scene.fog = null; ctx.dust().visible = false; ctx.setDOF(0, 0, 0); return { samples: 1 }; }  // covered by the profile page
+    if (t > 28.0) { ctx.scene.background = new THREE.Color(0xfffaf3); ctx.scene.fog = null; ctx.dust().visible = false; ctx.setDOF(0, 0, 0); return { samples: 1 }; }  // covered by the profile page
     S.reel.visible = true;
     deskLights(ctx, t);                       // identical lighting to the screen render, so the cut is seamless
     ctx.scene.background = new THREE.Color(0xb98450); ctx.scene.fog = null;

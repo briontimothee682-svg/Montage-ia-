@@ -18,7 +18,9 @@ W, H, FPS = 1080, 1920, 24
 ESP = (58, 42, 31); GOLD = (201, 161, 91); CAR = (168, 120, 76); CREAM = (244, 236, 223); BG = (255, 250, 243); LIGHT = (239, 230, 216)
 RED = (224, 48, 58); MUTED = (140, 124, 108)
 
-T_IN, LIKE, TAP_USER, SLIDE0, SLIDE1, FOLLOW, SCROLL0, SCROLL1, TAP_TILE, OPEN0, OPEN1 = 25.4, 25.95, 27.75, 28.2, 28.8, 30.8, 31.25, 32.15, 32.55, 32.7, 34.0
+T_IN, LIKE, TAP_USER, SLIDE0, SLIDE1, FOLLOW = 25.4, 25.95, 27.2, 27.45, 27.95, 28.85
+CC_TAP, SHEET0, SHEET1, TAP_SIZE, TAP_VALID, SUCCESS, TAP_PRICES, OPEN0, OPEN1 = 29.55, 29.65, 30.05, 30.5, 31.25, 31.75, 33.0, 33.1, 34.0
+SCROLL0 = SCROLL1 = TAP_TILE = 99
 
 
 def clamp(x, a=0.0, b=1.0): return max(a, min(b, x))
@@ -101,6 +103,11 @@ def icon(d, name, x, y, s, col, w=4):
         d.ellipse((x - s * 0.2, y - s * 0.62, x + s * 0.2, y - s * 0.22), fill=BG)
     elif name == "check":
         d.line([(x - s, y), (x - s * 0.3, y + s * 0.7), (x + s, y - s * 0.7)], fill=col, width=w, joint="curve")
+
+
+def bag(d, x, y, s, col, w=4):
+    d.rounded_rectangle((x - s, y - s * 0.55, x + s, y + s), radius=s * 0.25, outline=col, width=w)
+    d.arc((x - s * 0.5, y - s * 1.15, x + s * 0.5, y - s * 0.05), 180, 360, fill=col, width=w)
 
 
 def shadow_text(d, xy, s, font, fill, anchor="la", sh=(0, 0, 0, 110)):
@@ -207,8 +214,9 @@ def profile_base(followed):
     else:
         d.rounded_rectangle((60, 846, 520, 932), radius=18, fill=GOLD)
         d.text((290, 889), "Suivre", font=F("Inter-700", 36), fill=(255, 255, 255), anchor="mm")
-    d.rounded_rectangle((540, 846, 1000, 932), radius=18, fill=LIGHT)
-    d.text((770, 889), "Contacter", font=F("Inter-700", 36), fill=ESP, anchor="mm")
+    d.rounded_rectangle((540, 846, 1000, 932), radius=18, fill=ESP)
+    bag(d, 640, 889, 20, CREAM)
+    d.text((800, 889), "Commander", font=F("Inter-700", 36), fill=CREAM, anchor="mm")
     # highlights (real frames of the film)
     for i, (fi, lab) in enumerate(HIGH):
         x = 125 + i * 190
@@ -233,7 +241,7 @@ def profile(t):
     page = profile_base(followed).copy()
     d = ImageDraw.Draw(page)
     # follow: glow, tap and a little burst of hearts
-    if FOLLOW - 1.2 < t < FOLLOW:
+    if FOLLOW - 0.8 < t < FOLLOW:
         k = 0.5 + 0.5 * math.sin((t - FOLLOW) * 9)
         d.rounded_rectangle((60 - 8 * k, 846 - 8 * k, 520 + 8 * k, 932 + 8 * k), radius=24, outline=(*GOLD, int(160 * k)), width=6)
     tk = prog(t, FOLLOW - 0.08, FOLLOW + 0.35)
@@ -245,7 +253,7 @@ def profile(t):
             ang = rnd.uniform(-math.pi, 0); r = (80 + rnd.uniform(0, 140)) * ease_out(bk)
             draw_heart(d, 290 + math.cos(ang) * r * 1.6, 889 + math.sin(ang) * r, 18 + rnd.uniform(0, 12), fill=((*RED, int(230 * (1 - bk))) if i % 2 else (*GOLD, int(230 * (1 - bk)))))
     # call to action pointing at the button, before the tap
-    ca = ease_out(prog(t, 29.25, 29.6)) * (1 - prog(t, FOLLOW - 0.1, FOLLOW + 0.15))
+    ca = ease_out(prog(t, SLIDE1, SLIDE1 + 0.3)) * (1 - prog(t, FOLLOW - 0.1, FOLLOW + 0.15))
     if ca > 0.01:
         lay = Image.new("RGBA", page.size, (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
         bob = math.sin(t * 7) * 8
@@ -255,7 +263,19 @@ def profile(t):
         ld.line((580, 1110 + bob, 580, 1040 + bob), fill=GOLD, width=10)
         lay.putalpha(lay.getchannel("A").point(lambda v: int(v * ca)))
         page.alpha_composite(lay)
-    scroll = 520 * ease(prog(t, SCROLL0, SCROLL1))
+    cc = ease_out(prog(t, FOLLOW + 0.15, FOLLOW + 0.45)) * (1 - prog(t, CC_TAP - 0.05, CC_TAP + 0.15))
+    if cc > 0.01:
+        lay = Image.new("RGBA", page.size, (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
+        bob = math.sin(t * 7) * 8
+        ld.rounded_rectangle((430, 1000 + bob, 1010, 1140 + bob), radius=70, fill=(*GOLD, 240))
+        ld.text((720, 1048 + bob), "Commande en", font=F("Oswald-500", 44), fill=ESP, anchor="mm")
+        ld.text((720, 1100 + bob), "CLICK & COLLECT", font=F("Oswald-700", 56), fill=ESP, anchor="mm")
+        ld.polygon([(760, 1000 + bob), (800, 1000 + bob), (780, 962 + bob)], fill=GOLD)
+        lay.putalpha(lay.getchannel("A").point(lambda v: int(v * cc)))
+        page.alpha_composite(lay)
+    tk2 = prog(t, CC_TAP - 0.06, CC_TAP + 0.3)
+    if 0 < tk2 < 1: ripple(d, 770, 889, tk2, (255, 230, 190))
+    scroll = 0
     view = page.crop((0, int(scroll), W, int(scroll) + H))
     # tap on the poster post, which opens into the next shot
     tr = prog(t, TAP_TILE - 0.05, TAP_TILE + 0.3)
@@ -263,6 +283,98 @@ def profile(t):
         x, y, w, h = tile_rect(OPEN_TILE, scroll)
         ripple(ImageDraw.Draw(view), x + w / 2, y + h / 2, tr)
     return view, scroll
+
+
+BOX_PRICE = B["prices"]["box"]
+
+
+def order_sheet(t):
+    """Click & Collect bottom sheet: the Box Apéro, size, pickup, total, validate"""
+    sh = Image.new("RGBA", (W, 1500), (0, 0, 0, 0)); d = ImageDraw.Draw(sh)
+    d.rounded_rectangle((0, 0, W, 1560), radius=48, fill=(*BG, 255))
+    d.rounded_rectangle((W / 2 - 60, 22, W / 2 + 60, 34), radius=6, fill=(214, 200, 182))
+    d.text((70, 120), "Click & Collect", font=F("Oswald-700", 72), fill=ESP, anchor="ls")
+    d.text((70, 172), "Retrait en boutique · Annecy", font=F("Inter-500", 34), fill=CAR, anchor="ls")
+    # product card with a real frame of the box
+    d.rounded_rectangle((60, 220, W - 60, 560), radius=30, fill=(255, 255, 255), outline=(232, 220, 204), width=3)
+    img = frame_crop(237, 1.0, 290)
+    m = Image.new("L", (290, 290), 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, 289, 289), radius=24, fill=255)
+    sh.paste(img, (85, 245), m)
+    d.text((410, 300), "La Box Apéro", font=F("Inter-700", 46), fill=ESP, anchor="ls")
+    d.text((410, 350), "fromages · saucisson · jambon", font=F("Inter-400", 30), fill=MUTED, anchor="ls")
+    d.text((410, 405), "producteurs locaux", font=F("Inter-400", 30), fill=MUTED, anchor="ls")
+    d.text((410, 500), f"dès {BOX_PRICE} €", font=F("Oswald-700", 56), fill=GOLD, anchor="ls")
+    # size chips
+    d.text((70, 650), "Taille", font=F("Inter-700", 38), fill=ESP, anchor="ls")
+    sel = "L" if t >= TAP_SIZE else "S"
+    for i, lab in enumerate(["S", "L", "XL"]):
+        x0 = 70 + i * 200
+        on = lab == sel
+        d.rounded_rectangle((x0, 680, x0 + 170, 780), radius=50, fill=(ESP if on else (255, 255, 255)), outline=(ESP if on else (220, 205, 186)), width=3)
+        d.text((x0 + 85, 730), lab, font=F("Oswald-700", 50), fill=(CREAM if on else ESP), anchor="mm")
+    tk = prog(t, TAP_SIZE - 0.06, TAP_SIZE + 0.3)
+    if 0 < tk < 1: ripple(d, 355, 730, tk, (90, 60, 30))
+    # pickup + quantity
+    d.text((70, 870), "Retrait", font=F("Inter-700", 38), fill=ESP, anchor="ls")
+    d.rounded_rectangle((70, 900, W - 70, 1000), radius=24, fill=(255, 255, 255), outline=(220, 205, 186), width=3)
+    icon(d, "pin", 120, 950, 18, CAR, 4)
+    d.text((160, 962), "Aujourd'hui · L'Apéretik Annecy", font=F("Inter-600", 34), fill=ESP, anchor="ls")
+    d.text((70, 1090), "Total", font=F("Inter-700", 40), fill=ESP, anchor="ls")
+    d.text((W - 70, 1090), f"{BOX_PRICE} €", font=F("Oswald-700", 58), fill=ESP, anchor="rs")
+    # validate button (with a spinner once tapped)
+    busy = TAP_VALID <= t < SUCCESS
+    d.rounded_rectangle((70, 1150, W - 70, 1270), radius=60, fill=GOLD)
+    if busy:
+        a0 = (t - TAP_VALID) * 900
+        d.arc((W / 2 - 34, 1176, W / 2 + 34, 1244), a0, a0 + 270, fill=(255, 255, 255), width=8)
+    else:
+        bag(d, 300, 1210, 22, (255, 255, 255), 5)
+        d.text((W / 2 + 30, 1210), "Valider la commande", font=F("Inter-700", 42), fill=(255, 255, 255), anchor="mm")
+    tv = prog(t, TAP_VALID - 0.06, TAP_VALID + 0.3)
+    if 0 < tv < 1: ripple(d, W / 2, 1210, tv)
+    return sh
+
+
+def success_screen(t):
+    """'Commande réussie !' with a check that draws itself and a little confetti"""
+    pg = Image.new("RGBA", (W, H), (*BG, 255)); d = ImageDraw.Draw(pg)
+    k = prog(t, SUCCESS, SUCCESS + 0.5)
+    cx, cy, r = W / 2, 640, 170 * ease_back(clamp(k * 1.4), 1.8)
+    if r > 1:
+        d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=GOLD)
+        ck = prog(t, SUCCESS + 0.2, SUCCESS + 0.55)
+        p0, p1, p2 = (cx - 70, cy + 4), (cx - 18, cy + 58), (cx + 82, cy - 60)
+        if ck > 0:
+            a = min(1, ck * 2); d.line([p0, (lerp(p0[0], p1[0], a), lerp(p0[1], p1[1], a))], fill=(255, 255, 255), width=24, joint="curve")
+            if ck > 0.5:
+                b = (ck - 0.5) * 2; d.line([p1, (lerp(p1[0], p2[0], b), lerp(p1[1], p2[1], b))], fill=(255, 255, 255), width=24, joint="curve")
+    ta = ease_out(prog(t, SUCCESS + 0.35, SUCCESS + 0.7))
+    if ta > 0:
+        lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
+        ld.text((W / 2, 930), "Commande réussie !", font=F("Oswald-700", 104), fill=ESP, anchor="mm")
+        ld.text((W / 2, 1020), "Votre Box Apéro vous attend", font=F("Inter-500", 40), fill=ESP, anchor="mm")
+        ld.text((W / 2, 1070), "en boutique · Click & Collect", font=F("Inter-500", 40), fill=ESP, anchor="mm")
+        ld.rounded_rectangle((150, 1130, W - 150, 1250), radius=26, fill=(255, 255, 255), outline=(226, 212, 192), width=3)
+        ld.text((W / 2, 1172), "Commande n° 0427 · Taille L", font=F("Inter-600", 34), fill=ESP, anchor="mm")
+        ld.text((W / 2, 1218), f"{B['street']} · {B['city']}", font=F("Inter-500", 30), fill=CAR, anchor="mm")
+        ld.rounded_rectangle((250, 1300, W - 250, 1400), radius=50, fill=ESP)
+        ld.text((W / 2, 1350), "Voir nos prix", font=F("Inter-700", 38), fill=CREAM, anchor="mm")
+        lay.putalpha(lay.getchannel("A").point(lambda v: int(v * ta)))
+        pg.alpha_composite(lay, (0, int((1 - ta) * 30)))
+    # confetti in the brand colours
+    ck = prog(t, SUCCESS + 0.1, SUCCESS + 1.6)
+    if 0 < ck < 1:
+        rnd = np.random.default_rng(12)
+        for i in range(70):
+            x = rnd.uniform(0, W); v = rnd.uniform(500, 1100); y = -40 + v * ck * 1.4 + rnd.uniform(-300, 0)
+            col = [GOLD, CAR, RED, ESP, (240, 214, 150)][i % 5]
+            a = rnd.uniform(0, math.pi); w_, h_ = rnd.uniform(10, 18), rnd.uniform(18, 30)
+            pts = [(x + math.cos(a) * w_ - math.sin(a) * h_, y + math.sin(a) * w_ + math.cos(a) * h_), (x - math.cos(a) * w_ - math.sin(a) * h_, y - math.sin(a) * w_ + math.cos(a) * h_),
+                   (x - math.cos(a) * w_ + math.sin(a) * h_, y - math.sin(a) * w_ - math.cos(a) * h_), (x + math.cos(a) * w_ + math.sin(a) * h_, y + math.sin(a) * w_ - math.cos(a) * h_)]
+            d.polygon(pts, fill=(*col, int(255 * (1 - ck * 0.6))))
+    tp = prog(t, TAP_PRICES - 0.06, TAP_PRICES + 0.3)
+    if 0 < tp < 1: ripple(d, W / 2, 1350 + 0, tp, (255, 230, 190))
+    return pg
 
 
 POSTER = lambda: Image.open(F3D / "f0816.png").convert("RGB")
@@ -273,10 +385,10 @@ def open_post(canvas, t, scroll):
     """the poster post grows from its tile to the full frame = first frame of the poster shot"""
     k = ease(prog(t, OPEN0, OPEN1 - 0.05))
     if k <= 0: return
-    x, y, w, h = tile_rect(OPEN_TILE, scroll)
+    x, y, w, h = 250, 1300, W - 500, 100
     rx, ry, rw, rh = lerp(x, 0, k), lerp(y, 0, k), lerp(w, W, k), lerp(h, H, k)
     src = POSTER_CACHE[0] if POSTER_CACHE else POSTER_CACHE.append(POSTER()) or POSTER_CACHE[0]
-    cw0, ch0 = W, int(W * 4 / 3); cx0, cy0 = 0, (H - ch0) // 2
+    cw0, ch0 = W, int(W * 100 / (W - 500)); cx0, cy0 = 0, (H - ch0) // 2
     cx, cy, cw, ch = lerp(cx0, 0, k), lerp(cy0, 0, k), lerp(cw0, W, k), lerp(ch0, H, k)
     img = src.crop((int(cx), int(cy), int(cx + cw), int(cy + ch))).resize((max(1, int(rw)), max(1, int(rh))), Image.LANCZOS)
     m = Image.new("L", img.size, 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, img.width - 1, img.height - 1), radius=int(28 * (1 - k)), fill=255)
@@ -301,6 +413,14 @@ def inside(canvas, t):
             if x - 40 > 0: canvas.alpha_composite(sh.transpose(Image.FLIP_LEFT_RIGHT), (x - 40, 0))
         else:
             canvas.alpha_composite(view.convert("RGBA"))
-        rgb = canvas
+        if SHEET0 <= t < SUCCESS + 0.25:
+            ks = ease(prog(t, SHEET0, SHEET1))
+            canvas.alpha_composite(Image.new("RGBA", (W, H), (20, 12, 8, int(120 * ks))))
+            canvas.alpha_composite(order_sheet(t), (0, int(H - 1480 * ks)))
+        if t >= SUCCESS:
+            sc = success_screen(t)
+            fa = ease_out(prog(t, SUCCESS, SUCCESS + 0.25))
+            sc.putalpha(sc.getchannel("A").point(lambda v: int(v * fa)))
+            canvas.alpha_composite(sc)
         if t >= OPEN0:
             base = canvas.convert("RGB"); open_post(base, t, scroll); canvas.paste(base.convert("RGBA"))

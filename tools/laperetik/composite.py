@@ -332,9 +332,40 @@ def composite(fi):
     return canvas.convert("RGB")
 
 
+@lru_cache(maxsize=None)
+def streaks_img():
+    """warm radial light streaks for the spiral dive"""
+    rng = np.random.default_rng(31)
+    im = Image.new("L", (W, H), 0); d = ImageDraw.Draw(im)
+    cx, cy = W / 2, H / 2
+    for _ in range(120):
+        a = rng.uniform(0, 2 * math.pi); r0 = rng.uniform(260, 700); r1 = r0 + rng.uniform(250, 900)
+        d.line((cx + math.cos(a) * r0, cy + math.sin(a) * r0, cx + math.cos(a) * r1, cy + math.sin(a) * r1), fill=int(rng.uniform(90, 255)), width=int(rng.uniform(2, 7)))
+    return im.filter(ImageFilter.GaussianBlur(3))
+
+
+def spiral_fx(im, t):
+    """radial zoom blur and rotating warm streaks during the spiral that sucks us into the screen"""
+    k = prog(t, 24.05, 25.4)
+    if k <= 0 or k >= 1: return im
+    s = math.sin(math.pi * k) ** 1.5
+    n = 8; acc = np.zeros((H, W, 3), np.float32)
+    for i in range(n):
+        z = 1 + 0.16 * s * i / (n - 1)
+        w2, h2 = int(W * z), int(H * z)
+        acc += np.asarray(im.resize((w2, h2), Image.BILINEAR).crop(((w2 - W) // 2, (h2 - H) // 2, (w2 - W) // 2 + W, (h2 - H) // 2 + H))).astype(np.float32)
+    out = acc / n
+    ang = 720 * (4 * k ** 3 if k < 0.5 else 1 - (-2 * k + 2) ** 3 / 2)
+    st = np.asarray(streaks_img().rotate(-ang, resample=Image.BILINEAR)).astype(np.float32)[..., None] / 255
+    out = out + st * np.array([255, 196, 120], np.float32) * 0.32 * s
+    return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8), "RGB")
+
+
 def base_frame(fi):
     t = fi / FPS
     im = frame_3d(fi)
+    if im is not None and 24.0 <= t < 25.5:
+        im = spiral_fx(im, t)
     if im is None:
         im = Image.new("RGB", (W, H), (40, 30, 22))
     s = punch(t)

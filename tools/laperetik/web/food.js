@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { tex, seeded, jitterGeometry, shiftUV, bboxUV, noise3, v3, deg } from './lib.js';
 
-export const BOX = { R: 15, H: 8.2, T: 0.32, LID_R: 15.38, LID_H: 2.7, LOGO_D: 17.5 };
+export const BOX = { R: 15, H: 8.2, T: 0.32, LID_R: 15.38, LID_H: 2.7, LOGO_D: 29.2 };   // the logo fills the whole lid
 
 // ------------------------------------------------------------ materials (created after preload)
 export function foodMaterials() {
@@ -21,7 +21,7 @@ export function foodMaterials() {
   M.tommeRind = std({ map: tex('tomme_rind', { repeat: [0.3, 0.3] }), bumpMap: tex('tomme_rind_bump', { color: false, repeat: [0.3, 0.3] }), bumpScale: 2.5, roughness: 0.9 });
   M.blue = phys({ map: tex('blue', { repeat: [0.16, 0.16] }), bumpMap: tex('blue_bump', { color: false, repeat: [0.16, 0.16] }), bumpScale: 1.6, roughness: 0.58, sheen: 0.3, sheenColor: new THREE.Color(0xffffff), emissive: 0x242018, emissiveIntensity: 0.2 });
   M.blueRind = std({ color: 0xd9d0bc, roughness: 0.85, bumpMap: tex('tomme_rind_bump', { color: false, repeat: [0.4, 0.4] }), bumpScale: 1.5 });
-  M.ham = phys({ map: tex('ham'), bumpMap: tex('ham_bump', { color: false }), bumpScale: 1.2, roughness: 0.5, clearcoat: 0.12, clearcoatRoughness: 0.5, sheen: 0.7, sheenColor: new THREE.Color(0xffa898), side: THREE.DoubleSide, alphaTest: 0.5, emissive: 0x6a1812, emissiveIntensity: 0.32 });
+  M.ham = phys({ map: tex('ham'), bumpMap: tex('ham_bump', { color: false }), bumpScale: 0.8, roughness: 0.42, clearcoat: 0.2, clearcoatRoughness: 0.45, sheen: 0.85, sheenColor: new THREE.Color(0xffb0a0), side: THREE.DoubleSide, alphaTest: 0.5, emissive: 0x8a2a1c, emissiveIntensity: 0.38 });   // thin and translucent
   M.sauFace = phys({ map: tex('saucisson_face'), bumpMap: tex('saucisson_face_bump', { color: false }), bumpScale: 1.5, roughness: 0.55, clearcoat: 0.1, clearcoatRoughness: 0.5, emissive: 0x220606, emissiveIntensity: 0.25 });
   M.sauSkin = std({ map: tex('saucisson_skin'), bumpMap: tex('saucisson_skin_bump', { color: false }), bumpScale: 2.5, roughness: 0.85 });
   M.coppa = phys({ map: tex('coppa'), bumpMap: tex('coppa_bump', { color: false }), bumpScale: 1.0, roughness: 0.4, clearcoat: 0.3, clearcoatRoughness: 0.35, sheen: 0.5, sheenColor: new THREE.Color(0xff8a7a), side: THREE.DoubleSide, alphaTest: 0.5, emissive: 0x2a0606, emissiveIntensity: 0.25 });
@@ -149,7 +149,7 @@ function blueWedge(M, rnd, R = 6, A = deg(42), h = 3.6) {
 
 function hamGeometry(rnd, L = 19, W = 6.4) {
   // folded state = a thin slice loosely gathered in irregular folds; morph target = the slice laid out
-  const g = new THREE.PlaneGeometry(L, W, 150, 18);
+  const g = new THREE.PlaneGeometry(L, W, 260, 22);
   const p = g.attributes.position;
   const flat = new Float32Array(p.array.length);
   const fold = new Float32Array(p.array.length);
@@ -159,13 +159,14 @@ function hamGeometry(rnd, L = 19, W = 6.4) {
     const u = x / L + 0.5, v = y / W + 0.5;
     const n1 = noise3(u * 7, v * 1.6, ph) - 0.5, n2 = noise3(u * 15, v * 3, ph + 4) - 0.5;
     flat[i * 3] = x; flat[i * 3 + 1] = y; flat[i * 3 + 2] = Math.sin(u * 6 + ph) * 0.5 + n1 * 0.6;
-    // gathered: the length is compressed ~2.4x into soft, uneven pleats
-    const a = u * Math.PI * (5.2 + n1 * 1.5) + ph + n1 * 2.2;
-    const amp = 1.15 + 0.5 * (noise3(u * 3, 1, ph) - 0.5) + v * 0.35;
-    const cx = x * 0.42 + Math.sin(a) * 0.55 * amp;
+    // paper-thin slice gathered in many fine, uneven pleats (chiffonnade), with a ruffled edge
+    const a = u * Math.PI * (10.5 + n1 * 2.5) + ph + n1 * 2.6;
+    const amp = 0.62 + 0.3 * (noise3(u * 3, 1, ph) - 0.5) + v * 0.22;
+    const edge = Math.pow(Math.abs(v - 0.5) * 2, 3);
+    const cx = x * 0.46 + Math.sin(a) * 0.38 * amp;
     fold[i * 3] = cx;
-    fold[i * 3 + 1] = y * (0.92 + 0.08 * Math.cos(a)) + cx * cx * bend * 0.08 + n2 * 0.35;
-    fold[i * 3 + 2] = Math.cos(a) * amp * (0.75 + 0.25 * v) + n2 * 0.5 + n1 * 0.4;
+    fold[i * 3 + 1] = y * (0.93 + 0.07 * Math.cos(a)) + cx * cx * bend * 0.08 + n2 * 0.3;
+    fold[i * 3 + 2] = Math.cos(a) * amp * (0.8 + 0.2 * v) + n2 * 0.35 + n1 * 0.3 + Math.sin(u * 70 + v * 4 + ph) * 0.12 * edge;
   }
   p.array.set(fold);
   g.morphAttributes.position = [new THREE.Float32BufferAttribute(flat, 3)];

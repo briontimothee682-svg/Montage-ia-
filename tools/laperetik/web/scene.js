@@ -592,7 +592,7 @@ function lightVis() {
 }
 window.renderAt = async (t) => {
   const info0 = setup(t); lightVis();
-  const n = Math.min(6, Math.max(1, info0.samples || 1)), shutter = info0.shutter || 1 / 48;
+  const n = Math.min(12, Math.max(1, info0.samples || 1)), shutter = info0.shutter || 1 / 48;
   renderer.setRenderTarget(accRT); renderer.setClearColor(0x000000, 1); renderer.clear();
   for (let i = 0; i < n; i++) {
     let ts = n > 1 ? t + (i / (n - 1) - 0.5) * shutter : t;

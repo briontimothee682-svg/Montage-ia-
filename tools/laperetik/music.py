@@ -298,17 +298,33 @@ S16 = BEAT / 4
 SWING = 0.018
 
 
-def sixteenth(bar_t, k):
-    return bar_t + k * S16 + (SWING if k % 2 else 0)
+def sixteenth(bar_t, k, s16=None):
+    s16 = s16 or S16
+    return bar_t + k * s16 + (SWING * s16 / S16 if k % 2 else 0)
+
+
+# tempo map: 120 BPM, a little faster (128 BPM) inside the screen after the spiral, back to 120 on the 34 s hit
+TEMPO = [(0.0, 25.4, 120), (25.4, 34.0, 128), (34.0, DUR, 120)]
+
+
+def bars():
+    out = []
+    for a, b, bpm in TEMPO:
+        bl = 4 * 60 / bpm; t = a
+        while t < b - 1e-6:
+            out.append((t, bl, b)); t += bl
+    return out
 
 
 def build(stems=False):
     drums = np.zeros((N, 2)); bass = np.zeros((N, 2)); keys = np.zeros((N, 2)); gtr = np.zeros((N, 2))
     fx = np.zeros((N, 2)); padb = np.zeros((N, 2)); brs = np.zeros((N, 2))
     K, C = kick(), clap()
-    nbars = int(DUR / BAR)
-    for b in range(nbars):
-        t0 = b * BAR
+    kicks = []
+    for b, (t0, bl, seg_end) in enumerate(bars()):
+        BEAT_, S16_ = bl / 4, bl / 16
+        six = lambda k: sixteenth(t0, k, S16_)
+        ok = lambda tt: tt < seg_end - 0.01 and not (24.9 <= tt < 25.4)
         ch = CH[b % 4]
         full = t0 >= DROP
         quiet_slowmo = 10.4 <= t0 < 14.0
@@ -317,16 +333,17 @@ def build(stems=False):
         stop = (19.0 <= t0 < 20.0)
         # drums
         for beat in range(4):
-            bt = t0 + beat * BEAT
+            bt = t0 + beat * BEAT_
+            if not ok(bt): continue
             if full and not breakdown and not outro and not (19.75 <= bt < 20.0):
-                place(drums, K, bt, 1.0 if not quiet_slowmo else 0.75)
+                place(drums, K, bt, 1.0 if not quiet_slowmo else 0.75); kicks.append(bt)
                 if beat in (1, 3): place(drums, C, bt, 0.7, 0.05)
             elif breakdown and beat in (0, 2):
                 place(drums, K, bt, 0.55)
         for k in range(16):
-            tt = sixteenth(t0, k)
+            tt = six(k)
             if t0 < 2.0 or outro: continue
-            if 19.75 <= tt < 20.0: continue
+            if 19.75 <= tt < 20.0 or not ok(tt): continue
             acc = 1.0 if k % 4 == 2 else 0.55 if k % 2 == 0 else 0.4
             if full and not breakdown:
                 place(drums, hat(k % 4 == 2, acc * (0.7 if quiet_slowmo else 1.0)), tt, 0.9, 0.3)
@@ -338,17 +355,17 @@ def build(stems=False):
             for st, off, ln, v in BASS_PAT:
                 if breakdown and st % 4: continue
                 root = ch["root"] + (5 if (b % 4 == 3 and st >= 8) else 0)   # A7 on the second half of bar 4
-                tt = sixteenth(t0, st)
-                if 19.75 <= tt < 20.0: continue
+                tt = six(st)
+                if 19.75 <= tt < 20.0 or not ok(tt): continue
                 slide = root + off - 2 if st == 15 else None
-                place(bass, bass_note(root + off, ln * S16 * 0.95, v, slide), tt, 0.95)
+                place(bass, bass_note(root + off, ln * S16_ * 0.95, v, slide), tt, 0.95)
         # rhodes stabs (syncopated), also in the intro
         rh = ch["rh"] if not (b % 4 == 3) else ch["rh"]
         hits = [0, 3, 6, 10, 14] if full else [0, 6, 10]
         if outro: hits = [0]
         for st in hits:
-            tt = sixteenth(t0, st)
-            if 19.75 <= tt < 20.0: continue
+            tt = six(st)
+            if 19.75 <= tt < 20.0 or not ok(tt): continue
             dur = 0.45 if st else 0.9
             if outro: dur = 2.2
             for k, m in enumerate(rh):
@@ -356,14 +373,20 @@ def build(stems=False):
         # funk guitar chops on 16ths + chord on the 'and' of 2 & 4
         if full and not breakdown and not outro and not quiet_slowmo:
             for k in range(16):
-                tt = sixteenth(t0, k)
-                if 19.75 <= tt < 20.0: continue
+                tt = six(k)
+                if 19.75 <= tt < 20.0 or not ok(tt): continue
                 if k in (6, 14):
                     place(gtr, strum(ch["g"], 0.22, False, 0.9, k == 6), tt, 0.8, 0.45)
                 elif k % 2 == 1 or k in (0, 8):
                     place(gtr, strum(ch["g"][:3], 0.06, True, 0.55, k % 2 == 0), tt, 0.7, 0.45)
         # pad bed
-        place(padb, pad(ch["rh"], BAR + 0.4, 0.9 if not full else 0.55, 700 if t0 < DROP else 1100), t0, 0.7)
+        place(padb, pad(ch["rh"], min(bl, seg_end - t0) + 0.4, 0.9 if not full else 0.55, 700 if t0 < DROP else 1100), t0, 0.7)
+    # accelerating snare roll while the spiral sucks us in (23.4 -> 25.4 s)
+    tr = 23.4
+    while tr < 25.35:
+        p = (tr - 23.4) / 1.95
+        place(drums, C, tr, 0.25 + 0.55 * p, (-1) ** int(tr * 40) * 0.2)
+        tr += 0.25 - 0.19 * p ** 1.4
     # brass stabs on the hits
     for h in (DROP,) + HITS:
         ch = CH[int(h / BAR) % 4]
@@ -401,14 +424,20 @@ def build(stems=False):
     place(fx, whoosh(0.6, 5000, 400, 0.9), 25.35, 0.5)
     place(fx, click(0.8), 25.82, 0.5, 0.1); place(fx, click(0.8), 25.92, 0.5, 0.1)   # double tap
     place(fx, like_pop(1.0), 25.96, 0.9)
-    place(fx, click(1.0), 27.72, 0.6)                                    # tap on the account
-    place(fx, whoosh(0.6, 2500, 500, 0.8), 28.2, 0.45, 0.5)              # profile slides in
-    place(fx, click(1.0), 30.78, 0.7)                                    # follow
-    place(fx, like_pop(0.9), 30.82, 0.7)
-    place(fx, whoosh(0.7, 800, 3000, 0.6), 31.25, 0.3)                   # scroll through the grid
-    place(fx, click(1.0), 32.52, 0.6)                                    # tap on the post
-    place(fx, riser(1.2, 0.8), 32.75, 0.5)
-    place(fx, whoosh(1.0, 300, 4500, 1.0, rev=True), 33.0, 0.55)
+    place(fx, click(1.0), 27.17, 0.6)                                    # tap on the account
+    place(fx, whoosh(0.6, 2500, 500, 0.8), 27.45, 0.45, 0.5)             # profile slides in
+    place(fx, click(1.0), 28.82, 0.7)                                    # follow
+    place(fx, like_pop(0.9), 28.86, 0.7)
+    place(fx, click(1.0), 29.52, 0.6)                                    # Click & Collect
+    place(fx, whoosh(0.5, 600, 3000, 0.7), 29.65, 0.35)                  # order sheet slides up
+    place(fx, click(0.9), 30.47, 0.5)                                    # size L
+    place(fx, click(1.0), 31.22, 0.7)                                    # validate
+    for k, f0 in enumerate((1568, 1976, 2349, 3136)):                    # 'order placed' chime
+        place(fx, clink(f0 / 2, 0.8, 0.9), 31.75 + k * 0.07, 0.45, -0.2 + k * 0.13)
+    place(fx, like_pop(1.0), 31.78, 0.6)
+    place(fx, click(1.0), 32.98, 0.6)                                    # 'voir nos prix'
+    place(fx, riser(1.0, 0.8), 33.0, 0.5)
+    place(fx, whoosh(0.9, 300, 4500, 1.0, rev=True), 33.1, 0.55)
     place(fx, impact(1.1), 34.0, 0.95)
     place(fx, whoosh(0.6, 3000, 300, 0.9), 42.0, 0.5)
     place(fx, wood_pop(0.8), 42.4, 0.3)
@@ -427,11 +456,9 @@ def build(stems=False):
 
     # ---------------- mix
     kick_env = np.zeros(N)
-    for b in range(int(DUR / BEAT)):
-        bt = b * BEAT
-        if bt >= DROP and not (48 <= bt < 52) and bt < 54 and not (19.75 <= bt < 20):
-            i = int(bt * SR); L = int(0.28 * SR)
-            kick_env[i:i + L] = np.maximum(kick_env[i:i + L], np.exp(-np.arange(min(L, N - i)) / (0.08 * SR)))
+    for bt in kicks:
+        i = int(bt * SR); L = int(0.28 * SR)
+        kick_env[i:i + L] = np.maximum(kick_env[i:i + L], np.exp(-np.arange(min(L, N - i)) / (0.08 * SR)))
     duck = (1 - 0.55 * kick_env)[:, None]
     # intro/slow-mo filters on the musical bed
     tt = t_(N)
