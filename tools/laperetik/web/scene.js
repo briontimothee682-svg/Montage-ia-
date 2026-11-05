@@ -272,9 +272,78 @@ async function build() {
 
   sets = await SETS.build({ scene, renderer, M, U, box, lid, pieces, makeBox, makeContents, camera });
   Object.assign(ctx, { box, lid, contents, pieces });
+  makeLabel('cheese', 'FROMAGES', 'de montagne, à la découpe');
+  makeLabel('sau', 'SAUCISSON SEC', 'finement tranché');
+  makeLabel('ham', 'JAMBON CRU', 'affiné, en chiffonnade');
   // Instagram grid thumbnails are snapshots of the real 3D shots
   const snap = (t) => { setup(t); renderer.setRenderTarget(null); renderer.render(scene, camera); return renderer.domElement; };
   await sets.makeTiles(snap);
+}
+
+// ------------------------------------------------------------ 3D product labels ("rubrique")
+const labelGroup = new THREE.Group(); scene.add(labelGroup);
+const LABELS = {};
+function makeLabel(key, title, sub) {
+  const cv = L.canvas(1024, 360), c = cv.getContext('2d');
+  c.fillStyle = '#f6eee2'; c.beginPath(); c.roundRect(14, 14, 996, 332, 64); c.fill();
+  c.strokeStyle = '#c9a15b'; c.lineWidth = 12; c.beginPath(); c.roundRect(14, 14, 996, 332, 64); c.stroke();
+  c.fillStyle = '#3a2a1f'; c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+  c.font = '700 136px Oswald'; c.fillText(title, 512, 178);
+  c.fillStyle = '#a8784c'; c.font = 'italic 400 72px "Playfair Display"'; c.fillText(sub, 512, 286);
+  const g = new THREE.Group();
+  const card = new THREE.Mesh(new THREE.PlaneGeometry(16, 5.625), new THREE.MeshBasicMaterial({ map: L.canvasTex(cv), transparent: true, depthWrite: false, depthTest: false, color: new THREE.Color(1.08, 1.06, 1.04) }));
+  card.renderOrder = 30;
+  const shCv = L.canvas(256, 96), sx = shCv.getContext('2d'); sx.filter = 'blur(10px)'; sx.fillStyle = 'rgba(30,18,10,0.55)'; sx.beginPath(); sx.roundRect(20, 20, 216, 56, 24); sx.fill();
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(17.5, 6.6), new THREE.MeshBasicMaterial({ map: L.canvasTex(shCv), transparent: true, depthWrite: false, depthTest: false }));
+  shadow.renderOrder = 29; shadow.position.set(0.5, -0.6, -0.05);
+  const holder = new THREE.Group(); holder.add(shadow, card); g.add(holder);
+  const gold = new THREE.MeshBasicMaterial({ color: 0xd9b26a, depthTest: false });
+  const line = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1, 8), gold); line.renderOrder = 28; g.add(line);
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 10), gold); dot.renderOrder = 28; g.add(dot);
+  g.userData = { holder, line, dot };
+  labelGroup.add(g); LABELS[key] = g;
+}
+const _r = new THREE.Vector3(), _u = new THREE.Vector3(), _d = new THREE.Vector3();
+function placeLabel(key, anchor, ox, oy, scale, k) {
+  const g = LABELS[key]; if (!g) return;
+  g.visible = k > 0.002;
+  if (!g.visible) return;
+  camera.updateMatrixWorld();
+  _r.set(1, 0, 0).applyQuaternion(camera.quaternion); _u.set(0, 1, 0).applyQuaternion(camera.quaternion);
+  const { holder, line, dot } = g.userData;
+  const pos = anchor.clone().addScaledVector(_r, ox).addScaledVector(_u, oy);
+  const s = scale * Math.max(0.001, easeBack(clamp(k * 1.15), 1.4));
+  holder.position.copy(pos); holder.quaternion.copy(camera.quaternion); holder.scale.setScalar(s);
+  // leader line from the product to the nearest edge of the card
+  const edge = pos.clone().addScaledVector(_u, -Math.sign(oy || 1) * 2.8 * scale);
+  const lk = smooth(clamp(k * 1.6));
+  const end = anchor.clone().lerp(edge, lk);
+  _d.subVectors(end, anchor); const len = Math.max(0.001, _d.length());
+  line.position.copy(anchor).addScaledVector(_d, 0.5); line.scale.set(scale, len, scale);
+  line.quaternion.setFromUnitVectors(v3(0, 1, 0), _d.normalize());
+  dot.position.copy(anchor); dot.scale.setScalar(scale * smooth(clamp(k * 3)));
+}
+function placeLabelScreen(key, anchor, sx, sy, frac, k) {
+  // label centred at a fixed point of the frame (sx, sy in 0..1 from top-left), at the depth of its product
+  camera.updateMatrixWorld();
+  const ndc = anchor.clone().project(camera);
+  const p = v3(sx * 2 - 1, 1 - sy * 2, ndc.z).unproject(camera);
+  const depth = p.clone().sub(camera.position).dot(v3(0, 0, -1).applyQuaternion(camera.quaternion));
+  const hw = depth * Math.tan(deg(camera.fov / 2)) * camera.aspect;
+  const scale = frac * 2 * hw / 16;
+  _r.set(1, 0, 0).applyQuaternion(camera.quaternion); _u.set(0, 1, 0).applyQuaternion(camera.quaternion);
+  const off = p.clone().sub(anchor);
+  placeLabel(key, anchor, off.dot(_r), off.dot(_u), scale, k);
+}
+function cluster(kind) {
+  // centroid of a readable group of pieces: one sector of comté cubes, the saucisson rosette, one sector of ham
+  const ang = pc => Math.atan2(-pc.rest.p.z, pc.rest.p.x);
+  const near = (pc, a) => Math.abs(Math.atan2(Math.sin(ang(pc) - a), Math.cos(ang(pc) - a))) < 0.62;
+  let sel;
+  if (kind === 'cheese') sel = pieces.filter(pc => pc.kind === 'cube' && near(pc, deg(30)));
+  else if (kind === 'sau') sel = pieces.filter(pc => pc.kind === 'sau' && Math.hypot(pc.rest.p.x, pc.rest.p.z) < 6.5);
+  else sel = pieces.filter(pc => pc.kind === 'ham' && near(pc, deg(90)));
+  const c = v3(0, 0, 0); sel.forEach(pc => c.add(pc.obj.position)); return c.divideScalar(Math.max(1, sel.length));
 }
 
 // ------------------------------------------------------------ piece choreography
@@ -301,7 +370,7 @@ function poseContents(t) {
     _q.slerpQuaternions(pc.rest.q, pc.ex.q, ee);
     _q2.setFromAxisAngle(pc.spin.axis, rotA * (1 - back));
     pc.obj.quaternion.copy(_q).multiply(_q2);
-    if (pc.obj.userData.morph) pc.obj.morphTargetInfluences[0] = 0.85 * ee;
+    if (pc.obj.userData.morph) pc.obj.morphTargetInfluences[0] = 0.28 * ee;
   }
 }
 
@@ -324,6 +393,7 @@ function show(names) {
   for (const [k, g] of Object.entries({ walnut, oak, studio, ...sets.groups })) g.visible = names.includes(k);
   box.visible = names.includes('box');
   if (sparks) sparks.visible = false;
+  labelGroup.visible = false;
   if (crumbs) crumbs.visible = false;
   smokePuffs.forEach(m => (m.visible = false));
   sweepLight.intensity = 0; glowLight.intensity = 0;
@@ -414,52 +484,73 @@ function shotExplode(t) {
   look(orbitPos(at, az, el, d), at, 34);
   setDOF(d, 0.00022, 0.01);
   dustA.visible = false;
+  wideLabels(t, d);
   return { samples: t < 10.4 ? 6 : 1, shutter: 1 / 48 };
+}
+
+function wideLabels(t, d, fade = 1) {
+  labelGroup.visible = true;
+  placeLabelScreen('cheese', cluster('cheese'), 0.32, 0.69, 0.36, prog(t, 11.55, 12.0) * fade);
+  placeLabelScreen('sau', cluster('sau'), 0.66, 0.31, 0.36, prog(t, 11.95, 12.4) * fade);
+  placeLabelScreen('ham', cluster('ham'), 0.34, 0.43, 0.36, prog(t, 12.35, 12.8) * fade);
 }
 
 function shotMacro(t) {
   studioLook();
+  pieces.forEach(pc => (pc.obj.visible = true));
   poseContents(t); crumbsAt(t);
-  // macro fly-through between floating pieces, rack focus from one to the next
-  const pick = k => pieces.find(p => p.kind === k);
-  const tg = [pieces.filter(p => p.kind === 'cube')[3], pieces.filter(p => p.kind === 'sau')[22], pieces.filter(p => p.kind === 'tomme')[1], pieces.filter(p => p.kind === 'cube')[20]];
-  const times = [15.0, 15.95, 16.85, 17.75, 18.45];
-  let seg = 0; while (seg < 3 && t > times[seg + 1]) seg++;
-  const lt = prog(t, times[seg], times[seg + 1]);
-  const DIST = { cube: 10, ham: 18, sau: 10, toast: 13, tomme: 13 };
-  const posOf = (pc, side) => {
-    const p = pc.obj.position.clone();
-    const out = v3(p.x, 0, p.z).normalize().applyAxisAngle(v3(0, 1, 0), side * 0.35);
-    return p.clone().add(out.multiplyScalar(DIST[pc.kind] || 10)).add(v3(0, 2.2, 0));
+  // snap zooms on the beat: cheese, saucisson, ham, back wide; each product named by its 3D label
+  const wide = () => { const at = v3(0, 19, 0); return { pos: orbitPos(at, deg(200), deg(16), 142), at, fov: 34, d: 142 }; };
+  const close = (kind, side, k) => {
+    const c = cluster(kind);
+    const out = v3(c.x, 0, c.z); if (out.length() < 2) out.set(Math.sin(deg(200)), 0, Math.cos(deg(200)));
+    out.normalize().applyAxisAngle(v3(0, 1, 0), side * 0.32);
+    const D = kind === 'ham' ? lerp(60, 53, k) : lerp(50, 43, k);
+    return { pos: c.clone().addScaledVector(out, D * Math.cos(deg(17))).add(v3(0, D * Math.sin(deg(17)), 0)), at: c, fov: 30, d: D };
   };
-  const A = tg[seg], B = tg[Math.min(seg + 1, 3)];
-  const pa = posOf(A, -1), pb = posOf(B, 1);
-  const e = easeInOut(lt);
-  let pos = pa.clone().lerp(pb, e);
-  const out = pos.clone().setY(0).normalize();
-  pos.add(out.multiplyScalar(Math.sin(e * Math.PI) * 3));
-  const atA = A.obj.position, atB = B.obj.position;
-  let at = atA.clone().lerp(atB, smooth(clamp((lt - 0.35) / 0.5)));
-  let fov = 26, samples = 1;
-  // rack focus: focus pulls to the next piece in the second half of each segment
-  let focus = lerp(pos.distanceTo(atA), pos.distanceTo(atB), smooth(clamp((lt - 0.45) / 0.35)));
-  if (seg === 3 && lt > 0.99) { /* hold */ }
+  const SNAP = [[15.0, 'cheese', -1], [16.0, 'sau', 1], [17.0, 'ham', -1], [18.0, 'wide', 0]];
+  let i = 0; while (i < 3 && t >= SNAP[i + 1][0]) i++;
+  const [t0, kind, side] = SNAP[i];
+  const hold = prog(t, t0, t0 + 1.0);
+  const poseOf = (j, h) => (SNAP[j][1] === 'wide' ? wide() : close(SNAP[j][1], SNAP[j][2], h));
+  const prev = i === 0 ? wide() : poseOf(i - 1, 1);
+  const cur = poseOf(i, hold);
+  const e = easeInOut5(prog(t, t0, t0 + 0.24));
+  let pos = prev.pos.clone().lerp(cur.pos, e), at = prev.at.clone().lerp(cur.at, e);
+  let fov = lerp(prev.fov, cur.fov, e), focus = lerp(prev.d, cur.d, e);
+  let samples = e > 0.02 && e < 0.98 ? 6 : 1;
+  labelGroup.visible = true;
+  const lab = { cheese: [-1, -1], sau: [1, 1], ham: [-1, 1] };
+  if (t < 18.7) {
+    for (const k of ['cheese', 'sau', 'ham']) {
+      if (kind === 'wide') continue;
+      const on = k === kind ? smooth(prog(t, t0 + 0.12, t0 + 0.4)) : 0;
+      const sc = cur.d / 48 * 0.5;
+      placeLabel(k, cluster(k), lab[k][0] * 6.5 * sc, lab[k][1] * 7.5 * sc, sc, on);
+    }
+  }
   // pull back for the snap-back and the lid
-  const pb2 = prog(t, 18.35, 18.95);
+  const pb2 = prog(t, 18.55, 19.0);
+  if (kind === 'wide') wideLabels(99, 142, smooth(prog(t, 18.1, 18.35)) * (1 - smooth(prog(t, 18.55, 18.75))));
   if (pb2 > 0) {
     const fin = orbitPos(v3(0, 6, 0), deg(208), deg(24), 120);
     const e2 = easeInOut5(pb2);
-    pos = pos.lerp(fin, e2); at = at.clone().lerp(v3(0, 6, 0), e2); fov = lerp(26, 32, e2);
+    pos = pos.lerp(fin, e2); at = at.clone().lerp(v3(0, 6, 0), e2); fov = lerp(fov, 32, e2);
     focus = lerp(focus, 120, e2);
-    samples = pb2 > 0.05 && pb2 < 0.95 ? 8 : 1;
+    samples = pb2 > 0.05 && pb2 < 0.95 ? 6 : samples;
   }
-  if (t > 18.95) {
-    const k = prog(t, 18.95, 20.0);
+  if (t > 19.0) {
+    const k = prog(t, 19.0, 20.0);
     pos = orbitPos(v3(0, 6, 0), deg(208 + 6 * k), deg(24 + 4 * k), 120 - 6 * k); at = v3(0, 6, 0); fov = 32; focus = pos.distanceTo(at);
     if (t > 19.3) samples = 4;
   }
   look(pos, at, fov);
-  setDOF(focus, pb2 > 0.5 ? 0.00025 : 0.004, pb2 > 0.5 ? 0.008 : 0.02);
+  setDOF(focus, t < 18.5 && kind !== 'wide' ? 0.0011 : 0.00025, 0.012);
+  if (t < 18.7) for (const k of ['cheese', 'sau', 'ham']) if (LABELS[k].visible) { /* re-place after the final camera */ }
+  // labels must follow the final camera of the frame
+  if (t < 18.7 && kind !== 'wide') { for (const k of ['cheese', 'sau', 'ham']) placeLabelScreen(k, cluster(k), 0.5, 0.2, 0.62, k === kind ? smooth(prog(t, t0 + 0.12, t0 + 0.4)) : 0); }
+  else if (kind === 'wide') wideLabels(99, 142, smooth(prog(t, 18.1, 18.35)) * (1 - smooth(prog(t, 18.55, 18.75))));
+  else labelGroup.visible = false;
   // lid falls back and closes with a clap at ~19.95 s
   const top = lid.userData.closedY;
   const kl = prog(t, 19.3, 19.93);
@@ -476,7 +567,7 @@ function shotMacro(t) {
 
 const SHOTS = [
   [0, 4, shotLogo], [4, 10, shotBox], [10, 15, shotExplode], [15, 20, shotMacro],
-  [20, 28.6, t => sets.shotLaptop(t, ctx)], [28.6, 34, t => sets.shotFollow(t, ctx)], [34, 42, t => sets.shotPoster(t, ctx)],
+  [20, 25.4, t => sets.shotLaptop(t, ctx)], [25.4, 34, t => sets.shotFollow(t, ctx)], [34, 42, t => sets.shotPoster(t, ctx)],
   [42, 48, t => sets.shotShop(t, ctx)], [48, 56.1, t => sets.shotCard(t, ctx)],
 ];
 const ctx = { look, orbitPos, setDOF, setKey, setRim, hemi, key, rim, show, poseContents, U, glowLight, sweepLight, dust: () => dustA, scene, renderer, camera, smokePuffs };
@@ -494,7 +585,9 @@ window.renderAt = async (t) => {
   const n = Math.min(6, Math.max(1, info0.samples || 1)), shutter = info0.shutter || 1 / 48;
   renderer.setRenderTarget(accRT); renderer.setClearColor(0x000000, 1); renderer.clear();
   for (let i = 0; i < n; i++) {
-    const ts = n > 1 ? t + (i / (n - 1) - 0.5) * shutter : t;
+    let ts = n > 1 ? t + (i / (n - 1) - 0.5) * shutter : t;
+    const shot = SHOTS.find(([a, b]) => t >= a && t < b);
+    if (shot) ts = clamp(ts, shot[0], shot[1] - 1e-4);      // motion-blur samples never cross a cut
     if (n > 1) { setup(ts); lightVis(); }
     sets.beforeRender && sets.beforeRender(ts);
     composer.render();

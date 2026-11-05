@@ -15,7 +15,7 @@ export function foodMaterials() {
   M.birchInner = std({ map: tex('birch_inner'), roughness: 0.75 });
   M.birchEdge = std({ map: tex('birch_inner', { repeat: [4, 0.05] }), roughness: 0.7, color: 0xf1e2c6 });
   M.parchment = std({ color: 0x6e4a2c, roughness: 0.9, side: THREE.DoubleSide });   // dark kraft liner, invisible between the pieces
-  M.comte = phys({ map: tex('comte'), bumpMap: tex('comte_bump', { color: false }), bumpScale: 1.2, roughness: 0.5, sheen: 0.5, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xffe2a0), emissive: 0x3a2508, emissiveIntensity: 0.25 });
+  M.comte = phys({ map: tex('comte'), bumpMap: tex('comte_bump', { color: false }), bumpScale: 0.9, roughness: 0.56, sheen: 0.35, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xffe6b0), emissive: 0x3a2608, emissiveIntensity: 0.32 });
   M.comteRind = std({ map: tex('comte_rind'), bumpMap: tex('comte_rind_bump', { color: false }), bumpScale: 2, roughness: 0.8 });
   M.tomme = phys({ map: tex('tomme', { repeat: [0.14, 0.14] }), bumpMap: tex('tomme_bump', { color: false, repeat: [0.14, 0.14] }), bumpScale: 1.5, roughness: 0.55, sheen: 0.4, sheenColor: new THREE.Color(0xfff1d6), emissive: 0x2e2410, emissiveIntensity: 0.2 });
   M.tommeRind = std({ map: tex('tomme_rind', { repeat: [0.3, 0.3] }), bumpMap: tex('tomme_rind_bump', { color: false, repeat: [0.3, 0.3] }), bumpScale: 2.5, roughness: 0.9 });

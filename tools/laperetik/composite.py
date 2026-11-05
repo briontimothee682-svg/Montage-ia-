@@ -12,7 +12,11 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import ig  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[2]
+ig.POSTER = lambda: Image.fromarray((base_frame(816) * 255).astype(np.uint8), 'RGB')
 WORK = ROOT / "exports/laperetik_work"
 F3D = WORK / "f3d"
 FONTS = ROOT / "assets/laperetik/fonts"
@@ -263,32 +267,17 @@ def overlays(canvas, base, t):
     title(canvas, base, "Fromages & charcuterie", "Oswald-700", 86, cx, 330, t, 10.35, 14.65, tracking=2)
     title(canvas, base, "à la découpe", "PlayfairDisplay-700i", 76, cx, 430, t, 10.6, 14.65)
     # 0:15-0:20
-    title(canvas, base, "Producteurs locaux", "Oswald-700", 96, cx, 330, t, 15.3, 18.35, tracking=3)
-    title(canvas, base, "Bio · AOP · IGP", "Oswald-500", 70, cx, 430, t, 15.6, 18.35, color=GOLD_L if t < 18.4 else None, tracking=6)
+    title(canvas, base, "Producteurs locaux", "Oswald-700", 96, cx, 330, t, 18.05, 19.85, tracking=3)
+    title(canvas, base, "Bio · AOP · IGP", "Oswald-500", 70, cx, 430, t, 18.3, 19.85, color=GOLD_L, tracking=6)
     # 0:27-0:34
-    if 29.0 <= t < 33.9:
-        k = ease_out(prog(t, 29.0, 29.45)) * (1 - prog(t, 33.4, 33.8))
-        pill(canvas, cx, 1320, 760, 300, (40, 28, 20), 0.88 * k)
-        title(canvas, base, "Abonne-toi →", "Oswald-700", 92, cx, 1250, t, 29.15, 33.35, color=CREAM, tracking=4, scrim=False)
-        title(canvas, base, B["handle"], "Inter-700", 54, cx, 1330, t, 29.4, 33.35, color=GOLD_L, scrim=False)
-        followed = t >= 31.2
-        bk = ease_back(prog(t, 29.8, 30.2)) * (1 - prog(t, 33.35, 33.7))
-        if bk > 0.01:
-            press = max(0.0, 1 - abs(t - 31.2) / 0.1)
-            bw, bh = 260 * (1 - 0.06 * press), 70 * (1 - 0.06 * press)
-            fill = (239, 231, 218) if followed else GOLD
-            pill(canvas, cx, 1412, bw * bk, bh * bk, fill, 0.98)
-            label = "Suivi(e)" if followed else "Suivre"
-            line(canvas, base, label, "Inter-700", 34, cx, 1410, t, 29.9, 33.35, scrim=False, color=ESPRESSO)
+    if 25.4 <= t < 34.0:
+        ig.inside(canvas, t)          # inside the screen: Reel, like, profile, follow, open the post
     # 0:42-0:48
     title(canvas, base, "Un accueil au top", "Oswald-700", 104, cx, 330, t, 42.4, 44.75, tracking=3)
     title(canvas, base, "Un très bon rapport", "Oswald-700", 92, cx, 320, t, 45.3, 47.75, tracking=2)
     title(canvas, base, "qualité-prix", "PlayfairDisplay-700i", 92, cx, 424, t, 45.55, 47.75, color=GOLD_L)
     # 0:48-0:56 end card
     if t >= 51.9:
-        k = ease_back(prog(t, 52.0, 52.42), 1.9)
-        disc = logo_disc(352)
-        paste(canvas, disc, W / 2, 951, clamp(prog(t, 52.0, 52.08)), max(0.01, 0.9 + 0.1 * k), 0)
         title(canvas, base, "NOUVEAU À ANNECY", "Oswald-700", 96, cx, 300, t, 52.2, 99, color=CREAM, tracking=5)
         line(canvas, base, f"{B['street_number']} {B['street']} · {B['city']}", "Inter-600", 36, cx, 392, t, 52.55, 99, color=CREAM)
         line(canvas, base, B["hours"], "Oswald-500", 38, cx, 448, t, 52.75, 99, color=GOLD_L, tracking=2)
@@ -336,6 +325,14 @@ def frame_3d(fi):
 
 
 def composite(fi):
+    base = base_frame(fi)
+    t = fi / FPS
+    canvas = Image.fromarray((base * 255).astype(np.uint8), "RGB").convert("RGBA")
+    overlays(canvas, base, t)
+    return canvas.convert("RGB")
+
+
+def base_frame(fi):
     t = fi / FPS
     im = frame_3d(fi)
     if im is None:
@@ -353,10 +350,7 @@ def composite(fi):
     g = grain_tiles()[fi % 8] if fi <= LAST_3D else grain_tiles()[fi % 8]
     lum = arr.mean(axis=2, keepdims=True)
     arr = arr + g[..., None] * (0.010 + 0.010 * (1 - lum))
-    base = np.clip(arr, 0, 1)
-    canvas = Image.fromarray((base * 255).astype(np.uint8), "RGB").convert("RGBA")
-    overlays(canvas, base, t)
-    return canvas.convert("RGB")
+    return np.clip(arr, 0, 1)
 
 
 def test(ts):

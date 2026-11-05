@@ -186,5 +186,12 @@ def labels():
     print("labels")
 
 
+def qr_json():
+    q = segno.make(B["qr_url"], error="m")
+    mat = [[int(v) for v in r] for r in q.matrix]
+    (TEX / "qr.json").write_text(json.dumps({"url": B["qr_url"], "n": len(mat), "m": mat}))
+    print("qr", len(mat))
+
+
 if __name__ == "__main__":
-    poster(); card_front(); card_back(); labels()
+    poster(); card_front(); card_back(); labels(); qr_json()

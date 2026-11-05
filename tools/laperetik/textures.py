@@ -181,13 +181,16 @@ def t_linen():
 def t_cheese():
     N = 1024
     # Alpine hard cheese (comté style): pale gold paste, tyrosine crystals, a few small eyes
-    base = fbm(N, N, 81, (4, 4), 5)
-    col = lerpc((246, 214, 132), (226, 178, 86), base * 0.9)
-    cr = dots(N, N, 900, 0.6, 1.8, 82, 0.5)
-    col = col * (1 - 0.6 * cr[..., None]) + np.array([255, 250, 232]) * 0.6 * cr[..., None]
-    eyes = dots(N, N, 14, 6, 18, 83, 1.5)
-    col *= (1 - 0.28 * eyes)[..., None]
-    h = 0.6 + 0.12 * (fbm(N, N, 84, (24, 24), 3) - 0.5) - 0.5 * eyes + 0.15 * cr
+    base = fbm(N, N, 81, (3, 3), 5)
+    col = lerpc((244, 216, 146), (230, 190, 110), base * 0.85)
+    col *= (0.97 + 0.06 * fbm(N, N, 88, (40, 40), 3))[..., None]           # fine paste grain
+    streak = fbm(N, N, 89, (2, 90), 2)                                        # faint knife marks
+    col *= (0.985 + 0.03 * streak)[..., None]
+    cr = dots(N, N, 1400, 0.5, 1.4, 82, 0.5)                                  # tyrosine crystals
+    col = col * (1 - 0.5 * cr[..., None]) + np.array([255, 248, 226]) * 0.5 * cr[..., None]
+    eyes = dots(N, N, 4, 3, 7, 83, 1.2)                                       # very few, small eyes
+    col *= (1 - 0.12 * eyes)[..., None]
+    h = 0.6 + 0.10 * (fbm(N, N, 84, (24, 24), 3) - 0.5) - 0.3 * eyes + 0.12 * cr + 0.05 * (streak - 0.5)
     save(col, "comte"); save(gray(h), "comte_bump")
     # rind of the alpine cheese (brushed, brown-orange)
     rb = fbm(N, N, 85, (6, 6), 5)

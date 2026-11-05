@@ -229,6 +229,28 @@ export async function build(B) {
     const rm2 = rosemary(M, 9); rm2.scale.setScalar(1.3); rm2.position.set(-24, 0.4, -12); rm2.rotation.y = deg(-70); cardSet.add(rm2);
     cardSet.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   }
+  // 3D QR code that comes out of the business card at the end (modules extruded on a cream plate, scannable)
+  {
+    const qr = await fetch('/assets/laperetik/tex/qr.json').then(r => r.json());
+    const n = qr.n, quiet = 2, cell = 0.5, codeW = (n + quiet * 2) * cell;
+    const g = new THREE.Group();
+    const pc = canvas(1024, 1280), px = pc.getContext('2d');
+    px.fillStyle = '#f6eee2'; px.fillRect(0, 0, 1024, 1280);
+    px.strokeStyle = '#c9a15b'; px.lineWidth = 14; px.beginPath(); px.roundRect(26, 26, 972, 1228, 60); px.stroke();
+    px.fillStyle = '#3a2a1f'; px.textAlign = 'center'; px.font = '700 96px Oswald'; px.fillText('SCANNEZ-MOI', 512, 150);
+    const W_ = codeW + 1.6, H_ = codeW * 1.25;
+    const plate = new THREE.Mesh(new RoundedBoxGeometry(W_, H_, 0.7, 3, 0.3), [0, 1, 2, 3, 4, 5].map(i => i === 4 ? new THREE.MeshStandardMaterial({ map: canvasTex(pc), roughness: 0.85 }) : new THREE.MeshStandardMaterial({ color: 0xe9dcc6, roughness: 0.85 })));
+    g.add(plate);
+    const codeY = -(H_ - codeW) / 2 + 0.8;      // the code sits in the lower part, the title above
+    const dark = []; qr.m.forEach((row, y) => row.forEach((v, x) => { if (v) dark.push([x, y]); }));
+    const mod = new THREE.InstancedMesh(new RoundedBoxGeometry(cell * 1.0, cell * 1.0, 0.36, 1, 0.03), new THREE.MeshStandardMaterial({ color: 0x2a1e16, roughness: 0.7 }), dark.length);
+    const m4 = new THREE.Matrix4();
+    dark.forEach(([x, y], i) => { m4.makeTranslation((x + quiet + 0.5) * cell - codeW / 2, codeY + codeW / 2 - (y + quiet + 0.5) * cell, 0.35 + 0.18); mod.setMatrixAt(i, m4); });
+    g.add(mod);
+    g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    const holder = new THREE.Group(); holder.add(g); cardSet.add(holder); holder.visible = false;
+    S.qr = holder; S.qrInner = g; S.qrW = W_;
+  }
   S.groups = groups;
   return api;
 }
@@ -253,13 +275,13 @@ async function makeTiles(snap) {
 // ------------------------------------------------------------ screen choreography (20 - 28.6 s)
 // two-finger scroll through the Reels feed, land on the L'Apéretik Reel, like it, the box comes out of the
 // screen and goes back in as the camera dives into the Reel.
-const SCROLLS = [[20.45, 20.95, 0, 1], [21.15, 21.7, 1, 2]];
+const SCROLLS = [[20.3, 20.7, 0, 1], [20.85, 21.3, 1, 2]];
 const feedP = t => {
   let p = 0;
   for (const [a, b, p0, p1] of SCROLLS) if (t >= a) p = lerp(p0, p1, easeInOut5(prog(t, a, b)));
   return p;
 };
-const CURSOR = [[20.0, 1240, 720], [21.9, 1240, 720], [22.4, 1181, 580], [30, 1181, 580]];
+const CURSOR = [[20.0, 1240, 720], [30, 1240, 720]];
 const CUR = (pts, t) => {
   if (t <= pts[0][0]) return { x: pts[0][1], y: pts[0][2] };
   for (let i = 0; i < pts.length - 1; i++) {
@@ -269,12 +291,12 @@ const CUR = (pts, t) => {
   const l = pts[pts.length - 1]; return { x: l[1], y: l[2] };
 };
 const press = (t, at) => Math.max(0, 1 - Math.abs(t - at) / 0.07);
-const LIKE = 22.5, POP_OUT = 23.0, POP_BACK = 26.05, POP_IN = 27.0, ZOOM0 = 26.75, ZOOM1 = 28.6;
+const LIKE = 99, POP_OUT = 21.45, CIRC0 = 22.15, CIRC1 = 24.0, POP_IN = 24.75, ZOOM0 = 24.1, ZOOM1 = 25.4;
 
 function screenState(t) {
   const p = feedP(t);
   const st = { p, cursor: CUR(CURSOR, t), press: press(t, LIKE), liked: t >= LIKE, likePop: t >= LIKE ? prog(t, LIKE, LIKE + 0.7) : 0,
-    chrome: 1 - smooth(prog(t, 27.25, 28.2)) };
+    chrome: 1 - smooth(prog(t, 24.55, 25.25)) };
   st.rect = S.ui.reelRect(S.ui.ours, p);
   st.reelT = t - 21.0;
   return st;
@@ -287,9 +309,9 @@ function reelPose(rt, boxVisible = true) {
   b.position.set(0, -8 + Math.sin(rt * 1.4) * 1.0, 0);
   b.rotation.set(deg(24), -deg(25) + (rt / 6.5) * Math.PI * 2, 0);
   const lid = b.userData.lid;
-  const lo = smooth(prog(rt, 9.4, 10.3)) * (1 - smooth(prog(rt, 11.9, 12.5)));
+  const lo = smooth(prog(rt, 5.3, 6.0)) * (1 - smooth(prog(rt, 7.0, 7.5)));
   lid.position.set(0, lid.userData.closedY + lo * 13, -lo * 3); lid.rotation.set(-deg(16) * lo, 0, 0);
-  S.reelContents.visible = lo > 0.001 || rt > 9.3;
+  S.reelContents.visible = lo > 0.001;
   hideUnderLid(S.reelPieces, lid);
   S.reelShadow.material.opacity = boxVisible ? 0.3 : 0;
   S.lines.forEach((l, i) => { l.t.offset.x = (rt * 0.035 * l.dir + i * 0.17) % 1; });
@@ -302,7 +324,7 @@ function reelPose(rt, boxVisible = true) {
 function renderReel(t, st, boxVisible) {
   const { renderer, scene } = S.B;
   reelPose(st.reelT, boxVisible);
-  const big = t > 27.3;
+  const big = t > 24.4;
   const w = big ? 1080 : 720, h = big ? 1920 : 1280;
   if (S.reelRT.width !== w) S.reelRT.setSize(w, h);
   const vis = [];
@@ -361,24 +383,33 @@ function povCam(D, elev, side = 4, lowerAim = 2.5) {
 }
 
 function popPose(t, ctx) {
-  // the box leaves the Reel, hovers in front of the laptop facing the camera, then dives back into the screen
+  // the box leaves the Reel, goes round in circles in front of the Mac, then spirals back into the screen
   const { c, n } = screenWorld();
-  const lidUp = v3(0, 1, 0).applyQuaternion(S.laptop.userData.lid.getWorldQuaternion(new THREE.Quaternion()));
-  const out = easeInOut(prog(t, POP_OUT, POP_OUT + 1.15)), back = easeInOut5(prog(t, POP_BACK, POP_IN));
-  const k = out * (1 - back);
+  const lidQ = S.laptop.userData.lid.getWorldQuaternion(new THREE.Quaternion());
+  const up = v3(0, 1, 0).applyQuaternion(lidQ), right = v3(1, 0, 0).applyQuaternion(lidQ);
+  const C = c.clone().addScaledVector(n, 13).addScaledVector(up, -0.5);
+  const RX = 5.6, RY = 7.0;
+  const start = c.clone().addScaledVector(n, 0.6).addScaledVector(up, -1.2);
+  const ring = (th, r, depth) => c.clone().addScaledVector(n, depth).addScaledVector(up, -0.5 * r).addScaledVector(right, Math.cos(th) * RX * r).addScaledVector(up, Math.sin(th) * RY * r);
+  let pos, sc, th = 0;
+  if (t < CIRC0) {
+    const k = easeInOut(prog(t, POP_OUT, CIRC0));
+    pos = start.clone().lerp(ring(0, 1, 13), k); pos.addScaledVector(n, Math.sin(k * Math.PI) * 2.5); sc = lerp(0.17, 0.32, k);
+  } else if (t < CIRC1) {
+    th = Math.PI * 3 * easeInOut(prog(t, CIRC0, CIRC1));
+    pos = ring(th, 1, 13 + Math.sin(th * 2) * 1.0); sc = 0.32;
+  } else {
+    const kb = easeIn(prog(t, CIRC1, POP_IN));
+    th = Math.PI * 3 + Math.PI * 1.6 * kb;
+    pos = ring(th, 1 - kb, lerp(13, 0.6, kb)); sc = lerp(0.32, 0.17, kb);
+  }
   S.popHolder.visible = t >= POP_OUT && t < POP_IN;
-  const start = c.clone().add(n.clone().multiplyScalar(0.6)).add(lidUp.clone().multiplyScalar(-1.2));
-  const hover = c.clone().add(n.clone().multiplyScalar(15)).add(lidUp.clone().multiplyScalar(-1.0)).add(v3(Math.sin(t * 0.9) * 0.6, Math.sin(t * 1.3) * 0.5, 0));
-  const pos = start.clone().lerp(hover, k);
-  pos.add(n.clone().multiplyScalar(Math.sin(k * Math.PI) * 2.0));
-  S.popHolder.position.copy(pos);
-  S.popHolder.scale.setScalar(lerp(0.17, 0.4, k));
-  // face the camera (lid toward the lens, logo upright), with a gentle sway
-  const camPos = ctx.camera.position.clone();
-  S.popHolder.up.copy(lidUp); S.popHolder.lookAt(camPos);
-  S.popHolder.rotateY(Math.sin(t * 1.1) * 0.22 * k); S.popHolder.rotateX(Math.sin(t * 0.8) * 0.12 * k);
-  S.popBox.rotation.set(Math.PI / 2, 0, (1 - k) * deg(25) + Math.sin(t * 0.7) * 0.08);
-  return t >= POP_OUT && t < POP_IN;   // true while the box is outside the Reel
+  S.popHolder.position.copy(pos); S.popHolder.scale.setScalar(sc);
+  // always facing the camera so the logo stays readable, banking into the turns
+  S.popHolder.up.copy(up); S.popHolder.lookAt(ctx.camera.position);
+  S.popHolder.rotateZ(-Math.sin(th) * 0.18); S.popHolder.rotateY(Math.cos(th) * 0.28);
+  S.popBox.rotation.set(Math.PI / 2, 0, Math.sin(t * 0.9) * 0.06);
+  return t >= POP_OUT && t < POP_IN;
 }
 
 const api = {
@@ -387,12 +418,13 @@ const api = {
   shotLaptop(t, ctx) {
     ctx.show(['desk']); deskLights(ctx, t);
     S.laptop.userData.halves.forEach(h => (h.rotation.y = 0));
-    const outside = popPose(t, ctx);
+    const outside = t >= POP_OUT && t < POP_IN;
     const st = screenUpdate(t, !outside);
     placeHand(st, t); S.hand.visible = true;
-    // exterior view, slow dolly, then the dive into the Reel (camera ends square to the screen, Reel filling the frame)
+    // exterior view (pulls back a little while the box circles), then a spiral dive that sucks us into the Reel
     const k = easeInOut(prog(t, 20.0, ZOOM0));
-    let { pos, at } = povCam(lerp(62, 52, k), lerp(15, 11, k), lerp(5, 3, k), lerp(5.5, 3.5, k));
+    const away = smooth(prog(t, 21.6, 22.4)) * (1 - smooth(prog(t, 23.6, 24.2)));
+    let { pos, at } = povCam(lerp(62, 56, k) + away * 9, lerp(15, 11, k), lerp(5, 3, k), lerp(5.5, 3.5, k) - away * 1.5);
     const w = prog(t, 20.0, 20.4);
     let samples = 1;
     if (w < 1) { const e = easeOut5(w); pos.add(v3(0, (1 - e) * 20, (1 - e) * 30)); samples = w < 0.9 ? 5 : 1; }
@@ -404,23 +436,31 @@ const api = {
       .add(v3(1, 0, 0).applyQuaternion(lidQ).multiplyScalar(((rr.x + rr.w / 2) / SCR.w - 0.5) * LAP.SW))
       .add(lidUp.clone().multiplyScalar(-((rr.y + rr.h / 2) / SCR.h - 0.5) * LAP.SH));
     const fillD = (rr.h / SCR.h * LAP.SH / 2) / Math.tan(deg(23));
+    ctx.look(pos, at, 46);
     if (z > 0) {
-      ctx.look(pos, at, 46);
       const q0 = ctx.camera.quaternion.clone();
       const endPos = rc.clone().add(n.clone().multiplyScalar(fillD));
       const m = new THREE.Matrix4().lookAt(endPos, rc, lidUp); const q1 = new THREE.Quaternion().setFromRotationMatrix(m);
-      pos = pos.clone().lerp(endPos, z);
+      // spiral: the path curls around the axis of the dive while the camera rolls a full turn
+      const curl = Math.sin(z * Math.PI) * 9;
+      const side = v3(1, 0, 0).applyQuaternion(lidQ);
+      const spiralOff = side.clone().multiplyScalar(Math.cos(z * Math.PI * 2) * curl).add(lidUp.clone().multiplyScalar(Math.sin(z * Math.PI * 2) * curl));
+      pos = pos.clone().lerp(endPos, z).add(spiralOff);
       ctx.camera.position.copy(pos); ctx.camera.quaternion.slerpQuaternions(q0, q1, z);
+      ctx.camera.rotateZ(Math.PI * 2 * easeInOut(prog(t, ZOOM0 + 0.1, ZOOM1)));
       ctx.camera.fov = 46; ctx.camera.updateProjectionMatrix();
-      samples = z > 0.08 && z < 0.92 ? 4 : 1;
-    } else ctx.look(pos, at, 46);
-    ctx.setDOF(ctx.camera.position.distanceTo(c), lerp(0.0009, 0.0, smooth(prog(t, ZOOM0, ZOOM0 + 1.0))), 0.014);
+      samples = z > 0.04 && z < 0.97 ? 6 : 1;
+    }
+    popPose(t, ctx);                          // after the camera, so the box faces this frame's lens
+    ctx.setDOF(ctx.camera.position.distanceTo(c), lerp(0.0009, 0.0, smooth(prog(t, ZOOM0, ZOOM0 + 0.8))), 0.014);
     const d = ctx.dust(); d.visible = z < 0.5; d.position.set(0, 0, 0); d.material.uniforms.t.value = t; d.material.uniforms.size.value = 0.45;
-    return { samples, shutter: 1 / 40 };
+    return { samples, shutter: 1 / 36 };
   },
   shotFollow(t, ctx) {
     // inside the Reel: the same set and camera as the screen texture, now rendered full frame
-    ctx.show([]); S.reel.visible = true;
+    ctx.show([]);
+    if (t > 28.9) { ctx.scene.background = new THREE.Color(0xfffaf3); ctx.scene.fog = null; ctx.dust().visible = false; ctx.setDOF(0, 0, 0); return { samples: 1 }; }  // covered by the profile page
+    S.reel.visible = true;
     deskLights(ctx, t);                       // identical lighting to the screen render, so the cut is seamless
     ctx.scene.background = new THREE.Color(0xb98450); ctx.scene.fog = null;
     ctx.dust().visible = false;
@@ -546,8 +586,24 @@ const api = {
     const p = v3(at.x + Math.sin(az) * Math.cos(el) * D, at.y + Math.sin(el) * D, at.z + Math.cos(az) * Math.cos(el) * D);
     ctx.look(p, at, 34);
     ctx.setDOF(p.distanceTo(v3(rest.x, top, rest.z)), rise > 0.9 ? 0.00008 : 0.0005, 0.012);
+    // the QR code rises out of the card in 3D, spinning, and settles facing the camera, big enough to scan
+    const qk = prog(t, 50.9, 52.3);
+    S.qr.visible = t >= 50.9;
+    let samples = 1;
+    if (S.qr.visible) {
+      const e = easeOut5(qk);
+      const from = v3(rest.x, top + 0.4, rest.z), to = v3(2.0, 40, 12.5);
+      const pos = from.clone().lerp(to, e); pos.y += Math.sin(e * Math.PI) * 6;
+      pos.y += Math.sin((t - 52.3) * 1.6) * 0.25 * smooth(prog(t, 52.3, 53));
+      S.qr.position.copy(pos);
+      S.qr.scale.setScalar(lerp(0.17, 0.86, easeBack(clamp(qk * 1.05), 1.2)));
+      S.qr.up.set(0, 0, -1); S.qr.lookAt(ctx.camera.position);
+      S.qrInner.rotation.set(0, (1 - e) * Math.PI * 0.9, -(1 - e) * Math.PI * 2);
+      if (t > 54) { S.qr.position.y = to.y; }           // still for the last 2 s
+      samples = qk > 0.03 && qk < 0.7 ? 4 : 1;
+    }
     const d = ctx.dust(); d.visible = t < 52; d.material.uniforms.t.value = t;
-    return { samples: 1 };
+    return { samples, shutter: 1 / 40 };
   },
   beforeRender(t) {},
 };

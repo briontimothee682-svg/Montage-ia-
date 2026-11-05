@@ -387,22 +387,28 @@ def build(stems=False):
     place(fx, wood_clap(1.0), 19.93, 1.0)
     place(fx, impact(0.9), 20.0, 0.75)
     place(fx, whoosh(0.5, 4000, 300, 1.0), 19.98, 0.6, 0.3)
-    for a in (20.45, 21.15):                                             # two-finger scrolls on the trackpad
-        place(fx, whoosh(0.45, 900, 3500, 0.7), a, 0.28, 0.2)
+    for a in (15.0, 16.0, 17.0, 18.0):                                 # snap zooms on the products
+        place(fx, whoosh(0.32, 4500, 600, 1.0), a - 0.04, 0.6, (-1) ** int(a) * 0.3)
+        place(fx, like_pop(0.5), a + 0.2, 0.3)                           # the 3D label pops in
+    for a in (20.3, 20.85):                                              # two-finger scrolls on the trackpad
+        place(fx, whoosh(0.4, 900, 3500, 0.7), a, 0.28, 0.2)
         place(fx, paper(0.4, 0.06), a, 0.25, 0.2)
-    place(fx, click(1.0), 22.49, 0.7, 0.15)
-    place(fx, like_pop(1.0), 22.52, 0.8, 0.2)
-    place(fx, whoosh(1.0, 300, 4200, 1.0), 22.95, 0.65, -0.1)          # the box comes out of the screen
-    place(fx, wood_pop(0.7), 24.1, 0.3)
-    place(fx, whoosh(1.0, 4200, 300, 1.0), 26.05, 0.65, 0.1)           # ...and dives back in
-    place(fx, riser(1.9, 0.9), 26.75, 0.6)                              # the zoom into the Reel
-    place(fx, whoosh(1.6, 200, 6000, 1.0, rev=True), 27.0, 0.6)
-    place(fx, whoosh(0.7, 5000, 400, 0.9), 28.58, 0.55)
-    place(fx, wood_pop(0.9), 30.42, 0.45)                               # lid opens inside the Reel
-    place(fx, click(1.0), 31.2, 0.6, 0.1)                                # follow button
-    place(fx, like_pop(0.7), 31.22, 0.5)
-    place(fx, wood_clap(0.6), 33.45, 0.5)
-    place(fx, riser(1.2, 0.7), 32.8, 0.45)
+    place(fx, whoosh(0.8, 300, 4200, 1.0), 21.4, 0.65, -0.1)          # the box comes out of the screen
+    for i, a in enumerate((22.2, 22.8, 23.4)):                           # ...and goes round in circles
+        place(fx, whoosh(0.6, 700, 3200, 0.8), a, 0.42, (-1) ** i * 0.7)
+    place(fx, riser(1.4, 0.9), 24.0, 0.6)                                # spiral that sucks us into the screen
+    place(fx, whoosh(1.3, 200, 6500, 1.0, rev=True), 24.1, 0.7)
+    place(fx, whoosh(0.6, 5000, 400, 0.9), 25.35, 0.5)
+    place(fx, click(0.8), 25.82, 0.5, 0.1); place(fx, click(0.8), 25.92, 0.5, 0.1)   # double tap
+    place(fx, like_pop(1.0), 25.96, 0.9)
+    place(fx, click(1.0), 27.72, 0.6)                                    # tap on the account
+    place(fx, whoosh(0.6, 2500, 500, 0.8), 28.2, 0.45, 0.5)              # profile slides in
+    place(fx, click(1.0), 30.78, 0.7)                                    # follow
+    place(fx, like_pop(0.9), 30.82, 0.7)
+    place(fx, whoosh(0.7, 800, 3000, 0.6), 31.25, 0.3)                   # scroll through the grid
+    place(fx, click(1.0), 32.52, 0.6)                                    # tap on the post
+    place(fx, riser(1.2, 0.8), 32.75, 0.5)
+    place(fx, whoosh(1.0, 300, 4500, 1.0, rev=True), 33.0, 0.55)
     place(fx, impact(1.1), 34.0, 0.95)
     place(fx, whoosh(0.6, 3000, 300, 0.9), 42.0, 0.5)
     place(fx, wood_pop(0.8), 42.4, 0.3)
@@ -415,8 +421,9 @@ def build(stems=False):
     place(fx, whoosh(0.45, 500, 3500, 0.6), 49.75, 0.45)
     place(fx, paper(0.8, 0.08), 50.55, 0.5)
     place(fx, riser(1.6, 0.9), 50.4, 0.55)
+    place(fx, whoosh(1.2, 400, 4000, 0.9), 50.9, 0.55)                 # the QR code rises out of the card
     place(fx, impact(1.2), 52.0, 1.0)
-    place(fx, like_pop(0.8), 52.05, 0.45)
+    place(fx, like_pop(0.8), 52.3, 0.5)
 
     # ---------------- mix
     kick_env = np.zeros(N)
