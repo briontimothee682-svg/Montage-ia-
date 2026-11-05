@@ -367,7 +367,7 @@ def success_screen(t):
         rnd = np.random.default_rng(12)
         for i in range(70):
             x = rnd.uniform(0, W); v = rnd.uniform(500, 1100); y = -40 + v * ck * 1.4 + rnd.uniform(-300, 0)
-            col = [GOLD, CAR, RED, ESP, (240, 214, 150)][i % 5]
+            col = [GOLD, CAR, RED, (240, 214, 150), (232, 120, 70)][i % 5]
             a = rnd.uniform(0, math.pi); w_, h_ = rnd.uniform(10, 18), rnd.uniform(18, 30)
             pts = [(x + math.cos(a) * w_ - math.sin(a) * h_, y + math.sin(a) * w_ + math.cos(a) * h_), (x - math.cos(a) * w_ - math.sin(a) * h_, y - math.sin(a) * w_ + math.cos(a) * h_),
                    (x - math.cos(a) * w_ + math.sin(a) * h_, y - math.sin(a) * w_ - math.cos(a) * h_), (x + math.cos(a) * w_ + math.sin(a) * h_, y + math.sin(a) * w_ - math.cos(a) * h_)]

@@ -12,8 +12,8 @@ scène 3D Three.js rendue image par image, titres et étalonnage en Python, musi
 | 4–10 s | Slogan, orbite, le couvercle s'ouvre sur le drop (6 s), vue de dessus de la box pleine |
 | 10–15 s | Explosion au ralenti, étiquettes 3D « Fromages », « Saucisson sec », « Jambon cru » |
 | 15–20 s | Zooms secs sur le temps (fromages, saucisson, jambon), retour dans la boîte, le couvercle se referme |
-| 20–25,4 s | Le Mac : défilement des Reels à deux doigts, la box sort de l'écran, tourne en rond, puis zoom en spirale qui aspire dans l'écran |
-| 25,4–34 s | À l'intérieur : le Reel défile, double-tap like, visite du profil @laperetik, abonnement, défilement de la grille, ouverture d'une publication qui devient l'affiche |
+| 20–25,4 s | Le Mac : défilement des Reels à deux doigts, la box sort de l'écran, tourne en rond, puis zoom en spirale (deux tours, flou radial, traînées lumineuses) qui aspire dans l'écran |
+| 25,4–34 s | À l'intérieur (musique légèrement accélérée) : le Reel défile, double-tap like, visite du profil @laperetik, abonnement, commande en Click & Collect (taille, retrait), « Commande réussie ! », « Voir nos prix » ouvre l'affiche |
 | 34–42 s | Affiche des prix dans un décor avec olivier et eucalyptus |
 | 42–48 s | Boutique (plantes suspendues), puis trinquage |
 | 48–56 s | Carte de visite qui tombe et se retourne, le QR code sort de la carte en 3D, carton de fin |

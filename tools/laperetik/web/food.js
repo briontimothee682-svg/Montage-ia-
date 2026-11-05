@@ -149,7 +149,7 @@ function blueWedge(M, rnd, R = 6, A = deg(42), h = 3.6) {
 
 function hamGeometry(rnd, L = 19, W = 6.4) {
   // folded state = a thin slice loosely gathered in irregular folds; morph target = the slice laid out
-  const g = new THREE.PlaneGeometry(L, W, 260, 22);
+  const g = new THREE.PlaneGeometry(L, W, 170, 16);
   const p = g.attributes.position;
   const flat = new Float32Array(p.array.length);
   const fold = new Float32Array(p.array.length);
