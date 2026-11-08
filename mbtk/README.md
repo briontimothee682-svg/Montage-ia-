@@ -1,15 +1,19 @@
 # MBTK Design — vidéo de lancement
 
-`mbtk_lancement.html` : la vidéo complète (9:16, 1080×1920, 60 fps, 58 s), en un seul fichier.
-Ouvre-la sur ton téléphone, touche « ▶ Lancer », enregistre l'écran. Touche l'écran à la fin pour rejouer.
+- `mbtk_lancement.mp4` : la vidéo prête à publier (1080×1920, 30 i/s, 58 s, avec musique et bruitages).
+- `mbtk_lancement_sans_musique.mp4` : la même avec les bruitages seuls (pour mettre une musique TikTok).
+- `mbtk_lancement.html` : la version animée en direct (Three.js), à ouvrir dans Safari ou Chrome.
 
-## Options dans l'adresse
-- `?son=sfx` : bruitages seuls, sans la musique (si tu mets ta propre musique dans TikTok)
-- `?son=0` : muet
+## Ouvrir la version HTML sur téléphone
+Le fichier .html ne fonctionne pas s'il est ouvert depuis l'app Fichiers ou un aperçu (le code n'y est pas exécuté) :
+il faut l'ouvrir dans le navigateur, via le lien de l'artefact claude.ai, ou en hébergeant le fichier.
+Touche « ▶ Lancer », enregistre l'écran, touche l'écran à la fin pour rejouer.
+En cas de souci, un message d'erreur s'affiche sous le bouton.
+
+Options dans l'adresse :
+- `?son=sfx` : bruitages seuls · `?son=0` : muet
 - `?q=0.8` : rendu plus léger si ça saccade (par défaut 1 sur téléphone, 1.5 sur ordinateur)
 - `?fit=cover` : remplit tout l'écran (rogne un peu les bords)
-
-Sur iPhone : désactive le mode silencieux, puis Partager → « Sur l'écran d'accueil » et ouvre depuis l'icône pour un vrai plein écran.
 
 ## Modifier
 Ton site et ton pseudo : ligne `const CFG` au début du script de `tools/src_v1.html`, puis reconstruire.
