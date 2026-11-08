@@ -214,7 +214,7 @@ function camB(t) {
   if (t < 42.9) { // couloir à pleine vitesse, avec rampe de vitesse et roulis
     const k = inv(41.0, 42.9, t), u = clamp(k + .055 * Math.sin(k * Math.PI * 2));
     const pos = HALL.getPointAt(u);
-    const pose = lookV(pos, pos.clone().add(HALL.getTangentAt(Math.min(1, u + .03))));
+    const pose = lookV(pos, pos.clone().add(HALL.getTangentAt(Math.min(1, u + .03))).lerp(DISP_T, .3 * Math.pow(inv(.7, 1, k), 3)));
     pose.q.multiply(new THREE.Quaternion().setFromAxisAngle(V3(0, 0, 1), Math.sin(k * Math.PI * 2) * .09));
     pose.q = new THREE.Quaternion().slerp(pose.q, E.cubicOut(inv(41.0, 41.35, t)));
     return pose;
@@ -223,7 +223,7 @@ function camB(t) {
     const k = E.sine(inv(42.9, 44.6, t));
     const pos = SWOOP.getPointAt(k);
     const ahead = pos.clone().add(SWOOP.getTangentAt(Math.min(1, k + .03)));
-    const tgt = ahead.lerp(DISP_T, E.cubicOut(Math.min(1, k * 2.6)));
+    const tgt = ahead.lerp(DISP_T, .3 + .7 * E.cubicOut(Math.min(1, k * 2.6)));
     const pose = lookV(pos, tgt);
     pose.q.multiply(new THREE.Quaternion().setFromAxisAngle(V3(0, 0, 1), -Math.sin(k * Math.PI) * .12));
     return pose;
@@ -572,7 +572,7 @@ document.getElementById('go').addEventListener('click', e => {
 document.body.addEventListener('click', () => { if (ended) start(); });
 
 async function init() {
-  await Promise.all([document.fonts.load("900 40px Unbounded"), document.fonts.load("800 40px Unbounded"), document.fonts.load("700 40px Unbounded"), document.fonts.load("700 40px 'Space Grotesk'"), document.fonts.load("600 40px 'Space Grotesk'"), document.fonts.load("500 40px 'Space Grotesk'"), document.fonts.load("400 40px 'Space Grotesk'")]).catch(() => { });
+  await Promise.race([Promise.all([document.fonts.load("900 40px Unbounded"), document.fonts.load("800 40px Unbounded"), document.fonts.load("700 40px Unbounded"), document.fonts.load("700 40px 'Space Grotesk'"), document.fonts.load("600 40px 'Space Grotesk'"), document.fonts.load("500 40px 'Space Grotesk'"), document.fonts.load("400 40px 'Space Grotesk'")]).catch(() => { }), new Promise(r => setTimeout(r, 10000))]);
   LOGO = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = LOGO_SRC; });
   document.getElementById('siteTxt').textContent = CFG.site; document.getElementById('urlTxt').textContent = CFG.site;
   const audioP = prepareAudio();

@@ -179,41 +179,94 @@ function knitTex() {
   g.putImageData(id, 0, 0); return c;
 }
 
-/* ---------- drapé de tissu (couette, drap, plaid) ---------- */
-function drapeGeo(o) {
-  const g = new THREE.PlaneGeometry(o.w, o.z1 - o.z0, o.sx || 150, o.sz || 120); g.rotateX(-Math.PI / 2); g.translate(0, 0, (o.z0 + o.z1) / 2);
-  const P = g.attributes.position, rad = o.rad || .06;
+/* ---------- tissus : carreau de matelassage (couleur + relief), tissage fin ---------- */
+function fabricTile(base, opt = {}) {
+  // une tuile = un carreau de couette (ou un motif de lin) ; couleur avec fibres + carte de normales assortie
+  const S2 = 512, C = mk(S2, S2), Nn = mk(S2, S2);
+  const cd = C.g.createImageData(S2, S2), nd = Nn.g.createImageData(S2, S2);
+  const hgt = new Float32Array(S2 * S2), R = rng(opt.seed || 3);
+  const per = opt.thread || 3.2;
+  for (let y = 0; y < S2; y++) for (let x = 0; x < S2; x++) {
+    const wv = Math.sin(x / per * Math.PI) * Math.sin(y / per * Math.PI);
+    const fib = (N2(x / 1.5, y * .7, S2 / 1.5, S2 * .7) - .5);
+    let h = .5 + .14 * wv + .1 * fib;
+    if (opt.seam) { const ex = Math.min(x, S2 - 1 - x), ey = Math.min(y, S2 - 1 - y), e = Math.min(ex, ey); h -= .55 * Math.exp(-e * e / 30); }
+    hgt[y * S2 + x] = h;
+  }
+  for (let y = 0; y < S2; y++) for (let x = 0; x < S2; x++) {
+    const i = y * S2 + x, h = hgt[i];
+    const hx = hgt[y * S2 + ((x + 1) % S2)] - hgt[y * S2 + ((x - 1 + S2) % S2)], hy = hgt[((y + 1) % S2) * S2 + x] - hgt[((y - 1 + S2) % S2) * S2 + x];
+    const st = opt.strength || 2.2; let nx = -hx * st, ny = hy * st, nz = 1; const l = Math.hypot(nx, ny, nz);
+    nd.data[i * 4] = (nx / l * .5 + .5) * 255; nd.data[i * 4 + 1] = (ny / l * .5 + .5) * 255; nd.data[i * 4 + 2] = (nz / l * .5 + .5) * 255; nd.data[i * 4 + 3] = 255;
+    const v = .88 + (h - .5) * .5 + (R() - .5) * .05 + (N1(x / 40, y / 40, S2 / 40, S2 / 40) - .5) * .1;
+    cd.data[i * 4] = base[0] * v; cd.data[i * 4 + 1] = base[1] * v; cd.data[i * 4 + 2] = base[2] * v; cd.data[i * 4 + 3] = 255;
+  }
+  C.g.putImageData(cd, 0, 0); Nn.g.putImageData(nd, 0, 0);
+  if (opt.seam) { C.g.strokeStyle = 'rgba(0,0,0,.35)'; C.g.lineWidth = 2; C.g.setLineDash([7, 5]); C.g.strokeRect(3, 3, S2 - 6, S2 - 6); }
+  const rp = opt.repeat || [1, 1];
+  return { map: T(C.c, { repeat: rp, aniso: MAXANI }), normal: T(Nn.c, { repeat: rp, linear: true, aniso: MAXANI }) };
+}
+
+/* ---------- drapé de tissu (couette matelassée, drap, plaid) ---------- */
+function drapeMap(o) {
+  const rad = o.rad || .06;
   const drape = d => { if (d <= 0) return [0, 0]; const arc = Math.PI * rad / 2; if (d < arc) { const a = d / rad; return [rad * Math.sin(a), rad - rad * Math.cos(a)]; } return [rad, rad + Math.min(d - arc, o.hang || .28)]; };
-  for (let i = 0; i < P.count; i++) {
-    let x = P.getX(i), z = P.getZ(i), y = o.top, ax = Math.abs(x), sx = Math.sign(x) || 1;
+  return (x, z) => {
+    let y = o.top; const ax = Math.abs(x), sx = Math.sign(x) || 1;
     const dx = drape(ax - o.half); let nx = sx * (Math.min(ax, o.half) + dx[0]); y -= dx[1];
     const dz = o.foot != null ? drape(z - o.foot) : [0, 0]; let nz = (o.foot != null ? Math.min(z, o.foot) : z) + dz[0]; y -= dz[1];
     const onTop = clamp(1 - Math.max(ax - o.half, o.foot != null ? z - o.foot : -1, 0) * 8);
     const s = o.seed || 0;
-    const w = (.010 * Math.sin(x * 9 + z * 4 + s) + .008 * Math.sin(x * 3.5 - z * 11 + 1.3 + s) + .012 * (fbm(N1, (x + 2 + s) * 3, (z + 2) * 3, 3) - .5) * 2 + .005 * Math.sin(x * 23 + z * 7)) * (o.wr || 1);
-    y += w * (.6 + .4 * onTop) + (o.puff || .02) * onTop;
-    if (o.fold != null) { const fz = z - o.fold; y += .03 * Math.exp(-fz * fz * 260) * onTop; }
-    if (o.dip) { const lx = x - o.dip[0], lz = z - o.dip[1]; y -= .008 * Math.exp(-(lx * lx * 18 + lz * lz * 30)) * onTop; }
-    if (ax > o.half + .05) nx += .006 * Math.sin(z * 30 + x + s);
-    P.setXYZ(i, nx, y, nz);
-  }
+    // grands plis souples + plis fins + gonflant
+    const w = (.012 * Math.sin(x * 6 + z * 3 + s) + .009 * Math.sin(x * 2.6 - z * 8.5 + 1.3 + s) + .014 * (fbm(N1, (x + 2 + s) * 2.4, (z + 2) * 2.4, 4) - .5) * 2 + .004 * Math.sin(x * 19 + z * 6 + s)) * (o.wr || 1);
+    y += w * (.55 + .45 * onTop) + (o.puff || .02) * onTop;
+    // plis rayonnants autour du portable
+    if (o.dip) { const lx = x - o.dip[0], lz = z - o.dip[1], r = Math.hypot(lx, lz), a = Math.atan2(lz, lx); y -= .01 * Math.exp(-r * r * 22) * onTop; y += .006 * Math.sin(a * 7) * Math.exp(-Math.pow(r - .32, 2) * 40) * onTop; }
+    if (o.fold != null) { const fz = z - o.fold; y += .032 * Math.exp(-fz * fz * 240) * onTop; }
+    // matelassage : chaque carreau gonfle entre les coutures
+    if (o.quilt) {
+      const q = Math.pow(Math.abs(Math.sin(Math.PI * (x + o.w / 2) / o.quilt) * Math.sin(Math.PI * (z - o.z0) / o.quilt)), .55) * o.qh;
+      if (onTop > .5) y += q; else if (ax > o.half) nx += sx * q * .8; else nz += q * .8;
+    }
+    if (ax > o.half + .05) nx += .007 * Math.sin(z * 26 + x + s) + .004 * Math.sin(z * 61 + s);
+    return [nx, y, nz];
+  };
+}
+function drapeGeo(o) {
+  const g = new THREE.PlaneGeometry(o.w, o.z1 - o.z0, o.sx || 150, o.sz || 120); g.rotateX(-Math.PI / 2); g.translate(0, 0, (o.z0 + o.z1) / 2);
+  const P = g.attributes.position, map = drapeMap(o);
+  for (let i = 0; i < P.count; i++) { const r = map(P.getX(i), P.getZ(i)); P.setXYZ(i, r[0], r[1], r[2]); }
   g.computeVertexNormals(); return g;
 }
+// ourlet épais qui suit le bord du tissu (donne l'épaisseur de la couette)
+function hemGeo(o, r) {
+  const map = drapeMap(o), pts = [], n = 60;
+  for (let k = 0; k <= n; k++) pts.push(V3(...map(-o.w / 2, o.z0 + (o.z1 - o.z0) * k / n)));
+  if (o.foot != null) for (let k = 1; k < n; k++) pts.push(V3(...map(-o.w / 2 + o.w * k / n, o.z1)));
+  for (let k = n; k >= 0; k--) pts.push(V3(...map(o.w / 2, o.z0 + (o.z1 - o.z0) * k / n)));
+  return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 500, r, 10, false);
+}
 function pillowGeo(sx, sy, sz, seed) {
-  const g = new THREE.SphereGeometry(1, 72, 48), p = g.attributes.position;
+  const g = new THREE.SphereGeometry(1, 96, 64), p = g.attributes.position;
+  const f = a => Math.sign(a) * Math.pow(Math.abs(a), .26);
   for (let i = 0; i < p.count; i++) {
     const vx = p.getX(i), vy = p.getY(i), vz = p.getZ(i);
-    const f = a => Math.sign(a) * Math.pow(Math.abs(a), .26);
     const x = f(vx), z = f(vz);
+    const m = Math.max(Math.abs(x), Math.abs(z));
     const prof = Math.pow(Math.max(0, (1 - Math.pow(Math.abs(x), 5)) * (1 - Math.pow(Math.abs(z), 5))), .55);
     let y = Math.sign(vy) * Math.pow(Math.abs(vy), .8) * prof;
-    y += (N1(x * 2.5 + seed, z * 2.5, 0, 0) - .5) * .22 * prof * Math.sign(vy);
+    // plis de tissu qui partent des coins + creux au centre
+    const ang = Math.atan2(z, x);
+    y += Math.sign(vy) * (Math.sin(ang * 8 + seed) * .06 * Math.pow(m, 3) + (N1(x * 3 + seed, z * 3, 0, 0) - .5) * .14 * prof - .05 * Math.exp(-(x * x + z * z) * 6));
     const corner = Math.pow(Math.abs(x * z), 6) * .05;
     p.setXYZ(i, x * sx * (1 + corner), y * sy, z * sz * (1 + corner));
   }
-  g.computeVertexNormals(); return g;
+  g.computeVertexNormals();
+  // passepoil (couture) sur tout le tour
+  const pts = []; for (let k = 0; k < 160; k++) { const a = k / 160 * Math.PI * 2; const x = f(Math.cos(a)), z = f(Math.sin(a)); const corner = Math.pow(Math.abs(x * z), 6) * .05; pts.push(V3(x * sx * (1 + corner), 0, z * sz * (1 + corner))); }
+  const pipe = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 320, Math.min(sx, sz) * .028, 8, true);
+  return { body: g, pipe };
 }
-
 
 /* ---------- MacBook bordeaux détaillé : alu sablé, clavier en relief, trackpad, haut-parleurs, écran fin ---------- */
 function dotsTex() { const { c, g } = mk(128, 512); g.fillStyle = '#5c1628'; g.fillRect(0, 0, 128, 512); g.fillStyle = '#12050a'; for (let y = 4; y < 512; y += 7) for (let x = 5; x < 128; x += 7) { g.beginPath(); g.arc(x + ((y / 7 | 0) % 2 ? 3.5 : 0), y, 1.8, 0, 7); g.fill(); } return T(c); }
@@ -238,7 +291,7 @@ function buildMac(env) {
     zz += rowH;
   });
   keys.castShadow = true; g.add(keys);
-  const tp = new THREE.Mesh(slab(.128, .08, .006, .0008, .0003), new THREE.MeshPhysicalMaterial({ color: 0x6a1a2c, metalness: .55, roughness: .2, clearcoat: .7, envMap: env, envMapIntensity: 1.1 })); tp.rotation.x = -Math.PI / 2; tp.position.set(0, BH + .0001, LD / 2 - .049); g.add(tp);
+  const tp = new THREE.Mesh(slab(.128, .08, .006, .0008, .0003), new THREE.MeshPhysicalMaterial({ color: 0x6a1a2c, metalness: .5, roughness: .42, clearcoat: .15, clearcoatRoughness: .4, envMap: env, envMapIntensity: .9 })); tp.rotation.x = -Math.PI / 2; tp.position.set(0, BH + .0001, LD / 2 - .049); g.add(tp);
   const spk = dotsTex(); for (const sx of [-1, 1]) { const sp = new THREE.Mesh(new THREE.PlaneGeometry(.013, .108), new THREE.MeshStandardMaterial({ map: spk, roughness: .6 })); sp.rotation.x = -Math.PI / 2; sp.position.set(sx * .147, BH + .0003, wz); g.add(sp); }
   const hinge = new THREE.Mesh(new THREE.CylinderGeometry(.0055, .0055, LW - .07, 20), new THREE.MeshStandardMaterial({ color: 0x220810, metalness: .7, roughness: .35, envMap: env })); hinge.rotation.z = Math.PI / 2; hinge.position.set(0, BH, -LD / 2 + .004); g.add(hinge);
   // écran
@@ -251,7 +304,7 @@ function buildMac(env) {
   const notch = new THREE.Mesh(shapeGeo(.03, .0085, .003), new THREE.MeshBasicMaterial({ color: 0x020202 })); notch.position.set(0, dy + DH / 2 - .0035, .0009); lid.add(notch);
   const cam = new THREE.Mesh(new THREE.CircleGeometry(.0013, 16), new THREE.MeshPhysicalMaterial({ color: 0x0a1a12, roughness: .1, clearcoat: 1 })); cam.position.set(0, dy + DH / 2 - .0035, .001); lid.add(cam);
   const refl = new THREE.Mesh(new THREE.PlaneGeometry(DW + .004, DH + .004), new THREE.MeshPhysicalMaterial({ color: 0x000000, roughness: .03, metalness: 0, clearcoat: 1, transparent: true, opacity: .14, envMap: env, envMapIntensity: 2.2, depthWrite: false })); refl.position.set(0, dy, .0012); lid.add(refl);
-  const spill = new THREE.PointLight(0xc26a8a, .14, .8, 2); spill.position.set(0, .07, -.03); g.add(spill);
+  const spill = new THREE.PointLight(0xc26a8a, .12, .5, 2); spill.position.set(0, .1, -.06); g.add(spill);
   const ls = new THREE.Mesh(new THREE.PlaneGeometry(LW * 1.35, LD * 1.5), new THREE.MeshBasicMaterial({ map: T(softRectTex(256, 256, 40, 26, 20)), transparent: true, opacity: .6, depthWrite: false })); ls.rotation.x = -Math.PI / 2; ls.position.y = .002; g.add(ls);
   g.userData.disp = disp;
   return g;
@@ -317,21 +370,39 @@ function buildHouse() {
   const head = new THREE.Mesh(slab(1.8, .86, .03, .06, .012), oakMat); head.position.set(0, .8, -1.5); S(head);
   for (let i = 0; i < 9; i++) { const sl = new THREE.Mesh(new THREE.BoxGeometry(.012, .78, .012), new THREE.MeshStandardMaterial({ color: 0x8a6440, roughness: .7 })); sl.position.set(-.8 + i * .2, .8, -1.465); sceneB.add(sl); }
   const matt = new THREE.Mesh(slab(1.56, 2.0, .06, .2, .05), new THREE.MeshStandardMaterial({ color: 0xf1ebe3, roughness: .9 })); matt.rotation.x = -Math.PI / 2; matt.position.set(0, .48, -.45); S(matt);
-  // couette marine (velours), drap crème replié, plaid bordeaux
-  let duvetMat;
-  try { duvetMat = new THREE.MeshPhysicalMaterial({ color: 0x0e1838, roughness: .93, bumpMap: weave, bumpScale: .0006, envMap: envB, envMapIntensity: .3, side: THREE.DoubleSide }); }
-  catch (e) { duvetMat = new THREE.MeshStandardMaterial({ color: 0x101b42, roughness: .9, side: THREE.DoubleSide }); }
-  const duvet = new THREE.Mesh(drapeGeo({ w: 2.2, z0: -1.3, z1: .95, top: .625, half: .78, foot: .57, fold: -.9, dip: [.08, -.3], sz: 140, seed: 0 }), duvetMat); S(duvet);
-  const sheet = new THREE.Mesh(drapeGeo({ w: 2.18, z0: -1.0, z1: -.84, top: .64, half: .785, sx: 120, sz: 16, puff: .03, wr: .7, seed: 2 }), new THREE.MeshStandardMaterial({ color: 0xf0e7da, roughness: .9, bumpMap: weave, bumpScale: .0004, side: THREE.DoubleSide })); S(sheet);
+  // couette marine matelassée (carreaux de 25 cm, coutures, ourlet épais), drap crème replié, plaid bordeaux en maille
+  const DUV = { w: 2.2, z0: -1.3, z1: .95, top: .625, half: .78, foot: .57, fold: -.9, dip: [.08, -.3], sx: 220, sz: 200, quilt: .25, qh: .016, seed: 0 };
+  const qt = fabricTile([18, 28, 70], { seam: true, repeat: [DUV.w / .25, (DUV.z1 - DUV.z0) / .25], seed: 4 });
+  const duvetMat = new THREE.MeshPhysicalMaterial({ map: qt.map, normalMap: qt.normal, normalScale: new THREE.Vector2(.9, .9), roughness: .9, envMap: envB, envMapIntensity: .3, side: THREE.DoubleSide });
+  const duvet = new THREE.Mesh(drapeGeo(DUV), duvetMat); S(duvet);
+  const hem = new THREE.Mesh(hemGeo(DUV, .022), new THREE.MeshPhysicalMaterial({ color: 0x0f1a40, roughness: .9, envMap: envB, envMapIntensity: .3 })); S(hem);
+  const SHT = { w: 2.18, z0: -1.0, z1: -.84, top: .655, half: .785, sx: 160, sz: 20, puff: .03, wr: .7, seed: 2 };
+  const lin = fabricTile([240, 232, 220], { repeat: [12, 1], thread: 2.6, strength: 1.6, seed: 7 });
+  const sheet = new THREE.Mesh(drapeGeo(SHT), new THREE.MeshStandardMaterial({ map: lin.map, normalMap: lin.normal, normalScale: new THREE.Vector2(.7, .7), roughness: .88, side: THREE.DoubleSide, envMap: envB, envMapIntensity: .25 })); S(sheet);
+  const sheetHem = new THREE.Mesh(hemGeo(SHT, .012), sheet.material); S(sheetHem);
   const knit = T(knitTex(), { repeat: [10, 3] });
-  const thr = new THREE.Mesh(drapeGeo({ w: 2.3, z0: .12, z1: .56, top: .685, half: .8, hang: .34, sx: 140, sz: 40, puff: .015, wr: 1.4, seed: 5 }), new THREE.MeshStandardMaterial({ map: knit, bumpMap: knit, bumpScale: .002, roughness: .95, side: THREE.DoubleSide, envMap: envB, envMapIntensity: .2 })); S(thr);
-  // coussins
-  const pil = (sx, sy, sz, col, pos, rot, seed) => { const m = new THREE.Mesh(pillowGeo(sx, sy, sz, seed), new THREE.MeshStandardMaterial({ color: col, roughness: .93, bumpMap: weave, bumpScale: .0005, envMap: envB, envMapIntensity: .25 })); m.position.set(...pos); m.rotation.set(...rot); S(m); return m; };
-  pil(.36, .11, .23, 0xf4e4ce, [-.4, .76, -1.3], [-1.05, .04, .03], 1);
-  pil(.36, .11, .23, 0xf6e8d4, [.4, .76, -1.29], [-1.07, -.05, -.03], 2);
-  pil(.24, .085, .17, 0x9e2a43, [.16, .76, -1.1], [-.88, .18, .1], 3);
-  pil(.22, .08, .16, 0xe6d4c0, [-.2, .75, -1.09], [-.84, -.22, -.08], 4);
-  pil(.18, .07, .13, 0x16224d, [-.02, .74, -1.0], [-.8, .05, .02], 5);
+  const THR = { w: 2.3, z0: .12, z1: .56, top: .69, half: .8, hang: .34, sx: 160, sz: 50, puff: .015, wr: 1.3, seed: 5 };
+  const knitMat = new THREE.MeshStandardMaterial({ map: knit, bumpMap: knit, bumpScale: .0025, roughness: .95, side: THREE.DoubleSide, envMap: envB, envMapIntensity: .2 });
+  const thr = new THREE.Mesh(drapeGeo(THR), knitMat); S(thr);
+  S(new THREE.Mesh(hemGeo(THR, .014), knitMat));
+  // coussins (lin) avec passepoil
+  const pil = (sx, sy, sz, col, pos, rot, seed) => {
+    const geo = pillowGeo(sx, sy, sz, seed);
+    const tile = fabricTile(col, { repeat: [5, 5], thread: 2.8, strength: 1.4, seed });
+    const mat = new THREE.MeshStandardMaterial({ map: tile.map, normalMap: tile.normal, normalScale: new THREE.Vector2(.8, .8), roughness: .93, envMap: envB, envMapIntensity: .25 });
+    const m = new THREE.Mesh(geo.body, mat); m.position.set(...pos); m.rotation.set(...rot); S(m);
+    const pp = new THREE.Mesh(geo.pipe, new THREE.MeshStandardMaterial({ color: new THREE.Color(col[0] / 255 * .82, col[1] / 255 * .82, col[2] / 255 * .82).convertSRGBToLinear(), roughness: .85 })); m.add(pp); pp.castShadow = true;
+    return m;
+  };
+  pil(.36, .11, .23, [244, 230, 210], [-.4, .76, -1.3], [-1.05, .04, .03], 1);
+  pil(.36, .11, .23, [246, 234, 214], [.4, .76, -1.29], [-1.07, -.05, -.03], 2);
+  pil(.24, .085, .17, [158, 42, 67], [.16, .76, -1.1], [-.88, .18, .1], 3);
+  pil(.22, .08, .16, [230, 212, 192], [-.2, .75, -1.09], [-.84, -.22, -.08], 4);
+  pil(.18, .07, .13, [22, 34, 77], [-.02, .74, -1.0], [-.8, .05, .02], 5);
+  // ombres douces entre coussins, tête de lit et couette
+  { const aoT = T(softRectTex(256, 256, 34, 40, 40));
+    const aoM = (w, h, x, y, z, rx, op) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: aoT, transparent: true, opacity: op, depthWrite: false })); m.position.set(x, y, z); m.rotation.x = rx; sceneB.add(m); };
+    aoM(1.7, .5, 0, .78, -1.462, 0, .5); aoM(1.6, .55, 0, .69, -1.12, -Math.PI / 2, .4); }
   // tables de chevet, lampes, déco
   const lampShade = new THREE.MeshStandardMaterial({ color: 0xf3e3cc, emissive: new THREE.Color(1.4, .8, .4), emissiveMap: shadeTex(), roughness: .9, side: THREE.DoubleSide });
   for (const sx of [-1, 1]) {
@@ -361,7 +432,6 @@ function buildHouse() {
   };
   const big = T(bigPoster());
   hang(big, .64, .9, -.05, 1.75, -1.53);
-  hang(T(tradePoster(0)), .36, .5, 1.22, 1.5, -1.53);
   // MacBook bordeaux (modèle détaillé)
   laptop = buildMac(envB); laptop.position.set(.08, .652, -.3); laptop.rotation.y = -.32; sceneB.add(laptop);
   // ombres de contact (occlusion)
@@ -414,7 +484,7 @@ function buildHouse() {
   for (const [w, h, px, py] of [[.07, 2.12, .41, 1.06], [.07, 2.12, 1.39, 1.06], [1.05, .07, .9, 2.13]]) { boxM(w, h, .04, creamPaint, px, py, 3.18); boxM(w, h, .04, creamPaint, px, py, 3.32); }
   // tableaux MBTK dans le couloir
   const fr = [];
-  hang(T(tradePoster(0)), .5, .72, .33, 1.55, 8.3, Math.PI / 2);
+  hang(T(tradePoster(2)), .5, .72, .33, 1.55, 8.3, Math.PI / 2);
   hang(big, .56, .8, 1.47, 1.55, 5.4, -Math.PI / 2);
   hang(T(tradePoster(3)), .5, .72, 1.47, 1.55, 11.4, -Math.PI / 2);
   hang(T(tradePoster(1)), .5, .72, .33, 1.55, 10.6, Math.PI / 2);

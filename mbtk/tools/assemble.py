@@ -56,6 +56,9 @@ s = rep(s, '    <div id="topShade"></div>\n', '    <div id="site"><div id="siteB
 s = rep(s, "['Logo, cartes, affiches, posts', 'Tout assorti, un seul prestataire', 'layers'],", "['Logos, affiches, posts et vidéos comme celle-ci', 'Tout assorti, un seul prestataire', 'layers'],")
 s = rep(s, "'Tout assorti, un seul presta', 'Proche de toi, dispo 7j/7'];", "'Posts, vidéos : tout assorti', 'Proche de toi, dispo 7j/7'];")
 s = rep(s, "function keyboardTex() {", part('part_site.js') + "\nfunction keyboardTex() {")
+# ---- polices chargées sans bloquer le démarrage (si Google Fonts tarde, la page démarre quand même)
+s = rep(s, '&display=block" rel="stylesheet">', '&display=swap" rel="stylesheet" media="print" onload="this.media=\'all\'">')
+s = rep(s, "const F = (w, s, fam) => `${w} ${s}px ${fam === 'u' ? 'Unbounded' : \"'Space Grotesk'\"}`;", "const F = (w, s, fam) => `${w} ${s}px ${fam === 'u' ? \"Unbounded, 'Arial Black', 'Helvetica Neue', Arial, sans-serif\" : \"'Space Grotesk', 'Helvetica Neue', Arial, sans-serif\"}`;")
 # ---- constantes
 s = rep(s, "const W = 1080, H = 1920, DUR = 36;", "const W = 1080, H = 1920, DUR = 58;")
 s = rep(s, "(isMobile ? 32 : 44)", "(isMobile ? 32 : 48)")
