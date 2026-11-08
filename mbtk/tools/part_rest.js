@@ -21,7 +21,7 @@ function buildPost() {
   matComp = new THREE.ShaderMaterial({
     uniforms: {
       tC: { value: null }, tD: { value: null }, tB: { value: null }, uRes: { value: new THREE.Vector2(RW, RH) }, uNear: { value: camera.near }, uFar: { value: camera.far },
-      uFocus: { value: 3 }, uAp: { value: 0 }, uMax: { value: 26 * Q }, uRadial: { value: 0 }, uRadC: { value: new THREE.Vector2(.5, .5) }, uDir: { value: 0 },
+      uFocus: { value: 3 }, uAp: { value: 0 }, uMax: { value: 16 * Q }, uRadial: { value: 0 }, uRadC: { value: new THREE.Vector2(.5, .5) }, uDir: { value: 0 },
       uSlit: { value: 0 }, uFlash: { value: 0 }, uFlashCol: { value: new THREE.Color(.62, .1, .2) }, uExpo: { value: 1 }, uBloom: { value: .55 }, uCA: { value: .0007 }
     }, vertexShader: vs,
     fragmentShader: `
@@ -78,6 +78,8 @@ function buildPost() {
         vec3 a=.5*(texture2D(tC,vUv+dir*(1./3.-.5)).rgb+texture2D(tC,vUv+dir*(2./3.-.5)).rgb);
         vec3 b=a*.5+.25*(texture2D(tC,vUv-dir*.5).rgb+texture2D(tC,vUv+dir*.5).rgb);
         float lB=lu(b);vec3 c=(lB<lMin||lB>lMax)?a:b;
+        vec3 nb=(texture2D(tC,vUv+vec2(uPx.x,0.)).rgb+texture2D(tC,vUv-vec2(uPx.x,0.)).rgb+texture2D(tC,vUv+vec2(0.,uPx.y)).rgb+texture2D(tC,vUv-vec2(0.,uPx.y)).rgb)*.25;
+        c=clamp(c+(m-nb)*.55*(1.-smoothstep(.06,.25,lMax-lMin)*.5),0.,1.);
         c+=(fract(sin(dot(vUv*uRes+uTime,vec2(12.9898,78.233)))*43758.5453)-.5)/255.;
         gl_FragColor=vec4(c,1.);}`
   });
@@ -192,38 +194,42 @@ function camA(t) {
   return pose;
 }
 // ---- couloir → chambre
-let HALL, B0, B1, B2, DISP_T, BED_T = V3(-.02, .74, -.45);
+let HALL, SWOOP, B0, BN, BIN, DISP_T, BED_T = V3(-.02, .74, -.45);
 function computeHall() {
   { const ph = phonePose(7.3); phone.position.copy(ph.p); phone.quaternion.copy(ph.q); phone.updateMatrixWorld(true); POSE73 = relPose(2.95, 30, -30); }
   const d = SW / (K_OVER * 2 * Math.tan(FOV * DEG / 2) * (W / H));
   const p0 = V3(PB.x, PB.y, PB.z + d * PS);
-  HALL = new THREE.CatmullRomCurve3([p0, V3(.87, 1.33, 11.4), V3(1.0, 1.42, 8.2), V3(.84, 1.38, 5.2), V3(.9, 1.34, 3.3), V3(.98, 1.33, 2.5), V3(1.02, 1.32, 1.95)], false, 'centripetal');
-  B0 = lookV(V3(1.02, 1.32, 1.95), BED_T);
+  HALL = new THREE.CatmullRomCurve3([p0, V3(.86, 1.33, 11.4), V3(1.02, 1.45, 8.4), V3(.82, 1.36, 5.6), V3(.9, 1.32, 3.4)], false, 'centripetal');
   laptop.updateMatrixWorld(true);
   const disp = laptop.userData.disp; const c = disp.getWorldPosition(new THREE.Vector3()); const q = disp.getWorldQuaternion(new THREE.Quaternion());
   const n = V3(0, 0, 1).applyQuaternion(q), up = V3(0, 1, 0).applyQuaternion(q), rt = V3(1, 0, 0).applyQuaternion(q);
-  DISP_T = c.clone().addScaledVector(up, -.012);
-  B1 = lookV(c.clone().addScaledVector(n, .6).addScaledVector(rt, .05).addScaledVector(up, .06), DISP_T, V3(0, 1, 0));
-  B2 = lookV(c.clone().addScaledVector(n, .2), c, up);
+  DISP_T = c.clone();
+  const front = c.clone().addScaledVector(n, .8).addScaledVector(up, .12).addScaledVector(rt, .12);
+  SWOOP = new THREE.CatmullRomCurve3([V3(.9, 1.32, 3.4), V3(.98, 1.58, 2.45), V3(.62, 1.88, 1.3), V3(.3, 1.32, .6), front], false, 'centripetal');
+  B0 = lookV(front, c);
+  BN = lookV(c.clone().addScaledVector(n, .37), c, up);
+  BIN = lookV(c.clone().addScaledVector(n, .12), c, up);
 }
 function camB(t) {
-  if (t < 43.4) {
-    const k = inv(41.0, 43.4, t), u = 1 - Math.pow(1 - k, 2.1);
+  if (t < 42.9) { // couloir à pleine vitesse, avec rampe de vitesse et roulis
+    const k = inv(41.0, 42.9, t), u = clamp(k + .055 * Math.sin(k * Math.PI * 2));
     const pos = HALL.getPointAt(u);
-    const tg = pos.clone().add(HALL.getTangentAt(Math.min(1, u + .03)));
-    const w = E.cubicInOut(inv(.6, 1, u)); tg.lerp(BED_T, w);
-    const pose = lookV(pos, tg);
-    pose.q.multiply(new THREE.Quaternion().setFromAxisAngle(V3(0, 0, 1), Math.sin(u * Math.PI * 3) * .035 * (1 - w)));
+    const pose = lookV(pos, pos.clone().add(HALL.getTangentAt(Math.min(1, u + .03))));
+    pose.q.multiply(new THREE.Quaternion().setFromAxisAngle(V3(0, 0, 1), Math.sin(k * Math.PI * 2) * .09));
     pose.q = new THREE.Quaternion().slerp(pose.q, E.cubicOut(inv(41.0, 41.35, t)));
     return pose;
   }
-  if (t < 50.5) { // lent travelling : la caméra garde toujours le Mac dans le cadre
-    const k = E.quadInOut(inv(43.4, 50.5, t));
-    const pos = B0.p.clone().lerp(B1.p, k);
-    const tgt = BED_T.clone().lerp(DISP_T, E.cubicInOut(Math.min(1, k * 1.6)));
-    return lookV(pos, tgt);
+  if (t < 44.6) { // envolée au-dessus du lit, puis descente vers le Mac
+    const k = E.sine(inv(42.9, 44.6, t));
+    const pos = SWOOP.getPointAt(k);
+    const ahead = pos.clone().add(SWOOP.getTangentAt(Math.min(1, k + .03)));
+    const tgt = ahead.lerp(DISP_T, E.cubicOut(Math.min(1, k * 2.6)));
+    const pose = lookV(pos, tgt);
+    pose.q.multiply(new THREE.Quaternion().setFromAxisAngle(V3(0, 0, 1), -Math.sin(k * Math.PI) * .12));
+    return pose;
   }
-  return mixPose(B1, B2, E.expoIn(inv(50.5, 51.0, t)));
+  if (t < 45.5) return mixPose(B0, BN, E.cubicInOut(inv(44.6, 45.5, t)));
+  return mixPose(BN, BIN, E.expoIn(inv(45.5, 46.05, t)));
 }
 // ---- portail : la caméra vue "à travers" l'écran du téléphone, transposée dans le couloir
 function updatePortalCam() {
@@ -240,7 +246,7 @@ function camQuat(extra) { const q = camera.quaternion.clone(); if (extra) q.mult
 function stageWidth(px, depth) { return px / W * 2 * TANH * depth * W / H; }
 
 /* ---------- état animé (piloté par GSAP) ---------- */
-const P = { radial: 0, dir: 0, flash: 0, rip: 0, pulse: 1, pglow: 0, scroll: 0, shade: 0, portal: 0, glow: 0, fov: FOV };
+const P = { radial: 0, dir: 0, flash: 0, rip: 0, pulse: 1, pglow: 0, scroll: 0, shade: 0, portal: 0, glow: 0, fov: FOV, punch: 0 };
 let tl;
 function splitWords(el) {
   const walk = (node) => {
@@ -310,17 +316,19 @@ function buildTimeline() {
   tl.fromTo(P, { glow: 0 }, { keyframes: [{ glow: 1, duration: .25 }, { glow: 0, duration: .55 }] }, 39.9);
   tl.fromTo(P, { radial: 0 }, { radial: .12, duration: .75, ease: 'expo.in', ...ir }, 40.25).to(P, { radial: .07, duration: .2 }, 41.0).to(P, { radial: .025, duration: .5 }, 41.2).to(P, { radial: 0, duration: .5 }, 42.7);
   tl.fromTo(P, { fov: FOV }, { fov: 50, duration: .55, ease: 'power2.out', ...ir }, 41.0).to(P, { fov: FOV, duration: .7, ease: 'power2.inOut' }, 42.7);
-  // 8 · la chambre, le site
-  tl.to(P, { shade: .85, duration: .3 }, 43.8);
-  slamIn('t8', 43.9, .07);
-  slamIn('t9', 46.4, .05);
-  tl.fromTo('#t10', { opacity: 0, y: 30, scale: .9 }, { opacity: 1, y: 0, scale: 1, duration: .45, ease: 'back.out(2)' }, 47.6);
-  out('t8', 50.25, .2); out('t9', 50.25, .2); out('t10', 50.25, .2);
-  tl.to(P, { shade: 0, duration: .2 }, 50.3);
-  tl.set(P, { scroll: 0 }, 43.4);
-  [[44.4, .2], [45.8, .43], [47.2, .68], [48.6, 1]].forEach(([a, v]) => tl.to(P, { scroll: v, duration: a > 48 ? 1.4 : 1.0, ease: 'power2.inOut', ...ir }, a));
-  tl.fromTo(P, { radial: 0 }, { radial: .12, duration: .45, ease: 'expo.in', ...ir }, 50.55);
-  tl.fromTo(P, { flash: 0 }, { flash: 1, duration: .2, ease: 'power2.in', ...ir }, 50.8);
+  // 8 · le couloir, la chambre, puis plongée dans l'écran du Mac : le site en plein cadre
+  tl.to(P, { shade: .85, duration: .3 }, 42.9);
+  slamIn('t8', 43.0, .07);
+  slamIn('t9', 43.5, .05);
+  tl.fromTo('#t10', { opacity: 0, y: 30, scale: .9 }, { opacity: 1, y: 0, scale: 1, duration: .45, ease: 'back.out(2)' }, 44.0);
+  out('t8', 45.35, .2); out('t9', 45.35, .2); out('t10', 45.35, .2);
+  tl.to(P, { shade: 0, duration: .2 }, 45.4);
+  tl.set(P, { scroll: 0 }, 41.0);
+  tl.fromTo(P, { radial: 0 }, { radial: .1, duration: .5, ease: 'expo.in', ...ir }, 45.55).to(P, { radial: 0, duration: .2 }, 46.05);
+  tl.fromTo('#site', { opacity: 0, scale: 1.22, rotateX: 10, transformPerspective: 1400, filter: 'blur(10px)' }, { opacity: 1, scale: 1, rotateX: 0, transformPerspective: 1400, filter: 'blur(0px)', duration: .45, ease: 'power3.out' }, 45.75);
+  tl.fromTo('#siteCv', { y: 0 }, { keyframes: [{ y: 0, duration: .5 }, { y: -1250, duration: .75, ease: 'power3.inOut' }, { y: -1250, duration: .3 }, { y: -2450, duration: .75, ease: 'power3.inOut' }, { y: -2450, duration: .3 }, { y: -3650, duration: .75, ease: 'power3.inOut' }, { y: -3650, duration: .3 }, { y: -SITE_H - 170 + 1920, duration: .75, ease: 'power3.inOut' }], ...ir }, 46.3);
+  tl.to('#site', { scale: 1.12, filter: 'blur(6px)', duration: .35, ease: 'power2.in' }, 50.65);
+  tl.set('#site', { opacity: 0 }, 51.0);
   // 9 · fin
   tl.set('#end', { opacity: 1 }, 51.0); tl.set(P, { radial: 0, flash: 0 }, 51.0);
   tl.fromTo('#endFlash', { opacity: 1 }, { opacity: 0, duration: .5, ease: 'power2.out' }, 51.0);
@@ -333,6 +341,8 @@ function buildTimeline() {
   tl.fromTo('#card', { y: 0 }, { keyframes: [{ y: 10, duration: .05 }, { y: -4, duration: .06 }, { y: 0, duration: .08 }], ...ir }, 52.0);
   tl.fromTo('#endSweep', { x: 0, opacity: 0 }, { x: 2300, opacity: 1, duration: 1.4, ease: 'power2.inOut' }, 52.25);
   ['#e1', '#e2', '#e3', '#e4'].forEach((s, i) => tl.fromTo(s, { opacity: 0, y: 40, filter: 'blur(10px)' }, { opacity: 1, y: 0, filter: 'blur(0px)', duration: .45, ease: 'expo.out' }, 52.6 + i * .25));
+  // petits coups de zoom sur les temps forts
+  [.3, 1.0, 8.3, 9.0, 14.6, 15.45, 16.75, 18.05, 19.35, 20.65, 22.75, 27.0, 31.0, 35.4, 36.0, 36.75, 37.5, 38.25, 39.0].forEach(a => tl.to(P, { keyframes: [{ punch: 2.4, duration: .07, ease: 'power2.out' }, { punch: 0, duration: .45, ease: 'power2.inOut' }] }, a));
   // boucle : le logo se pose sur la photo de contact de l'appel, retour sur la table
   const ly = 960 + (905 - SCH / 2) * K_OVER;
   tl.to(['#e1', '#e2', '#e3', '#e4'], { opacity: 0, y: 30, duration: .18, ease: 'power2.in' }, 55.95);
@@ -379,8 +389,8 @@ function applyLayers(key, L, t) {
 const _hv = new THREE.Vector3();
 function update(t) {
   tl.time(Math.min(t, DUR));
-  const inB = t >= 41.0 && t < 51.0, inEnd = t >= 51.0 && t < 56.1;
-  setFov(inB ? P.fov : FOV);
+  const inB = t >= 41.0 && t < 51.0, inEnd = (t >= 51.0 && t < 56.1) || (t >= 46.1 && t < 51.0);
+  setFov(inB ? P.fov : FOV - P.punch);
   // ----- téléphone
   const ph = phonePose(t); phone.position.copy(ph.p); phone.quaternion.copy(ph.q); phone.updateMatrixWorld(true);
   const hgt = Math.max(0, phone.position.y - PD / 2);
@@ -473,22 +483,22 @@ function update(t) {
   siteUniforms.uScroll.value = P.scroll;
   // ----- mise au point
   let focus = camera.position.distanceTo(scrC), ap = 0;
-  if (t < 3.4) ap = 13; else if (t < 4.38) ap = 13 * (1 - inv(3.4, 4.1, t));
+  if (t < 3.4) ap = 7; else if (t < 4.38) ap = 7 * (1 - inv(3.4, 4.1, t));
   else if (t < 5.3) ap = 0;
-  else if (t < 7.6) { ap = 9 * Math.min(Lc * 1.5, 1); focus -= .1 * Lc; }
-  else if (t < 8.5) ap = lerp(9, 20, inv(7.6, 8.4, t));
-  else if (t < 14.5) { ap = 20; for (let i = 0; i < 4; i++) { const t0 = CARD_T[i]; const w = Math.min(inv(t0, t0 + .2, t), 1 - inv(t0 + 1.0, t0 + 1.35, t)); if (w > 0) focus = lerp(focus, 1.55, E.sine(w)); } }
-  else if (t < 22.7) { ap = 22; focus = lerp(focus, 1.6, E.sine(inv(14.6, 15.2, t))); }
-  else if (t < 25.4) { ap = 20; focus = 1.9; }
-  else if (t < 26.25) ap = 20 * (1 - inv(25.4, 26.0, t));
-  else if (t < 34.5) { const L = Math.max(Lt, Li); ap = 8 * Math.min(L * 1.5, 1); focus -= .14 * L; }
-  else if (t < 40.25) { ap = lerp(0, 18, inv(34.5, 35.1, t)); const front = trades.reduce((b, m) => m.visible && m.position.z > (b ? b.position.z : -99) ? m : b, null); if (front) focus = lerp(focus, camera.position.distanceTo(front.position), .55); }
-  else if (t < 41) ap = 18 * (1 - inv(40.25, 40.7, t));
+  else if (t < 7.6) { ap = 5 * Math.min(Lc * 1.5, 1); focus -= .1 * Lc; }
+  else if (t < 8.5) ap = lerp(5, 9, inv(7.6, 8.4, t));
+  else if (t < 14.5) { ap = 9; for (let i = 0; i < 4; i++) { const t0 = CARD_T[i]; const w = Math.min(inv(t0, t0 + .2, t), 1 - inv(t0 + 1.0, t0 + 1.35, t)); if (w > 0) focus = lerp(focus, 1.55, E.sine(w)); } }
+  else if (t < 22.7) { ap = 11; focus = lerp(focus, 1.6, E.sine(inv(14.6, 15.2, t))); }
+  else if (t < 25.4) { ap = 9; focus = 1.9; }
+  else if (t < 26.25) ap = 9 * (1 - inv(25.4, 26.0, t));
+  else if (t < 34.5) { const L = Math.max(Lt, Li); ap = 5 * Math.min(L * 1.5, 1); focus -= .14 * L; }
+  else if (t < 40.25) { ap = lerp(0, 9, inv(34.5, 35.1, t)); const front = trades.reduce((b, m) => m.visible && m.position.z > (b ? b.position.z : -99) ? m : b, null); if (front) focus = lerp(focus, camera.position.distanceTo(front.position), .55); }
+  else if (t < 41) ap = 9 * (1 - inv(40.25, 40.7, t));
   if (inB) {
-    if (t < 43.4) { ap = 6; focus = 3.0; }
-    else { focus = camera.position.distanceTo(laptop.userData.disp.getWorldPosition(new THREE.Vector3())); ap = lerp(6, 18, inv(43.4, 44, t)); }
+    if (t < 42.9) { ap = 2.5; focus = 3.0; }
+    else { focus = camera.position.distanceTo(laptop.userData.disp.getWorldPosition(new THREE.Vector3())); ap = lerp(2.5, 8, inv(42.9, 43.8, t)) * (1 - inv(45.3, 45.7, t)); }
   }
-  if (t >= 56) ap = 13 * inv(57.6, 58, t);
+  if (t >= 56) ap = 7 * inv(57.6, 58, t);
   const u = matComp.uniforms;
   u.uFocus.value = focus; u.uAp.value = ap * Q; u.uRadial.value = P.radial; u.uDir.value = P.dir; u.uFlash.value = P.flash;
   u.uBloom.value = inB ? .32 : .16 + .2 * away; u.uExpo.value = inB ? .92 : 1.0;
@@ -572,6 +582,7 @@ async function init() {
   PAGE.in = T(pageIncoming());
   for (const k of ['call', 'tt', 'ig']) { PAGE[k] = T(renderPage(PAGES[k], true)); PAGE[k + 'Base'] = T(renderPage(PAGES[k], false)); }
   const st = T(sitePage()); st.anisotropy = MAXANI; siteUniforms.tSite.value = st;
+  { const sc = sitePageMobile(); sc.id = 'siteCv'; sc.style.cssText = 'position:absolute;left:0;top:170px;width:1080px;height:' + SITE_H + 'px'; document.getElementById('site').appendChild(sc); document.getElementById('siteUrl').textContent = CFG.site; }
   buildSceneA(); buildHouse(); buildPost(); buildLogoPieces(); computeHall();
   endBgTex(document.getElementById('endBg'));
   buildTimeline();

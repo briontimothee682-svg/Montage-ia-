@@ -214,6 +214,51 @@ function pillowGeo(sx, sy, sz, seed) {
   g.computeVertexNormals(); return g;
 }
 
+
+/* ---------- MacBook bordeaux détaillé : alu sablé, clavier en relief, trackpad, haut-parleurs, écran fin ---------- */
+function dotsTex() { const { c, g } = mk(128, 512); g.fillStyle = '#5c1628'; g.fillRect(0, 0, 128, 512); g.fillStyle = '#12050a'; for (let y = 4; y < 512; y += 7) for (let x = 5; x < 128; x += 7) { g.beginPath(); g.arc(x + ((y / 7 | 0) % 2 ? 3.5 : 0), y, 1.8, 0, 7); g.fill(); } return T(c); }
+function sandTex() { const { c, g } = mk(256, 256); const id = g.createImageData(256, 256), d = id.data, R = rng(31); for (let i = 0; i < d.length; i += 4) { const v = 118 + (R() - .5) * 70; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; } g.putImageData(id, 0, 0); return T(c, { linear: true, repeat: [10, 10] }); }
+function buildMac(env) {
+  const g = new THREE.Group();
+  const LW = .312, LD = .221, BH = .0155;
+  const alu = new THREE.MeshPhysicalMaterial({ color: 0x7a1c33, metalness: .9, roughness: .36, roughnessMap: sandTex(), envMap: env, envMapIntensity: 1.5, clearcoat: .2, clearcoatRoughness: .3 });
+  const base = new THREE.Mesh(slab(LW, LD, .014, BH, .0035), alu); base.rotation.x = -Math.PI / 2; base.position.y = BH / 2; base.castShadow = base.receiveShadow = true; g.add(base);
+  const notchF = new THREE.Mesh(new THREE.BoxGeometry(.06, .004, .006), new THREE.MeshStandardMaterial({ color: 0x3a0c18, roughness: .5 })); notchF.position.set(0, BH - .002, LD / 2 - .002); g.add(notchF);
+  // clavier : cuvette sombre + touches en relief (une seule géométrie instanciée)
+  const wz = -LD / 2 + .072;
+  const well = new THREE.Mesh(shapeGeo(.274, .114, .006), new THREE.MeshStandardMaterial({ color: 0x12050a, roughness: .75 })); well.rotation.x = -Math.PI / 2; well.position.set(0, BH + .0002, wz); g.add(well);
+  const rows = [{ h: .55, u: Array(14).fill(1) }, { h: 1, u: [...Array(13).fill(1), 1.4] }, { h: 1, u: [1.4, ...Array(12).fill(1), 1] }, { h: 1, u: [1.75, ...Array(11).fill(1), 1.65] }, { h: 1, u: [2.25, ...Array(10).fill(1), 2.15] }, { h: 1, u: [1, 1, 1, 1.25, 5.5, 1.25, 1, 1, 1] }];
+  const P = .0186, kg = slab(.0162, .0162, .0035, .0016, .0006); kg.rotateX(-Math.PI / 2);
+  const total = rows.reduce((a, r) => a + r.u.length, 0);
+  const keys = new THREE.InstancedMesh(kg, new THREE.MeshPhysicalMaterial({ color: 0x0d0d10, roughness: .5, clearcoat: .15, envMap: env, envMapIntensity: .5 }), total);
+  const mtx = new THREE.Matrix4(), q0 = new THREE.Quaternion(); let n = 0, zz = wz - .052;
+  rows.forEach(r => {
+    const sum = r.u.reduce((a, b) => a + b, 0); let x = -sum * P / 2; const rowH = P * (r.h === 1 ? 1 : .62);
+    r.u.forEach(u => { const w = u * P; mtx.compose(V3(x + w / 2, BH + .0012, zz + rowH / 2), q0, V3((w - .0024) / .0162, 1, (rowH - .0024) / .0162)); keys.setMatrixAt(n++, mtx); x += w; });
+    zz += rowH;
+  });
+  keys.castShadow = true; g.add(keys);
+  const tp = new THREE.Mesh(slab(.128, .08, .006, .0008, .0003), new THREE.MeshPhysicalMaterial({ color: 0x6a1a2c, metalness: .55, roughness: .2, clearcoat: .7, envMap: env, envMapIntensity: 1.1 })); tp.rotation.x = -Math.PI / 2; tp.position.set(0, BH + .0001, LD / 2 - .049); g.add(tp);
+  const spk = dotsTex(); for (const sx of [-1, 1]) { const sp = new THREE.Mesh(new THREE.PlaneGeometry(.013, .108), new THREE.MeshStandardMaterial({ map: spk, roughness: .6 })); sp.rotation.x = -Math.PI / 2; sp.position.set(sx * .147, BH + .0003, wz); g.add(sp); }
+  const hinge = new THREE.Mesh(new THREE.CylinderGeometry(.0055, .0055, LW - .07, 20), new THREE.MeshStandardMaterial({ color: 0x220810, metalness: .7, roughness: .35, envMap: env })); hinge.rotation.z = Math.PI / 2; hinge.position.set(0, BH, -LD / 2 + .004); g.add(hinge);
+  // écran
+  const lid = new THREE.Group(); lid.position.set(0, BH, -LD / 2 + .004); lid.rotation.x = -16 * DEG; g.add(lid);
+  const LH = LD - .004;
+  const lidB = new THREE.Mesh(slab(LW, LH, .012, .0055, .0018), alu); lidB.position.set(0, LH / 2, -.0028); lidB.castShadow = true; lid.add(lidB);
+  const bez = new THREE.Mesh(shapeGeo(LW - .003, LH - .003, .011), new THREE.MeshPhysicalMaterial({ color: 0x040405, roughness: .1, clearcoat: 1, envMap: env })); bez.position.set(0, LH / 2, .0002); lid.add(bez);
+  const DW = .296, DH = DW / 1.54, dy = LH / 2 + .003;
+  const disp = new THREE.Mesh(new THREE.PlaneGeometry(DW, DH), siteMat); disp.position.set(0, dy, .0006); lid.add(disp);
+  const notch = new THREE.Mesh(shapeGeo(.03, .0085, .003), new THREE.MeshBasicMaterial({ color: 0x020202 })); notch.position.set(0, dy + DH / 2 - .0035, .0009); lid.add(notch);
+  const cam = new THREE.Mesh(new THREE.CircleGeometry(.0013, 16), new THREE.MeshPhysicalMaterial({ color: 0x0a1a12, roughness: .1, clearcoat: 1 })); cam.position.set(0, dy + DH / 2 - .0035, .001); lid.add(cam);
+  const refl = new THREE.Mesh(new THREE.PlaneGeometry(DW + .004, DH + .004), new THREE.MeshPhysicalMaterial({ color: 0x000000, roughness: .03, metalness: 0, clearcoat: 1, transparent: true, opacity: .14, envMap: env, envMapIntensity: 2.2, depthWrite: false })); refl.position.set(0, dy, .0012); lid.add(refl);
+  const spill = new THREE.PointLight(0xc26a8a, .14, .8, 2); spill.position.set(0, .07, -.03); g.add(spill);
+  const ls = new THREE.Mesh(new THREE.PlaneGeometry(LW * 1.35, LD * 1.5), new THREE.MeshBasicMaterial({ map: T(softRectTex(256, 256, 40, 26, 20)), transparent: true, opacity: .6, depthWrite: false })); ls.rotation.x = -Math.PI / 2; ls.position.y = .002; g.add(ls);
+  g.userData.disp = disp;
+  return g;
+}
+function shadeTex() { const { c, g } = mk(16, 256); const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#ffffff'); gr.addColorStop(.12, '#b98a5c'); gr.addColorStop(.7, '#7a5638'); gr.addColorStop(1, '#a87a50'); g.fillStyle = gr; g.fillRect(0, 0, 16, 256); return T(c); }
+function washTex() { const { c, g } = mk(128, 256); const gr = g.createRadialGradient(64, 128, 0, 64, 128, 128); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.4, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.setTransform(.5, 0, 0, 1, 32, 0); g.fillStyle = gr; g.fillRect(0, 0, 128, 256); return T(c); }
+
 /* ---------- la maison : couloir + chambre ---------- */
 const PB = V3(.9, 1.25, 12.0), PS = 1.5; // cadre du "portail" dans le couloir (écran du téléphone × 1.5)
 function buildHouse() {
@@ -233,6 +278,7 @@ function buildHouse() {
   const wallMat = new THREE.MeshStandardMaterial({ map: bordT, bumpMap: bordB, bumpScale: .0015, roughness: .93, envMap: envB, envMapIntensity: .25 });
   const creamWall = new THREE.MeshStandardMaterial({ map: creamT, bumpMap: bordB, bumpScale: .001, roughness: .9, envMap: envB, envMapIntensity: .25 });
   const creamPaint = new THREE.MeshStandardMaterial({ color: 0xece2d4, roughness: .45, envMap: envB, envMapIntensity: .5 });
+  const moldMat = new THREE.MeshStandardMaterial({ color: 0x1b2754, roughness: .38, envMap: envB, envMapIntensity: .7 });
   const navyPaint = new THREE.MeshStandardMaterial({ map: T(wainscotTex(), { repeat: [7, 1] }), roughness: .42, envMap: envB, envMapIntensity: .6 });
   const oakMat = new THREE.MeshStandardMaterial({ map: oakT, roughness: .5, envMap: envB, envMapIntensity: .55 });
   const brass = new THREE.MeshStandardMaterial({ color: 0xc9a063, metalness: 1, roughness: .28, envMap: envB, envMapIntensity: 1.4 });
@@ -287,7 +333,7 @@ function buildHouse() {
   pil(.22, .08, .16, 0xe6d4c0, [-.2, .75, -1.09], [-.84, -.22, -.08], 4);
   pil(.18, .07, .13, 0x16224d, [-.02, .74, -1.0], [-.8, .05, .02], 5);
   // tables de chevet, lampes, déco
-  const lampShade = new THREE.MeshStandardMaterial({ color: 0xf3e3cc, emissive: new THREE.Color(1.15, .62, .28), roughness: .9, side: THREE.DoubleSide });
+  const lampShade = new THREE.MeshStandardMaterial({ color: 0xf3e3cc, emissive: new THREE.Color(1.4, .8, .4), emissiveMap: shadeTex(), roughness: .9, side: THREE.DoubleSide });
   for (const sx of [-1, 1]) {
     const ns = new THREE.Mesh(slab(.48, .4, .02, .5, .01), oakMat); ns.rotation.x = -Math.PI / 2; ns.position.set(sx * 1.22, .25, -1.25); S(ns);
     const dr = new THREE.Mesh(new THREE.BoxGeometry(.4, .004, .004), new THREE.MeshBasicMaterial({ color: 0x3a2618 })); dr.position.set(sx * 1.22, .33, -1.049); sceneB.add(dr);
@@ -316,23 +362,8 @@ function buildHouse() {
   const big = T(bigPoster());
   hang(big, .64, .9, -.05, 1.75, -1.53);
   hang(T(tradePoster(0)), .36, .5, 1.22, 1.5, -1.53);
-  // MacBook bordeaux
-  laptop = new THREE.Group();
-  const alu = new THREE.MeshPhysicalMaterial({ color: 0x7c1d34, metalness: .85, roughness: .3, envMap: envB, envMapIntensity: 1.4, clearcoat: .35, clearcoatRoughness: .22 });
-  const LW = .312, LD = .221;
-  const base = new THREE.Mesh(slab(LW, LD, .012, .0155, .004), alu); base.rotation.x = -Math.PI / 2; base.position.y = .0078; base.castShadow = base.receiveShadow = true; laptop.add(base);
-  const kb = new THREE.Mesh(new THREE.PlaneGeometry(LW - .01, LD - .01), new THREE.MeshPhysicalMaterial({ map: T(keyboardTex()), metalness: .1, roughness: .6, envMap: envB, envMapIntensity: .4 })); kb.rotation.x = -Math.PI / 2; kb.position.y = .0157; laptop.add(kb);
-  const hinge = new THREE.Mesh(new THREE.CylinderGeometry(.005, .005, LW - .06, 16), new THREE.MeshStandardMaterial({ color: 0x2a0a12, metalness: .6, roughness: .4 })); hinge.rotation.z = Math.PI / 2; hinge.position.set(0, .0155, -LD / 2 + .004); laptop.add(hinge);
-  const lid = new THREE.Group(); lid.position.set(0, .0155, -LD / 2 + .004); lid.rotation.x = -18 * DEG; laptop.add(lid);
-  const lidB = new THREE.Mesh(slab(LW, LD - .004, .012, .006, .002), alu); lidB.position.set(0, (LD - .004) / 2, -.003); lidB.castShadow = true; lid.add(lidB);
-  const bez = new THREE.Mesh(shapeGeo(LW - .004, LD - .008, .01), new THREE.MeshPhysicalMaterial({ color: 0x050505, roughness: .08, clearcoat: 1, envMap: envB })); bez.position.set(0, (LD - .004) / 2, .0002); lid.add(bez);
-  const DW = .29, DH = DW / 1.54;
-  const disp = new THREE.Mesh(new THREE.PlaneGeometry(DW, DH), siteMat); disp.position.set(0, (LD - .004) / 2 + .002, .0006); lid.add(disp);
-  const notch = new THREE.Mesh(shapeGeo(.032, .009, .003), new THREE.MeshBasicMaterial({ color: 0x030303 })); notch.position.set(0, (LD - .004) / 2 + .002 + DH / 2 - .0035, .0009); lid.add(notch);
-  const ls = new THREE.Mesh(new THREE.PlaneGeometry(LW * 1.35, LD * 1.5), new THREE.MeshBasicMaterial({ map: T(softRectTex(256, 256, 40, 26, 20)), transparent: true, opacity: .55, depthWrite: false })); ls.rotation.x = -Math.PI / 2; ls.position.y = .002; laptop.add(ls);
-  laptop.position.set(.08, .652, -.3); laptop.rotation.y = -.32;
-  laptop.userData.disp = disp;
-  sceneB.add(laptop);
+  // MacBook bordeaux (modèle détaillé)
+  laptop = buildMac(envB); laptop.position.set(.08, .652, -.3); laptop.rotation.y = -.32; sceneB.add(laptop);
   // ombres de contact (occlusion)
   const ao = (w, d, x, y, z, op) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ map: T(softRectTex(256, 256, 30, 40, 30)), transparent: true, opacity: op, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); sceneB.add(m); return m; };
   ao(2.05, 2.5, 0, .009, -.45, .6); ao(.62, .55, 1.22, .009, -1.25, .55); ao(.62, .55, -1.22, .009, -1.25, .55); ao(.45, .45, -1.78, .009, 1.45, .5);
@@ -352,7 +383,17 @@ function buildHouse() {
     }
     reg(plane(1.2, L, creamPaint, .9, 2.5, cz, Math.PI / 2));
     const rn = reg(plane(.72, L - .4, new THREE.MeshStandardMaterial({ map: T(runnerTex(), { repeat: [1, (L - .4) / 1.4] }), roughness: .96, bumpMap: weave, bumpScale: .001, envMap: envB, envMapIntensity: .15 }), .9, .006, cz, -Math.PI / 2));
-    for (let z = z0 + 1; z < z1; z += 2) { const sp = reg(new THREE.Mesh(new THREE.CircleGeometry(.05, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.1, .78, .5) }))); sp.rotation.x = Math.PI / 2; sp.position.set(.9, 2.495, z); sceneB.add(sp); }
+    for (let z = z0 + 1; z < z1; z += 2) {
+      const sp = reg(new THREE.Mesh(new THREE.CircleGeometry(.05, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.1, .78, .5) }))); sp.rotation.x = Math.PI / 2; sp.position.set(.9, 2.495, z); sceneB.add(sp);
+      const tr = reg(new THREE.Mesh(new THREE.TorusGeometry(.06, .009, 10, 32), creamPaint)); tr.rotation.x = Math.PI / 2; tr.position.set(.9, 2.494, z); sceneB.add(tr);
+    }
+    for (const [x, sd] of [[.3, 1], [1.5, -1]]) {
+      const cor = reg(new THREE.Mesh(new THREE.BoxGeometry(.07, .08, L), creamPaint)); cor.position.set(x + sd * .035, 2.46, cz); cor.castShadow = false; sceneB.add(cor);
+      const nf = Math.floor((L - .3) / 1.05), mold = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), moldMat, nf * 4); const m4 = new THREE.Matrix4(), qq = new THREE.Quaternion(); let c = 0;
+      for (let f = 0; f < nf; f++) { const zc = z0 + .25 + f * 1.05 + .45; const xs = x + sd * .028;
+        for (const [py, pz, sy, szz] of [[.82, zc, .022, .82], [.2, zc, .022, .82], [.51, zc - .4, .64, .022], [.51, zc + .4, .64, .022]]) { m4.compose(V3(xs, py, pz), qq, V3(.016, sy, szz)); mold.setMatrixAt(c++, m4); } }
+      reg(mold); sceneB.add(mold);
+    }
   }
   far(plane(1.2, 2.5, creamWall, .9, 1.25, 19, 0, Math.PI));
   // portes marine
@@ -361,6 +402,8 @@ function buildHouse() {
     const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2; sceneB.add(g); if (isFar) FAR.push(g);
     const leaf = new THREE.Mesh(new THREE.BoxGeometry(.82, 2.02, .04), [navyPaint, navyPaint, navyPaint, navyPaint, new THREE.MeshStandardMaterial({ map: dTex, roughness: .4, envMap: envB, envMapIntensity: .6 }), navyPaint]); leaf.position.set(0, 1.01, .03); g.add(leaf);
     for (const [w, h, px, py] of [[.07, 2.12, -.45, 1.06], [.07, 2.12, .45, 1.06], [.97, .07, 0, 2.1]]) { const c = new THREE.Mesh(new THREE.BoxGeometry(w, h, .05), creamPaint); c.position.set(px, py, .03); g.add(c); }
+    for (const [py, ph] of [[1.5, .74], [.58, .8]]) { const pnl = new THREE.Mesh(slab(.56, ph, .01, .014, .005), navyPaint); pnl.position.set(0, py, .055); g.add(pnl); }
+    for (const py of [.25, 1.0, 1.75]) { const hg = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .09, 12), brass); hg.position.set(-.41, py, .045); g.add(hg); }
     const k = new THREE.Mesh(new THREE.SphereGeometry(.028, 16, 12), brass); k.position.set(.32, 1.0, .07); g.add(k);
     const kp = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .01, 16), brass); kp.rotation.x = Math.PI / 2; kp.position.set(.32, 1.0, .052); g.add(kp);
   };
@@ -378,13 +421,23 @@ function buildHouse() {
   hang(T(tradePoster(5)), .5, .72, .33, 1.55, 13.0, Math.PI / 2, fr);
   hang(T(tradePoster(4)), .5, .72, 1.47, 1.55, 14.2, -Math.PI / 2, fr);
   fr.forEach(f => FAR.push(f));
+  // console en chêne avec vase et livres
+  { const cz = 7.5, cx = .46;
+    boxM(.28, .03, .95, oakMat, cx, .8, cz);
+    for (const [dx, dz] of [[-.1, -.42], [.1, -.42], [-.1, .42], [.1, .42]]) boxM(.025, .8, .025, oakMat, cx + dx, .4, cz + dz);
+    const vase = new THREE.Mesh(new THREE.LatheGeometry([[0, 0], [.06, 0], [.075, .08], [.05, .2], [.035, .26], [.045, .3]].map(([a, b]) => new THREE.Vector2(a, b)), 40), new THREE.MeshPhysicalMaterial({ color: 0x9e2a43, roughness: .25, clearcoat: .8, envMap: envB })); vase.position.set(cx, .815, cz - .2); S(vase);
+    for (let k = 0; k < 5; k++) { const st = new THREE.Mesh(new THREE.CylinderGeometry(.003, .003, .5, 6), new THREE.MeshStandardMaterial({ color: 0x6b5233 })); st.position.set(cx + (k - 2) * .02, 1.32, cz - .2 + Math.sin(k) * .03); st.rotation.set(Math.sin(k * 2) * .25, 0, (k - 2) * .12); sceneB.add(st); }
+    [[0x16224d, 0], [0xe9dccd, .03], [0x9e2a43, .055]].forEach(([c, y], k) => boxM(.2 - k * .02, .028, .15, new THREE.MeshStandardMaterial({ color: c, roughness: .7 }), cx, .83 + y, cz + .2));
+  }
   // appliques
+  const wash = washTex();
   const globe = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, .95, .55) });
   for (const [x, z] of [[.31, 4.6], [1.49, 7.4], [.31, 9.6], [1.49, 12.6], [.31, 15.9], [1.49, 18.0]]) {
     const g = new THREE.Group(); g.position.set(x, 1.85, z); sceneB.add(g); if (z > 12.2) FAR.push(g);
     const pl = new THREE.Mesh(new THREE.CylinderGeometry(.055, .055, .015, 24), brass); pl.rotation.z = Math.PI / 2; g.add(pl);
     const arm = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .12, 8), brass); arm.rotation.z = Math.PI / 2; arm.position.x = x < 1 ? .06 : -.06; g.add(arm);
     const gl = new THREE.Mesh(new THREE.SphereGeometry(.06, 24, 16), globe); gl.position.set(x < 1 ? .13 : -.13, .03, 0); g.add(gl);
+    const ws = new THREE.Mesh(new THREE.PlaneGeometry(.75, 1.5), new THREE.MeshBasicMaterial({ map: wash, color: new THREE.Color(.45, .3, .17), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); ws.rotation.y = x < 1 ? Math.PI / 2 : -Math.PI / 2; ws.position.set(x < 1 ? .007 : -.007, .05, 0); g.add(ws);
   }
   for (const z of [4.9, 8.7, 12.5]) { const l = new THREE.PointLight(0xffb070, .5, 5.5, 2); l.position.set(.9, 2.05, z); sceneB.add(l); }
   // lumières de la chambre

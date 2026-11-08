@@ -50,6 +50,12 @@ s = rep(s, "const Q = QS.has('q') ? parseFloat(QS.get('q')) : 1;", "const Q = QS
 s = rep(s, "const { c, g } = mk(SCW, SCH); callBg(g, false)", "const { c, g } = mk(Math.round(SCW * PXS), Math.round(SCH * PXS)); g.scale(PXS, PXS); callBg(g, false)")
 s = rep(s, "const w = 1024, h = 4096, { c, g } = mk(w, h);", "const w = 1024, h = 4096, { c, g } = mk(Math.round(w * PXS), Math.round(h * PXS)); g.scale(PXS, PXS);")
 s = rep(s, "new THREE.MeshBasicMaterial({ map: GLOWRECT, color: opts.glow, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })", "new THREE.MeshBasicMaterial({ map: GLOWRECT, color: opts.glow, transparent: true, opacity: .5, blending: THREE.AdditiveBlending, depthWrite: false })")
+# ---- site en plein écran (zoom dans l'ordi) + "vidéos comme celle-ci" dans Pourquoi nous
+s = rep(s, "#topShade{position:absolute;", "#site{position:absolute;left:0;top:0;width:1080px;height:1920px;overflow:hidden;opacity:0;background:#2c0a24;transform-origin:50% 45%}\n#siteBar{position:absolute;left:0;top:0;width:1080px;height:170px;z-index:2;background:linear-gradient(#1a0612,#22081a);display:flex;align-items:flex-end;justify-content:center;padding-bottom:26px;box-sizing:border-box;box-shadow:0 6px 24px rgba(0,0,0,.35)}\n#siteBar span{display:inline-flex;align-items:center;gap:14px;background:rgba(255,255,255,.12);border-radius:26px;padding:14px 64px;font:600 36px 'Space Grotesk',sans-serif;color:#fff}\n#topShade{position:absolute;")
+s = rep(s, '    <div id="topShade"></div>\n', '    <div id="site"><div id="siteBar"><span>🔒 <b id="siteUrl">ton-site.fr</b></span></div></div>\n    <div id="topShade"></div>\n')
+s = rep(s, "['Logo, cartes, affiches, posts', 'Tout assorti, un seul prestataire', 'layers'],", "['Logos, affiches, posts et vidéos comme celle-ci', 'Tout assorti, un seul prestataire', 'layers'],")
+s = rep(s, "'Tout assorti, un seul presta', 'Proche de toi, dispo 7j/7'];", "'Posts, vidéos : tout assorti', 'Proche de toi, dispo 7j/7'];")
+s = rep(s, "function keyboardTex() {", part('part_site.js') + "\nfunction keyboardTex() {")
 # ---- constantes
 s = rep(s, "const W = 1080, H = 1920, DUR = 36;", "const W = 1080, H = 1920, DUR = 58;")
 s = rep(s, "(isMobile ? 32 : 44)", "(isMobile ? 32 : 48)")
