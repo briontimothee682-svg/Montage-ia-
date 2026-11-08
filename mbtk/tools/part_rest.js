@@ -567,7 +567,7 @@ async function init() {
   document.getElementById('siteTxt').textContent = CFG.site; document.getElementById('urlTxt').textContent = CFG.site;
   const audioP = prepareAudio();
   GLOWRECT = T(rectGlowTex());
-  TIMER = mk(480, 96); TIMER_TEX = T(TIMER.c); screenUniforms.tTimer.value = TIMER_TEX; drawTimer(TIMER, 1);
+  TIMER = mk(480, 96); TIMER_TEX = T(TIMER.c, { keep: true }); screenUniforms.tTimer.value = TIMER_TEX; drawTimer(TIMER, 1);
   defPages();
   PAGE.in = T(pageIncoming());
   for (const k of ['call', 'tt', 'ig']) { PAGE[k] = T(renderPage(PAGES[k], true)); PAGE[k + 'Base'] = T(renderPage(PAGES[k], false)); }

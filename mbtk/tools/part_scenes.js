@@ -1,6 +1,7 @@
 /* ---------- variables de scène ---------- */
 let GLOWRECT, sceneA, sceneB, phone, cards = [], argMeshes = [], poster, trades = [], laptop, bokehs = [], dust, dustB, contact, sunA, envA, envB;
 let PAGE = {}, TIMER, TIMER_TEX;
+const SHMAP = isMobile ? 1024 : 2048;
 const LAYERS = {};
 const FAR = []; // éléments du couloir masqués quand on le voit à travers l'écran du téléphone
 
@@ -64,7 +65,7 @@ function buildSceneA() {
   // lumières : clé ambrée, halo bordeaux, contre-jour bleu marine
   sceneA.add(new THREE.HemisphereLight(0xffe1c4, 0x1a0a1a, .4));
   sunA = new THREE.DirectionalLight(0xffc28a, 2.7); sunA.position.set(-5, 4.4, -3.2); sunA.target.position.set(0, .5, 0); sceneA.add(sunA, sunA.target);
-  sunA.castShadow = true; sunA.shadow.mapSize.set(2048, 2048); const sc = sunA.shadow.camera; sc.left = -3.5; sc.right = 3.5; sc.top = 3.5; sc.bottom = -3.5; sc.near = 1; sc.far = 16; sunA.shadow.bias = -.0004; sunA.shadow.normalBias = .02;
+  sunA.castShadow = true; sunA.shadow.mapSize.set(SHMAP, SHMAP); const sc = sunA.shadow.camera; sc.left = -3.5; sc.right = 3.5; sc.top = 3.5; sc.bottom = -3.5; sc.near = 1; sc.far = 16; sunA.shadow.bias = -.0004; sunA.shadow.normalBias = .02;
   const spot = new THREE.SpotLight(0xc4304f, 4.2, 16, .6, 1, 1.4); spot.position.set(4.6, 3.4, 2.6); spot.target.position.set(0, .6, 0); sceneA.add(spot, spot.target);
   const blue = new THREE.DirectionalLight(0x4d6fe0, 1.1); blue.position.set(-3.5, 2.2, -4.5); blue.target.position.set(0, 1, 0); sceneA.add(blue, blue.target);
   const rim = new THREE.PointLight(0xe8b27a, .9, 12, 2); rim.position.set(-2.4, 2.8, 3.2); sceneA.add(rim);
@@ -87,18 +88,18 @@ function buildLayers() {
   for (const key of ['call', 'tt', 'ig']) {
     const spec = PAGES[key]; const grp = new THREE.Group(); grp.visible = false; phone.add(grp);
     const items = [];
-    const add = (k, box, h, d, tex, cv, pad) => {
+    const add = (k, box, h, d, tex, shc, pad) => {
       const [x, y, w, hh] = box; const cw = w + 2 * pad, ch = hh + 2 * pad;
       const pw = cw / SCW * SW, ph = ch / SCH * SH;
       const lx = ((x + w / 2) / SCW - .5) * SW, ly = (.5 - (y + hh / 2) / SCH) * SH;
-      const sm = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), new THREE.MeshBasicMaterial({ map: T(shadowOf(cv)), transparent: true, depthWrite: false, opacity: 0 }));
+      const sm = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), new THREE.MeshBasicMaterial({ map: T(shc), transparent: true, depthWrite: false, opacity: 0 }));
       sm.position.set(lx, ly, SZ + .0006); sm.renderOrder = 2; grp.add(sm);
       const m = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
       m.position.set(lx, ly, SZ + .0012); m.renderOrder = 3 + Math.round(h * 100); grp.add(m);
       items.push({ k, m, sm, lx, ly, h, d });
     };
-    spec.heroes.forEach(hh => { const cv = renderLayer(hh); add(hh.k, hh.box, hh.h, hh.d, T(cv), cv, LPAD); });
-    if (key === 'call') { const tc = mk(480, 96); txt(tc.g, '00:00', 240, 70, F(500, 54, 's'), '#fff', 'center'); add('timer', [300, 504, 480, 96], .11, .14, TIMER_TEX, tc.c, 0); }
+    spec.heroes.forEach(hh => { const cv = renderLayer(hh); const shc = shadowOf(cv); add(hh.k, hh.box, hh.h, hh.d, T(cv), shc, LPAD); });
+    if (key === 'call') { const tc = mk(480, 96); txt(tc.g, '00:00', 240, 70, F(500, 54, 's'), '#fff', 'center'); add('timer', [300, 504, 480, 96], .11, .14, TIMER_TEX, shadowOf(tc.c), 0); tc.c.width = tc.c.height = 1; }
     const f = items.find(i => i.k === 'follow'); let glow = null;
     if (f) {
       glow = new THREE.Mesh(new THREE.PlaneGeometry(f.m.geometry.parameters.width * 1.22, f.m.geometry.parameters.height * 1.7), new THREE.MeshBasicMaterial({ map: GLOWRECT, color: key === 'tt' ? new THREE.Color(1.3, .12, .35) : new THREE.Color(.1, .5, 1.5), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0 }));
@@ -238,7 +239,7 @@ function buildHouse() {
   const floorMat = new THREE.MeshStandardMaterial({ map: floorT, roughness: .42, envMap: envB, envMapIntensity: .55 });
   // sol (coupé en deux pour le portail)
   const fl1 = plane(4.4, 13.75, floorMat, 0, 0, 5.325, -Math.PI / 2); fl1.material.map.repeat.set(2.2, 6.9);
-  const fl2 = far(plane(1.3, 6.85, floorMat.clone(), .9, 0, 15.625, -Math.PI / 2)); fl2.material.map = floorT.clone(); fl2.material.map.needsUpdate = true; fl2.material.map.repeat.set(.65, 3.4);
+  const fl2 = far(plane(1.3, 6.85, floorMat, .9, 0, 15.625, -Math.PI / 2)); { const uv = fl2.geometry.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * .65 / 2.2, uv.getY(i) * 3.4 / 6.9); }
   // ---------- chambre
   plane(4.4, 2.6, wallMat, 0, 1.3, -1.55);
   plane(4.75, 2.6, wallMat, 2.2, 1.3, .825, 0, -Math.PI / 2);
@@ -389,7 +390,7 @@ function buildHouse() {
   // lumières de la chambre
   sceneB.add(new THREE.HemisphereLight(0xffd2a8, 0x1a0c12, .3));
   const sun = new THREE.DirectionalLight(0xffb070, 2.6); sun.position.set(-6.2, 2.7, .6); sun.target.position.set(0, .6, -.3); sceneB.add(sun, sun.target);
-  sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); const sc = sun.shadow.camera; sc.left = -3.2; sc.right = 3.2; sc.top = 3.2; sc.bottom = -3.2; sc.near = .5; sc.far = 14; sun.shadow.bias = -.0005; sun.shadow.normalBias = .015;
+  sun.castShadow = true; sun.shadow.mapSize.set(SHMAP, SHMAP); const sc = sun.shadow.camera; sc.left = -3.2; sc.right = 3.2; sc.top = 3.2; sc.bottom = -3.2; sc.near = .5; sc.far = 14; sun.shadow.bias = -.0005; sun.shadow.normalBias = .015;
   const fill = new THREE.PointLight(0x6a80d8, .3, 4.5, 2); fill.position.set(-1.6, 1.6, .1); sceneB.add(fill);
   dustB = makeDust(220, [-2.1, .5, -.9, .6, 2.3, 1.0], 8, 0xffc890); sceneB.add(dustB);
 }

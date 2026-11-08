@@ -26,6 +26,25 @@ s = rep(s, '    <div class="tx" id="t9">Services · Réalisations · Tarifs</div
 s = rep(s, '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>',
         '<script>window.MBTK_AUDIO={mix:"__MIX__",sfx:"__SFX__"};</script>\n<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>')
 s = rep(s, "MBTK DESIGN — vidéo de lancement (9:16, 1080×1920, 60 fps, ≈36 s)", "MBTK DESIGN — vidéo de lancement (9:16, 1080×1920, 60 fps, 58 s, avec bande-son)")
+# ---- textures : envoi immédiat au GPU puis libération du canvas (limite mémoire des canvas sur iPhone)
+s = rep(s, "if (o.repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(o.repeat[0], o.repeat[1]); } return t; }",
+        "if (o.repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(o.repeat[0], o.repeat[1]); }\n  if (!o.keep) { try { renderer.initTexture(t); cv.width = cv.height = 1; } catch (e) { } }\n  return t; }")
+# ---- messages d'erreur visibles sur l'écran de lancement
+s = rep(s, '<script>window.MBTK_AUDIO=', """<script>
+(function () {
+  function show(m) { var h = document.getElementById('hint'), b = document.getElementById('go');
+    if (h) { h.style.opacity = 1; h.style.color = '#ffb4b4'; h.textContent = m; } if (b) { b.textContent = 'Erreur'; b.disabled = true; } }
+  window.__showErr = show;
+  window.addEventListener('error', function (e) { if (/\\blibs\\b/.test(e.message || '')) return; show('Erreur : ' + (e.message || 'inconnue') + '. Fais une capture d\u2019écran et envoie-la.'); });
+  window.addEventListener('unhandledrejection', function (e) { show('Erreur : ' + ((e.reason && e.reason.message) || e.reason) + '. Fais une capture d\u2019écran et envoie-la.'); });
+})();
+</script>
+<script>window.MBTK_AUDIO=""")
+s = rep(s, '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>', '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="window.__libfail=1"></script>')
+s = rep(s, '<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>\n<script>\n', """<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" onerror="window.__libfail=1"></script>
+<script>
+if (window.__libfail || typeof THREE === 'undefined' || typeof gsap === 'undefined') { window.__showErr && window.__showErr('Impossible de charger la 3D : vérifie ta connexion internet puis recharge la page.'); throw new Error('libs'); }
+""")
 # ---- constantes
 s = rep(s, "const W = 1080, H = 1920, DUR = 36;", "const W = 1080, H = 1920, DUR = 58;")
 s = rep(s, "const Q = QS.has('q') ? parseFloat(QS.get('q')) : 1;", "const Q = QS.has('q') ? parseFloat(QS.get('q')) : (isMobile ? 1 : 1.5);")

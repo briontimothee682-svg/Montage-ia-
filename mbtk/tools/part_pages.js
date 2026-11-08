@@ -16,7 +16,7 @@ function drawCallButton(g, b) {
 const PAGES = {};
 function defPages() {
   PAGES.call = {
-    base: g => { callBg(g, true); statusBar(g, '#F5EAE0'); g.fillStyle = '#34C759'; rr(g, 70, 76, 110, 56, 28); g.fill(); homeBar(g, 'rgba(245,234,224,.85)'); },
+    base: g => { callBg(g, true); statusBar(g, '#F5EAE0'); g.fillStyle = '#34C759'; rr(g, 62, 74, 140, 58, 29); g.fill(); txt(g, '17:42', 132, 114, F(600, 42, 's'), '#fff', 'center'); homeBar(g, 'rgba(245,234,224,.85)'); },
     heroes: [
       { k: 'name', box: [90, 370, 900, 112], h: .11, d: .1, draw: g => txt(g, 'MBTK Design', 540, 452, F(700, 90, 'u'), '#F5EAE0', 'center') },
       { k: 'avatar', box: [320, 640, 440, 440], h: .21, d: 0, draw: g => creamLogoCircle(g, 540, 860, 190) },
@@ -77,5 +77,5 @@ const LPAD = 36;
 function renderLayer(hh) { const [x, y, w, h] = hh.box; const { c, g } = mk(w + 2 * LPAD, h + 2 * LPAD); g.translate(LPAD - x, LPAD - y); hh.draw(g); return c; }
 function shadowOf(cv, r = 16) {
   const S = mk(cv.width, cv.height); S.g.drawImage(cv, 0, 0); S.g.globalCompositeOperation = 'source-in'; S.g.fillStyle = '#000'; S.g.fillRect(0, 0, cv.width, cv.height);
-  return softShape(cv.width, cv.height, r, g => g.drawImage(S.c, 0, 0));
+  const out = softShape(cv.width, cv.height, r, g => g.drawImage(S.c, 0, 0)); S.c.width = S.c.height = 1; return out;
 }
