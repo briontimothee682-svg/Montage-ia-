@@ -17,7 +17,7 @@ s = rep(s, "#hand{position:absolute;font-size:120px;left:700px;top:905px;opacity
         "#hand{position:absolute;font-size:120px;left:0;top:0;opacity:0;filter:drop-shadow(0 8px 18px rgba(0,0,0,.5))}\n"
         "#t10{top:470px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:50px}\n"
         ".url{display:inline-block;padding:14px 40px;border-radius:999px;background:var(--cream);color:var(--bordD);text-shadow:none;box-shadow:0 12px 30px rgba(20,3,9,.45)}")
-s = rep(s, "#grain{position:absolute;inset:-64px;opacity:.075;", "#grain{position:absolute;inset:-64px;opacity:.06;")
+s = rep(s, "#grain{position:absolute;inset:-64px;opacity:.075;", "#grain{position:absolute;inset:-64px;opacity:.035;")
 s = rep(s, "background:linear-gradient(180deg,rgba(24,4,11,.62) 0%,rgba(24,4,11,.38) 45%,rgba(24,4,11,0) 100%)}",
         "background:linear-gradient(180deg,rgba(18,6,20,.66) 0%,rgba(18,6,20,.4) 45%,rgba(18,6,20,0) 100%)}")
 # ---- DOM
@@ -45,9 +45,13 @@ s = rep(s, '<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap
 <script>
 if (window.__libfail || typeof THREE === 'undefined' || typeof gsap === 'undefined') { window.__showErr && window.__showErr('Impossible de charger la 3D : vérifie ta connexion internet puis recharge la page.'); throw new Error('libs'); }
 """)
+# ---- qualité : résolution adaptée à l'écran, pages plus fines sur ordinateur, lumières adoucies
+s = rep(s, "const Q = QS.has('q') ? parseFloat(QS.get('q')) : 1;", "const Q = QS.has('q') ? parseFloat(QS.get('q')) : (isMobile ? Math.min(1.2, Math.max(1, (window.devicePixelRatio || 1) * Math.min(innerWidth / 1080, innerHeight / 1920))) : 1.5);\nconst PXS = QS.has('px') ? parseFloat(QS.get('px')) : (isMobile ? 1 : 1.5);")
+s = rep(s, "const { c, g } = mk(SCW, SCH); callBg(g, false)", "const { c, g } = mk(Math.round(SCW * PXS), Math.round(SCH * PXS)); g.scale(PXS, PXS); callBg(g, false)")
+s = rep(s, "const w = 1024, h = 4096, { c, g } = mk(w, h);", "const w = 1024, h = 4096, { c, g } = mk(Math.round(w * PXS), Math.round(h * PXS)); g.scale(PXS, PXS);")
+s = rep(s, "new THREE.MeshBasicMaterial({ map: GLOWRECT, color: opts.glow, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })", "new THREE.MeshBasicMaterial({ map: GLOWRECT, color: opts.glow, transparent: true, opacity: .5, blending: THREE.AdditiveBlending, depthWrite: false })")
 # ---- constantes
 s = rep(s, "const W = 1080, H = 1920, DUR = 36;", "const W = 1080, H = 1920, DUR = 58;")
-s = rep(s, "const Q = QS.has('q') ? parseFloat(QS.get('q')) : 1;", "const Q = QS.has('q') ? parseFloat(QS.get('q')) : (isMobile ? 1 : 1.5);")
 s = rep(s, "(isMobile ? 32 : 44)", "(isMobile ? 32 : 48)")
 s = rep(s, "const TANH = Math.tan(FOV * DEG / 2);", "let TANH = Math.tan(FOV * DEG / 2);")
 # ---- flous sans ctx.filter

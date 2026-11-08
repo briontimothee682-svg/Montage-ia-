@@ -72,9 +72,9 @@ function defPages() {
     ]
   };
 }
-function renderPage(spec, withHeroes) { const { c, g } = mk(SCW, SCH); spec.base(g); if (withHeroes) spec.heroes.forEach(hh => { g.save(); hh.draw(g); g.restore(); }); return c; }
+function renderPage(spec, withHeroes) { const { c, g } = mk(Math.round(SCW * PXS), Math.round(SCH * PXS)); g.scale(PXS, PXS); spec.base(g); if (withHeroes) spec.heroes.forEach(hh => { g.save(); hh.draw(g); g.restore(); }); return c; }
 const LPAD = 36;
-function renderLayer(hh) { const [x, y, w, h] = hh.box; const { c, g } = mk(w + 2 * LPAD, h + 2 * LPAD); g.translate(LPAD - x, LPAD - y); hh.draw(g); return c; }
+function renderLayer(hh) { const [x, y, w, h] = hh.box; const { c, g } = mk(Math.round((w + 2 * LPAD) * PXS), Math.round((h + 2 * LPAD) * PXS)); g.scale(PXS, PXS); g.translate(LPAD - x, LPAD - y); hh.draw(g); return c; }
 function shadowOf(cv, r = 16) {
   const S = mk(cv.width, cv.height); S.g.drawImage(cv, 0, 0); S.g.globalCompositeOperation = 'source-in'; S.g.fillStyle = '#000'; S.g.fillRect(0, 0, cv.width, cv.height);
   const out = softShape(cv.width, cv.height, r, g => g.drawImage(S.c, 0, 0)); S.c.width = S.c.height = 1; return out;

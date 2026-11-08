@@ -59,27 +59,50 @@ const siteMat = new THREE.ShaderMaterial({
 });
 
 /* ---------- construction téléphone ---------- */
-const PW = 0.716, PH = 1.47, PD = 0.083, SW = 0.648, SH = SW / 0.4613, SZ = PD / 2 + 0.0016;
+const PW = 0.716, PH = 1.47, PD = 0.083, SW = 0.648, SH = SW / 0.4613, SZ = PD / 2 + 0.0036;
+function brushedTex() {
+  const { c, g } = mk(1024, 64); const id = g.createImageData(1024, 64), d = id.data, R = rng(17);
+  for (let y = 0; y < 64; y++) { const row = (R() - .5) * 40; for (let x = 0; x < 1024; x++) { const v = 150 + row + (N1(x * .01, y * 4, 0, 0) - .5) * 70 + (R() - .5) * 26; const i = (y * 1024 + x) * 4; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; } }
+  g.putImageData(id, 0, 0); return T(c, { linear: true, repeat: [6, 6] });
+}
 function buildPhone(env) {
   const g = new THREE.Group();
-  const frame = new THREE.MeshPhysicalMaterial({ color: 0x1d2440, metalness: 1, roughness: .24, envMap: env, envMapIntensity: 1.5, clearcoat: .5, clearcoatRoughness: .15 });
-  const body = new THREE.Mesh(slab(PW, PH, .115, PD, .03), frame); body.castShadow = true; body.receiveShadow = true; g.add(body);
-  const glass = new THREE.Mesh(shapeGeo(PW - .014, PH - .014, .108), new THREE.MeshPhysicalMaterial({ color: 0x020203, roughness: .1, metalness: 0, clearcoat: 1, clearcoatRoughness: .07, envMap: env, envMapIntensity: 1.5 }));
-  glass.position.z = PD / 2 + .0008; g.add(glass);
+  const brush = brushedTex();
+  // cadre en titane brossé bleu marine : flancs plats, arêtes légèrement arrondies
+  const frame = new THREE.MeshPhysicalMaterial({ color: 0x27304e, metalness: 1, roughness: .34, roughnessMap: brush, envMap: env, envMapIntensity: 1.9, clearcoat: .25, clearcoatRoughness: .3 });
+  const body = new THREE.Mesh(slab(PW, PH, .115, PD - .004, .011), frame); body.castShadow = true; body.receiveShadow = true; g.add(body);
+  // vitre avant (avec tranche visible) et bordure noire
+  const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x020203, roughness: .08, metalness: 0, clearcoat: 1, clearcoatRoughness: .05, envMap: env, envMapIntensity: 1.4 });
+  const glass = new THREE.Mesh(slab(PW - .012, PH - .012, .109, .007, .0028), glassMat); glass.position.z = PD / 2 - .0005; g.add(glass);
   const scr = new THREE.Mesh(new THREE.PlaneGeometry(SW, SH), screenMat); scr.position.z = SZ; g.add(scr);
-  // dos en verre mat bordeaux + bloc photo
-  const back = new THREE.Mesh(shapeGeo(PW - .014, PH - .014, .108), new THREE.MeshPhysicalMaterial({ color: 0x5a1426, roughness: .42, metalness: .15, clearcoat: .9, clearcoatRoughness: .35, envMap: env, envMapIntensity: 1.1 }));
-  back.rotation.y = Math.PI; back.position.z = -PD / 2 - .0008; g.add(back);
-  const bumpMat = new THREE.MeshPhysicalMaterial({ color: 0x4a1020, roughness: .18, metalness: .2, clearcoat: 1, envMap: env, envMapIntensity: 1.3 });
-  const bump = new THREE.Mesh(slab(.3, .31, .07, .026, .008), bumpMat); bump.position.set(.17, .5, -PD / 2 - .012); bump.castShadow = true; g.add(bump);
-  const ringMat = new THREE.MeshPhysicalMaterial({ color: 0x1d2440, metalness: 1, roughness: .2, envMap: env, envMapIntensity: 1.6 });
-  const lensMat = new THREE.MeshPhysicalMaterial({ color: 0x05070c, roughness: .02, metalness: .3, clearcoat: 1, envMap: env, envMapIntensity: 2.2 });
+  // Dynamic Island en relief
+  const isl = new THREE.Mesh(shapeGeo(380 / 1080 * SW, 108 / 2341 * SH, 54 / 2341 * SH), new THREE.MeshPhysicalMaterial({ color: 0x000000, roughness: .15, clearcoat: 1, envMap: env, envMapIntensity: .8 }));
+  isl.position.set(0, (.5 - 88 / 2341) * SH, SZ + .0004); g.add(isl);
+  // dos en verre dépoli bordeaux
+  const back = new THREE.Mesh(slab(PW - .012, PH - .012, .109, .006, .0025), new THREE.MeshPhysicalMaterial({ color: 0x5a1426, roughness: .5, metalness: .1, clearcoat: .6, clearcoatRoughness: .45, envMap: env, envMapIntensity: 1.1 }));
+  back.position.z = -PD / 2 + .0005; g.add(back);
+  // bloc photo : plateau en verre brillant, 3 objectifs avec bague titane, verre traité, LiDAR, flash
+  const bumpMat = new THREE.MeshPhysicalMaterial({ color: 0x4a1020, roughness: .12, metalness: .15, clearcoat: 1, clearcoatRoughness: .05, envMap: env, envMapIntensity: 1.4 });
+  const bump = new THREE.Mesh(slab(.3, .31, .07, .02, .006), bumpMat); bump.position.set(.17, .5, -PD / 2 - .01); bump.castShadow = true; g.add(bump);
+  const lensGlass = new THREE.MeshPhysicalMaterial({ color: 0x060a16, roughness: .02, metalness: .2, clearcoat: 1, clearcoatRoughness: .01, envMap: env, envMapIntensity: 2.6 });
+  const inner = new THREE.MeshPhysicalMaterial({ color: 0x0b0f22, roughness: .3, metalness: .6, envMap: env });
   [[.235, .565], [.235, .435], [.105, .5]].forEach(([x, y]) => {
-    const ring = new THREE.Mesh(new THREE.CylinderGeometry(.056, .058, .022, 40), ringMat); ring.rotation.x = Math.PI / 2; ring.position.set(x, y, -PD / 2 - .032); g.add(ring);
-    const lens = new THREE.Mesh(new THREE.CircleGeometry(.044, 40), lensMat); lens.rotation.y = Math.PI; lens.position.set(x, y, -PD / 2 - .0435); g.add(lens);
+    const ring = new THREE.Mesh(new THREE.CylinderGeometry(.057, .059, .02, 48), frame); ring.rotation.x = Math.PI / 2; ring.position.set(x, y, -PD / 2 - .028); ring.castShadow = true; g.add(ring);
+    const lip = new THREE.Mesh(new THREE.TorusGeometry(.05, .006, 12, 48), frame); lip.position.set(x, y, -PD / 2 - .038); g.add(lip);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(.051, 40), inner); disc.rotation.y = Math.PI; disc.position.set(x, y, -PD / 2 - .0362); g.add(disc);
+    const lens = new THREE.Mesh(new THREE.SphereGeometry(.05, 40, 16, 0, Math.PI * 2, 0, Math.PI * .22), lensGlass); lens.rotation.x = -Math.PI / 2; lens.position.set(x, y, -PD / 2 + .0025); g.add(lens);
   });
-  const flash = new THREE.Mesh(new THREE.CircleGeometry(.016, 24), new THREE.MeshStandardMaterial({ color: 0xfff2d8, roughness: .3, emissive: 0x332a20 })); flash.rotation.y = Math.PI; flash.position.set(.105, .6, -PD / 2 - .0265); g.add(flash);
-  const btnMat = frame;
-  [[-1, .38, .1], [-1, .22, .16], [-1, .02, .16], [1, .25, .22]].forEach(([s, y, l]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(.012, l, .03), btnMat); b.position.set(s * (PW / 2 + .003), y, 0); b.castShadow = true; g.add(b); });
+  const flash = new THREE.Mesh(new THREE.CircleGeometry(.017, 24), new THREE.MeshStandardMaterial({ color: 0xfff2d8, roughness: .3, emissive: 0x2a2218 })); flash.rotation.y = Math.PI; flash.position.set(.105, .605, -PD / 2 - .0205); g.add(flash);
+  const lidar = new THREE.Mesh(new THREE.CircleGeometry(.014, 24), lensGlass); lidar.rotation.y = Math.PI; lidar.position.set(.105, .395, -PD / 2 - .0205); g.add(lidar);
+  // boutons latéraux arrondis (action, volume +/-, côté)
+  [[-1, .38, .085], [-1, .24, .14], [-1, .07, .14], [1, .25, .22]].forEach(([sd, y, l]) => {
+    const b = new THREE.Mesh(slab(.03, l, .014, .011, .004), frame); b.rotation.y = Math.PI / 2; b.position.set(sd * (PW / 2 + .0015), y, 0); b.castShadow = true; g.add(b);
+  });
+  // lignes d'antenne, port USB-C, grilles de haut-parleur
+  const dark = new THREE.MeshPhysicalMaterial({ color: 0x0a0c14, roughness: .5, metalness: .3 });
+  [[-PW / 2 + .11, PH / 2], [PW / 2 - .11, PH / 2], [-PW / 2 + .11, -PH / 2], [PW / 2 - .11, -PH / 2]].forEach(([x, y]) => { const a = new THREE.Mesh(new THREE.BoxGeometry(.008, .012, PD - .02), dark); a.position.set(x, y + Math.sign(y) * -.0005, 0); g.add(a); });
+  const port = new THREE.Mesh(slab(.105, .03, .014, .02, .004), new THREE.MeshBasicMaterial({ color: 0x020202 })); port.rotation.x = Math.PI / 2; port.position.set(0, -PH / 2 - .002, 0); g.add(port);
+  const hole = new THREE.CylinderGeometry(.0055, .0055, .02, 12);
+  for (let k = 0; k < 6; k++) for (const sd of [-1, 1]) { const h = new THREE.Mesh(hole, dark); h.position.set(sd * (.1 + k * .022), -PH / 2 - .002, 0); g.add(h); }
   return g;
 }

@@ -14,21 +14,21 @@ function buildPost() {
   rtH2 = rtH1.clone();
   postScene = new THREE.Scene(); postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const vs = 'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}';
-  matBright = new THREE.ShaderMaterial({ uniforms: { tC: { value: null }, uPx: { value: new THREE.Vector2(1 / RW, 1 / RH) }, uThr: { value: 1.0 } }, vertexShader: vs,
-    fragmentShader: 'uniform sampler2D tC;uniform vec2 uPx;uniform float uThr;varying vec2 vUv;void main(){vec3 c=vec3(0.);c+=texture2D(tC,vUv+uPx*vec2(-1.,-1.)).rgb;c+=texture2D(tC,vUv+uPx*vec2(1.,-1.)).rgb;c+=texture2D(tC,vUv+uPx*vec2(-1.,1.)).rgb;c+=texture2D(tC,vUv+uPx*vec2(1.,1.)).rgb;c*=.25;c=min(c,vec3(4.));float l=max(c.r,max(c.g,c.b));gl_FragColor=vec4(c*max(l-uThr,0.)/max(l,1e-4),1.);}' });
+  matBright = new THREE.ShaderMaterial({ uniforms: { tC: { value: null }, uPx: { value: new THREE.Vector2(1 / RW, 1 / RH) }, uThr: { value: 1.35 } }, vertexShader: vs,
+    fragmentShader: 'uniform sampler2D tC;uniform vec2 uPx;uniform float uThr;varying vec2 vUv;void main(){vec3 c=vec3(0.);c+=texture2D(tC,vUv+uPx*vec2(-1.,-1.)).rgb;c+=texture2D(tC,vUv+uPx*vec2(1.,-1.)).rgb;c+=texture2D(tC,vUv+uPx*vec2(-1.,1.)).rgb;c+=texture2D(tC,vUv+uPx*vec2(1.,1.)).rgb;c*=.25;c=min(c,vec3(2.5));float l=max(c.r,max(c.g,c.b));gl_FragColor=vec4(c*max(l-uThr,0.)/max(l,1e-4),1.);}' });
   matBlur = new THREE.ShaderMaterial({ uniforms: { tC: { value: null }, uDir: { value: new THREE.Vector2() } }, vertexShader: vs,
     fragmentShader: 'uniform sampler2D tC;uniform vec2 uDir;varying vec2 vUv;void main(){vec3 c=texture2D(tC,vUv).rgb*.227;c+=(texture2D(tC,vUv+uDir*1.385).rgb+texture2D(tC,vUv-uDir*1.385).rgb)*.316;c+=(texture2D(tC,vUv+uDir*3.231).rgb+texture2D(tC,vUv-uDir*3.231).rgb)*.07;gl_FragColor=vec4(c,1.);}' });
   matComp = new THREE.ShaderMaterial({
     uniforms: {
       tC: { value: null }, tD: { value: null }, tB: { value: null }, uRes: { value: new THREE.Vector2(RW, RH) }, uNear: { value: camera.near }, uFar: { value: camera.far },
       uFocus: { value: 3 }, uAp: { value: 0 }, uMax: { value: 26 * Q }, uRadial: { value: 0 }, uRadC: { value: new THREE.Vector2(.5, .5) }, uDir: { value: 0 },
-      uSlit: { value: 0 }, uFlash: { value: 0 }, uFlashCol: { value: new THREE.Color(.62, .1, .2) }, uExpo: { value: 1 }, uBloom: { value: .55 }, uCA: { value: .0012 }
+      uSlit: { value: 0 }, uFlash: { value: 0 }, uFlashCol: { value: new THREE.Color(.62, .1, .2) }, uExpo: { value: 1 }, uBloom: { value: .55 }, uCA: { value: .0007 }
     }, vertexShader: vs,
     fragmentShader: `
       uniform sampler2D tC,tD,tB;uniform vec2 uRes,uRadC;uniform float uNear,uFar,uFocus,uAp,uMax,uRadial,uDir,uSlit,uFlash,uExpo,uBloom,uCA;uniform vec3 uFlashCol;varying vec2 vUv;
       float lin(vec2 uv){float z=texture2D(tD,uv).x*2.-1.;return 2.*uNear*uFar/(uFar+uNear-z*(uFar-uNear));}
       float coc(float d){return clamp(uAp*abs(1.-uFocus/d),0.,uMax);}
-      vec3 tm(vec3 c){vec3 o;for(int i=0;i<3;i++){float x=c[i];o[i]=x<.78?x:.78+.22*(1.-exp(-(x-.78)/.22));}return o;}
+      vec3 tm(vec3 c){vec3 o;for(int i=0;i<3;i++){float x=c[i];o[i]=x<.7?x:.7+.3*(1.-exp(-(x-.7)/.3));}return o;}
       void main(){
         vec2 uv=vUv;
         vec3 col;
@@ -125,7 +125,7 @@ function phonePose(t) {
   const flatQ = new THREE.Quaternion().setFromAxisAngle(V3(0, 1, 0), -.003 * sl + Math.sin(t * 2 * Math.PI * 29) * env * .006).multiply(qFlat);
   const flat = { p: flatP, q: flatQ };
   const bob = Math.sin(t * 1.3) * .03;
-  const upQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * .7) * .03, Math.sin(t * .5) * .12 + .05, Math.sin(t * .9) * .015));
+  const upQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * .7) * .06, Math.sin(t * .45) * .3 + .05, Math.sin(t * .9) * .02));
   const up = { p: V3(0, 1.38 + bob, 0), q: upQ };
   if (t < 7.45 || t >= 56) return flat;
   const k = E.cubicInOut(inv(7.45, 8.45, t));
@@ -394,7 +394,7 @@ function update(t) {
   const pq = phone.getWorldQuaternion(new THREE.Quaternion());
   const dFill = SW / (K_OVER * 2 * TANH * (W / H));
   const away = clamp((camera.position.distanceTo(scrC) - dFill) / (dFill * .5));
-  su.uBright.value = 1 + .35 * away; su.uGlass.value = away;
+  su.uBright.value = 1 + .18 * away; su.uGlass.value = away;
   const Lc = liftCall(t), Lt = liftTT(t), Li = liftIG(t);
   const sw1 = E.expoInOut(inv(26.5, 26.8, t)), sw2 = E.expoInOut(inv(30.5, 30.8, t));
   let A, B = null, sw = 0;
@@ -491,7 +491,7 @@ function update(t) {
   if (t >= 56) ap = 13 * inv(57.6, 58, t);
   const u = matComp.uniforms;
   u.uFocus.value = focus; u.uAp.value = ap * Q; u.uRadial.value = P.radial; u.uDir.value = P.dir; u.uFlash.value = P.flash;
-  u.uBloom.value = inB ? .55 : .25 + .35 * away;
+  u.uBloom.value = inB ? .32 : .16 + .2 * away; u.uExpo.value = inB ? .92 : 1.0;
   matFxaa.uniforms.uTime.value = t * 60 % 1000;
   dust.material.uniforms.uT.value = t; dust.material.uniforms.uFocus.value = focus; dust.material.uniforms.uAp.value = ap * Q; dust.visible = away > .5;
   dustB.material.uniforms.uT.value = t; dustB.material.uniforms.uFocus.value = focus; dustB.material.uniforms.uAp.value = ap * Q;

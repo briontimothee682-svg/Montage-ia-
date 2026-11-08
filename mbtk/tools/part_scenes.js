@@ -47,24 +47,24 @@ function buildSceneA() {
       vec2 w=p-vec2(.37,.6);
       float win=smoothstep(.075,.07,abs(w.x))*smoothstep(.12,.115,abs(w.y));
       float mull=1.-(1.-smoothstep(.002,.004,abs(w.x)))*.85; mull*=1.-(1.-smoothstep(.002,.004,abs(w.y-.01)))*.85;
-      c=mix(c,vec3(1.1,.6,.3)*1.5,win*mull);
+      c=mix(c,vec3(1.1,.6,.3)*.85,win*mull);
       c+=vec3(1.,.5,.22)*.35*exp(-dot(w*vec2(3.,2.2),w*vec2(3.,2.2))*5.);
       c+=bord*.9*exp(-pow(length((p-vec2(.7,.52))*vec2(1.2,1.8)),2.)*5.);
       c+=vec3(.08,.14,.5)*.5*exp(-pow(length((p-vec2(.12,.5))*vec2(1.5,1.6)),2.)*5.);
-      c+=vec3(1.,.62,.3)*3.*exp(-pow(length((p-vec2(.585,.8))*vec2(14.,10.)),2.));
+      c+=vec3(1.,.62,.3)*1.3*exp(-pow(length((p-vec2(.585,.8))*vec2(14.,10.)),2.));
       gl_FragColor=vec4(c,1.);}`
   }));
   bd.position.set(0, 3, -8); sceneA.add(bd);
   // bokeh lumineux (ambre, bordeaux, bleu marine)
   const disc = new THREE.CircleGeometry(1, 24); const R = rng(11);
   for (let i = 0; i < 52; i++) {
-    const col = [new THREE.Color(5, 2.4, 1.1), new THREE.Color(4, .5, .9), new THREE.Color(5, 4, 3.2), new THREE.Color(1.1, 1.7, 5.5)][i % 4];
+    const col = [new THREE.Color(2.6, 1.25, .6), new THREE.Color(2.1, .28, .48), new THREE.Color(2.4, 1.9, 1.5), new THREE.Color(.6, .9, 2.8)][i % 4];
     const m = new THREE.Mesh(disc, new THREE.MeshBasicMaterial({ color: col })); const s = .025 + R() * .045;
     m.scale.setScalar(s); m.position.set((R() - .5) * 12, .4 + R() * 5.5, -5 - R() * 2.6); sceneA.add(m); bokehs.push(m);
   }
   // lumières : clé ambrée, halo bordeaux, contre-jour bleu marine
   sceneA.add(new THREE.HemisphereLight(0xffe1c4, 0x1a0a1a, .4));
-  sunA = new THREE.DirectionalLight(0xffc28a, 2.7); sunA.position.set(-5, 4.4, -3.2); sunA.target.position.set(0, .5, 0); sceneA.add(sunA, sunA.target);
+  sunA = new THREE.DirectionalLight(0xffc28a, 2.3); sunA.position.set(-5, 4.4, -3.2); sunA.target.position.set(0, .5, 0); sceneA.add(sunA, sunA.target);
   sunA.castShadow = true; sunA.shadow.mapSize.set(SHMAP, SHMAP); const sc = sunA.shadow.camera; sc.left = -3.5; sc.right = 3.5; sc.top = 3.5; sc.bottom = -3.5; sc.near = 1; sc.far = 16; sunA.shadow.bias = -.0004; sunA.shadow.normalBias = .02;
   const spot = new THREE.SpotLight(0xc4304f, 4.2, 16, .6, 1, 1.4); spot.position.set(4.6, 3.4, 2.6); spot.target.position.set(0, .6, 0); sceneA.add(spot, spot.target);
   const blue = new THREE.DirectionalLight(0x4d6fe0, 1.1); blue.position.set(-3.5, 2.2, -4.5); blue.target.position.set(0, 1, 0); sceneA.add(blue, blue.target);
@@ -81,7 +81,7 @@ function buildSceneA() {
   for (let i = 0; i < 5; i++) { const m = panelMesh(1, 380 / 1720, .028, .012, T(argPanel(i)), envA, { emi: 1, coat: .5 }); m.visible = false; sceneA.add(m); argMeshes.push(m); }
   poster = panelMesh(1, 1.5, .02, .008, T(bigPoster()), envA, { emi: .92, rough: .45, coat: .5, body: 0x5e1426 }); poster.visible = false; sceneA.add(poster);
   for (let i = 0; i < 6; i++) { const m = panelMesh(.62, .93, .03, .016, T(tradePoster(i)), envA, { emi: .9, glow: i % 2 ? 0x4d6fe0 : 0xc0405e, body: 0x1a0a10 }); m.visible = false; sceneA.add(m); trades.push(m); }
-  dust = makeDust(260, [-3, 0, -3, 3, 3.5, 3], 5); sceneA.add(dust);
+  dust = makeDust(160, [-3, 0, -3, 3, 3.5, 3], 5, 0x9a6a40); sceneA.add(dust);
 }
 
 function buildLayers() {
@@ -226,7 +226,7 @@ function buildHouse() {
   // matériaux
   const bordT = T(plasterTex(1024, 1024, [66, 14, 27], [118, 32, 50]), { repeat: [2, 1.2] });
   const bordB = T(plasterTex(512, 512, [100, 100, 100], [160, 160, 160]), { repeat: [4, 2.4], linear: true });
-  const creamT = T(plasterTex(1024, 512, [186, 168, 148], [212, 196, 176]), { repeat: [3, 1] });
+  const creamT = T(plasterTex(1024, 512, [172, 162, 152], [200, 190, 180]), { repeat: [3, 1] });
   const floorT = T(oakTex(1024, 1024, 8), { repeat: [2.2, 10.3], aniso: MAXANI });
   const oakT = T(oakTex(512, 1024, 0), { aniso: MAXANI });
   const weave = T(weaveTex(), { repeat: [60, 60], linear: true });
@@ -250,7 +250,7 @@ function buildHouse() {
   const fw = [creamWall, creamWall, creamWall, creamWall, creamWall, wallMat];
   for (const [w, cx, h, cy] of [[2.65, -.875, 2.6, 1.3], [.85, 1.775, 2.6, 1.3], [.9, .9, .5, 2.35]]) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, .1), fw); m.position.set(cx, cy, 3.25); S(m); }
   // fenêtre : ciel du soir, encadrement, vitre
-  const sky = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.4), new THREE.MeshBasicMaterial({ map: T(skyTex()), color: new THREE.Color(1.5, 1.5, 1.5) })); sky.position.set(-3.1, 1.55, .05); sky.rotation.y = Math.PI / 2; sceneB.add(sky);
+  const sky = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.4), new THREE.MeshBasicMaterial({ map: T(skyTex()), color: new THREE.Color(1.1, 1.1, 1.1) })); sky.position.set(-3.1, 1.55, .05); sky.rotation.y = Math.PI / 2; sceneB.add(sky);
   for (const [w, h, d, x, y, z] of [[.24, .05, 1.72, -2.16, .83, .05], [.12, .06, 1.66, -2.2, 2.16, .05], [.12, 1.36, .06, -2.2, 1.5, -.76], [.12, 1.36, .06, -2.2, 1.5, .86], [.05, 1.3, .04, -2.2, 1.5, .05], [.05, .04, 1.6, -2.2, 1.6, .05]]) boxM(w, h, d, creamPaint, x, y, z);
   const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.3), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .04, transparent: true, opacity: .12, envMap: envB, envMapIntensity: 1.5, depthWrite: false })); glass.position.set(-2.21, 1.5, .05); glass.rotation.y = Math.PI / 2; sceneB.add(glass);
   // rideaux en lin
@@ -287,14 +287,14 @@ function buildHouse() {
   pil(.22, .08, .16, 0xe6d4c0, [-.2, .75, -1.09], [-.84, -.22, -.08], 4);
   pil(.18, .07, .13, 0x16224d, [-.02, .74, -1.0], [-.8, .05, .02], 5);
   // tables de chevet, lampes, déco
-  const lampShade = new THREE.MeshStandardMaterial({ color: 0xf3e3cc, emissive: new THREE.Color(2.2, 1.2, .55), roughness: .9, side: THREE.DoubleSide });
+  const lampShade = new THREE.MeshStandardMaterial({ color: 0xf3e3cc, emissive: new THREE.Color(1.15, .62, .28), roughness: .9, side: THREE.DoubleSide });
   for (const sx of [-1, 1]) {
     const ns = new THREE.Mesh(slab(.48, .4, .02, .5, .01), oakMat); ns.rotation.x = -Math.PI / 2; ns.position.set(sx * 1.22, .25, -1.25); S(ns);
     const dr = new THREE.Mesh(new THREE.BoxGeometry(.4, .004, .004), new THREE.MeshBasicMaterial({ color: 0x3a2618 })); dr.position.set(sx * 1.22, .33, -1.049); sceneB.add(dr);
     const kn = new THREE.Mesh(new THREE.SphereGeometry(.012, 12, 8), brass); kn.position.set(sx * 1.22, .4, -1.045); sceneB.add(kn);
     const lb = new THREE.Mesh(new THREE.CylinderGeometry(.055, .085, .28, 32), new THREE.MeshPhysicalMaterial({ color: sx < 0 ? 0x16224d : 0xe9dccd, roughness: .25, clearcoat: .8, envMap: envB })); lb.position.set(sx * 1.22, .64, -1.32); S(lb);
     const sh = new THREE.Mesh(new THREE.CylinderGeometry(.12, .18, .22, 40, 1, true), lampShade); sh.position.set(sx * 1.22, .89, -1.32); sceneB.add(sh);
-    const l = new THREE.PointLight(0xffa860, sx > 0 ? 1.5 : 1.1, 5, 2); l.position.set(sx * 1.22, .86, -1.32); sceneB.add(l);
+    const l = new THREE.PointLight(0xffa860, sx > 0 ? 1.15 : .85, 5, 2); l.position.set(sx * 1.22, .86, -1.32); sceneB.add(l);
   }
   const mug = new THREE.Mesh(new THREE.CylinderGeometry(.04, .036, .09, 32), new THREE.MeshPhysicalMaterial({ color: 0xf2e9dc, roughness: .2, clearcoat: 1, envMap: envB })); mug.position.set(1.08, .545, -1.16); S(mug);
   const mh = new THREE.Mesh(new THREE.TorusGeometry(.024, .007, 10, 24), mug.material); mh.position.set(1.123, .55, -1.16); mh.rotation.y = Math.PI / 2; sceneB.add(mh);
@@ -352,7 +352,7 @@ function buildHouse() {
     }
     reg(plane(1.2, L, creamPaint, .9, 2.5, cz, Math.PI / 2));
     const rn = reg(plane(.72, L - .4, new THREE.MeshStandardMaterial({ map: T(runnerTex(), { repeat: [1, (L - .4) / 1.4] }), roughness: .96, bumpMap: weave, bumpScale: .001, envMap: envB, envMapIntensity: .15 }), .9, .006, cz, -Math.PI / 2));
-    for (let z = z0 + 1; z < z1; z += 2) { const sp = reg(new THREE.Mesh(new THREE.CircleGeometry(.05, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 1.8, 1.1) }))); sp.rotation.x = Math.PI / 2; sp.position.set(.9, 2.495, z); sceneB.add(sp); }
+    for (let z = z0 + 1; z < z1; z += 2) { const sp = reg(new THREE.Mesh(new THREE.CircleGeometry(.05, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.1, .78, .5) }))); sp.rotation.x = Math.PI / 2; sp.position.set(.9, 2.495, z); sceneB.add(sp); }
   }
   far(plane(1.2, 2.5, creamWall, .9, 1.25, 19, 0, Math.PI));
   // portes marine
@@ -379,18 +379,18 @@ function buildHouse() {
   hang(T(tradePoster(4)), .5, .72, 1.47, 1.55, 14.2, -Math.PI / 2, fr);
   fr.forEach(f => FAR.push(f));
   // appliques
-  const globe = new THREE.MeshBasicMaterial({ color: new THREE.Color(4.2, 2.6, 1.4) });
+  const globe = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, .95, .55) });
   for (const [x, z] of [[.31, 4.6], [1.49, 7.4], [.31, 9.6], [1.49, 12.6], [.31, 15.9], [1.49, 18.0]]) {
     const g = new THREE.Group(); g.position.set(x, 1.85, z); sceneB.add(g); if (z > 12.2) FAR.push(g);
     const pl = new THREE.Mesh(new THREE.CylinderGeometry(.055, .055, .015, 24), brass); pl.rotation.z = Math.PI / 2; g.add(pl);
     const arm = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .12, 8), brass); arm.rotation.z = Math.PI / 2; arm.position.x = x < 1 ? .06 : -.06; g.add(arm);
     const gl = new THREE.Mesh(new THREE.SphereGeometry(.06, 24, 16), globe); gl.position.set(x < 1 ? .13 : -.13, .03, 0); g.add(gl);
   }
-  for (const z of [4.9, 8.7, 12.5]) { const l = new THREE.PointLight(0xffa85a, .85, 5.5, 2); l.position.set(.9, 2.05, z); sceneB.add(l); }
+  for (const z of [4.9, 8.7, 12.5]) { const l = new THREE.PointLight(0xffb070, .5, 5.5, 2); l.position.set(.9, 2.05, z); sceneB.add(l); }
   // lumières de la chambre
   sceneB.add(new THREE.HemisphereLight(0xffd2a8, 0x1a0c12, .3));
   const sun = new THREE.DirectionalLight(0xffb070, 2.6); sun.position.set(-6.2, 2.7, .6); sun.target.position.set(0, .6, -.3); sceneB.add(sun, sun.target);
   sun.castShadow = true; sun.shadow.mapSize.set(SHMAP, SHMAP); const sc = sun.shadow.camera; sc.left = -3.2; sc.right = 3.2; sc.top = 3.2; sc.bottom = -3.2; sc.near = .5; sc.far = 14; sun.shadow.bias = -.0005; sun.shadow.normalBias = .015;
   const fill = new THREE.PointLight(0x6a80d8, .3, 4.5, 2); fill.position.set(-1.6, 1.6, .1); sceneB.add(fill);
-  dustB = makeDust(220, [-2.1, .5, -.9, .6, 2.3, 1.0], 8, 0xffc890); sceneB.add(dustB);
+  dustB = makeDust(80, [-2.1, .5, -.9, .6, 2.3, 1.0], 8, 0x7a5a3c); sceneB.add(dustB);
 }
