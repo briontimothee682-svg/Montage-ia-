@@ -1,5 +1,5 @@
 /* ---------- variables de scène ---------- */
-let GLOWRECT, sceneA, sceneB, phone, cards = [], argMeshes = [], poster, trades = [], laptop, bokehs = [], dust, dustB, contact, sunA, envA, envB;
+let vibFx, screenLight, GLOWRECT, sceneA, sceneB, phone, cards = [], argMeshes = [], poster, trades = [], laptop, bokehs = [], dust, dustB, contact, sunA, envA, envB;
 let PAGE = {}, TIMER, TIMER_TEX;
 const SHMAP = isMobile ? 1024 : 2048;
 const LAYERS = {};
@@ -72,6 +72,25 @@ function buildSceneA() {
   // ombre de contact
   contact = new THREE.Mesh(new THREE.PlaneGeometry(PW * 1.7, PH * 1.35), new THREE.MeshBasicMaterial({ map: T(contactShadowTex()), transparent: true, depthWrite: false, opacity: .85 }));
   contact.rotation.x = -Math.PI / 2; contact.position.y = .002; sceneA.add(contact);
+  // ondes de vibration : contours du téléphone qui s'élargissent sur la table à chaque vibration (lumineux, additifs)
+  vibFx = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uR: { value: new THREE.Vector4(-1, -1, -1, -1) }, uA: { value: new THREE.Vector4() }, uEnv: { value: 0 }, uC: { value: new THREE.Vector2() }, uYaw: { value: 0 }, uOn: { value: 1 } },
+    vertexShader: 'varying vec2 vP;void main(){vec4 w=modelMatrix*vec4(position,1.);vP=w.xz;gl_Position=projectionMatrix*viewMatrix*w;}',
+    fragmentShader: `uniform vec4 uR,uA;uniform float uEnv,uYaw,uOn;uniform vec2 uC;varying vec2 vP;
+      float rbox(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return length(max(q,0.))+min(max(q.x,q.y),0.)-r;}
+      void main(){vec2 d=vP-uC;float c=cos(uYaw),s=sin(uYaw);vec2 p=vec2(c*d.x-s*d.y,s*d.x+c*d.y);
+        float sd=rbox(p,vec2(${(PW / 2).toFixed(3)},${(PH / 2).toFixed(3)}),.11);
+        vec3 col=vec3(0.);
+        for(int i=0;i<4;i++){float r=uR[i];if(r<0.)continue;float w=.018+r*.05;float ring=exp(-pow((sd-r)/w,2.))*uA[i];
+          col+=mix(vec3(1.25,.62,.32),vec3(1.05,.16,.36),clamp(r*1.6,0.,1.))*ring;}
+        float spill=exp(-max(sd,0.)*7.)*step(0.,sd)*(.22+.55*uEnv);
+        col+=vec3(1.,.32,.45)*spill*.55;
+        col*=smoothstep(2.4,1.2,length(d))*uOn;
+        gl_FragColor=vec4(col,1.);}`
+  }));
+  vibFx.rotation.x = -Math.PI / 2; vibFx.position.y = .003; vibFx.renderOrder = 2; sceneA.add(vibFx);
+  screenLight = new THREE.PointLight(0xff6b8a, 0, 1.6, 2); sceneA.add(screenLight);
   // téléphone + calques 3D
   phone = buildPhone(envA); sceneA.add(phone);
   buildLayers();

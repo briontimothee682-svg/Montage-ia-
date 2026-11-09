@@ -31,7 +31,7 @@ O = 1.0  # origine de la grille des mesures (mesures sur les secondes impaires)
 rng = np.random.default_rng(47)
 
 # ---------------------------------------------------------------- repères (identiques à la timeline JS)
-VIB = [(0, .4), (.5, .9), (1.5, 1.9), (2.0, 2.4), (3.0, 3.4), (3.5, 3.9), (57.2, 57.6)]
+VIB = [(0, .42), (.5, .92), (1.0, 1.42), (1.5, 1.92), (2.0, 2.42), (2.5, 2.92), (3.0, 3.42), (3.5, 3.86), (57.2, 57.6)]
 DROP = 5.0          # décroché : le beat démarre
 CARDS = [8.5, 10.0, 11.5, 13.0]
 ARGS = [15.0, 16.3, 17.6, 18.9, 20.2]
@@ -457,10 +457,31 @@ def music():
     return mus + fxw * .7
 
 
+def rumble(dur, vol=1.0):
+    n = int(dur * SR); t = T(n)
+    s = np.sin(2 * np.pi * 47 * t) * (.75 + .25 * np.sin(2 * np.pi * 21 * t)) + .3 * np.sin(2 * np.pi * 94 * t)
+    env = np.minimum(1, t / .02) * np.minimum(1, np.maximum(dur - t, 0) / .06)
+    return np.tanh(s * env * 1.3) * .8 * vol
+
+
+def glitch_sfx(dur=.2, vol=.5, seed=5):
+    r = np.random.default_rng(seed)
+    n = int(dur * SR); out = np.zeros(n); i = 0
+    while i < n:
+        seg = int(r.uniform(.007, .028) * SR); f = r.choice([90, 180, 360, 720, 1440, 2880]); tt = T(seg)
+        sig = np.sign(np.sin(2 * np.pi * f * tt)) * r.uniform(.3, 1) if r.random() > .35 else r.normal(0, .6, seg)
+        out[i:i + seg] = sig[:n - i]; i += seg
+    out = np.round(out * 5) / 5
+    return fftfilt(out, hi=9000) * vol * np.minimum(1, (n - np.arange(n)) / (.012 * SR))
+
+
 # ---------------------------------------------------------------- bruitages (temps du scénario -> temps réel)
 def sfx():
     s = np.zeros((N, 2)); r = R
-    for a, b in VIB: place(s, vibration(r(b) - r(a)), r(a), .22)
+    for a, b in VIB:
+        place(s, vibration(r(b) - r(a)), r(a), .34)
+        if a < 4: place(s, rumble(r(b) - r(a), .55), r(a), 1)
+    for k, a in enumerate((0.0, .96, 1.96)): place(s, glitch_sfx(.22 if k == 0 else .16, .42, seed=5 + k), a, 1, -.2 + .2 * k)
     # accroche : crash zoom, coupes, impacts des mots
     place(s, whoosh(.7, 4200, 250, shape=.12), 0.0, .5)
     for a in (.93, 1.93): place(s, whoosh(.3, 900, 6500, shape=.6), a, .45, .5 if a < 1.5 else -.5)

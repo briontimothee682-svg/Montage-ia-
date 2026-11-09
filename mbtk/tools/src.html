@@ -917,7 +917,7 @@ function panelMesh(w, h, r, depth, tex, env, opts = {}) {
 }
 
 /* ---------- variables de scène ---------- */
-let GLOWRECT, sceneA, sceneB, phone, cards = [], argMeshes = [], poster, trades = [], laptop, bokehs = [], dust, dustB, contact, sunA, envA, envB;
+let vibFx, screenLight, GLOWRECT, sceneA, sceneB, phone, cards = [], argMeshes = [], poster, trades = [], laptop, bokehs = [], dust, dustB, contact, sunA, envA, envB;
 let PAGE = {}, TIMER, TIMER_TEX;
 const SHMAP = isMobile ? 1024 : 2048;
 const LAYERS = {};
@@ -990,6 +990,25 @@ function buildSceneA() {
   // ombre de contact
   contact = new THREE.Mesh(new THREE.PlaneGeometry(PW * 1.7, PH * 1.35), new THREE.MeshBasicMaterial({ map: T(contactShadowTex()), transparent: true, depthWrite: false, opacity: .85 }));
   contact.rotation.x = -Math.PI / 2; contact.position.y = .002; sceneA.add(contact);
+  // ondes de vibration : contours du téléphone qui s'élargissent sur la table à chaque vibration (lumineux, additifs)
+  vibFx = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uR: { value: new THREE.Vector4(-1, -1, -1, -1) }, uA: { value: new THREE.Vector4() }, uEnv: { value: 0 }, uC: { value: new THREE.Vector2() }, uYaw: { value: 0 }, uOn: { value: 1 } },
+    vertexShader: 'varying vec2 vP;void main(){vec4 w=modelMatrix*vec4(position,1.);vP=w.xz;gl_Position=projectionMatrix*viewMatrix*w;}',
+    fragmentShader: `uniform vec4 uR,uA;uniform float uEnv,uYaw,uOn;uniform vec2 uC;varying vec2 vP;
+      float rbox(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return length(max(q,0.))+min(max(q.x,q.y),0.)-r;}
+      void main(){vec2 d=vP-uC;float c=cos(uYaw),s=sin(uYaw);vec2 p=vec2(c*d.x-s*d.y,s*d.x+c*d.y);
+        float sd=rbox(p,vec2(${(PW / 2).toFixed(3)},${(PH / 2).toFixed(3)}),.11);
+        vec3 col=vec3(0.);
+        for(int i=0;i<4;i++){float r=uR[i];if(r<0.)continue;float w=.018+r*.05;float ring=exp(-pow((sd-r)/w,2.))*uA[i];
+          col+=mix(vec3(1.25,.62,.32),vec3(1.05,.16,.36),clamp(r*1.6,0.,1.))*ring;}
+        float spill=exp(-max(sd,0.)*7.)*step(0.,sd)*(.22+.55*uEnv);
+        col+=vec3(1.,.32,.45)*spill*.55;
+        col*=smoothstep(2.4,1.2,length(d))*uOn;
+        gl_FragColor=vec4(col,1.);}`
+  }));
+  vibFx.rotation.x = -Math.PI / 2; vibFx.position.y = .003; vibFx.renderOrder = 2; sceneA.add(vibFx);
+  screenLight = new THREE.PointLight(0xff6b8a, 0, 1.6, 2); sceneA.add(screenLight);
   // téléphone + calques 3D
   phone = buildPhone(envA); sceneA.add(phone);
   buildLayers();
@@ -1465,15 +1484,17 @@ function buildPost() {
     uniforms: {
       tC: { value: null }, tD: { value: null }, tB: { value: null }, uRes: { value: new THREE.Vector2(RW, RH) }, uNear: { value: camera.near }, uFar: { value: camera.far },
       uFocus: { value: 3 }, uAp: { value: 0 }, uMax: { value: 16 * Q }, uRadial: { value: 0 }, uRadC: { value: new THREE.Vector2(.5, .5) }, uDir: { value: 0 },
-      uSlit: { value: 0 }, uFlash: { value: 0 }, uFlashCol: { value: new THREE.Color(.62, .1, .2) }, uExpo: { value: 1 }, uBloom: { value: .55 }, uCA: { value: .0007 }
+      uSlit: { value: 0 }, uFlash: { value: 0 }, uFlashCol: { value: new THREE.Color(.62, .1, .2) }, uExpo: { value: 1 }, uBloom: { value: .55 }, uCA: { value: .0007 }, uGlitch: { value: 0 }, uSeed: { value: 0 }
     }, vertexShader: vs,
     fragmentShader: `
-      uniform sampler2D tC,tD,tB;uniform vec2 uRes,uRadC;uniform float uNear,uFar,uFocus,uAp,uMax,uRadial,uDir,uSlit,uFlash,uExpo,uBloom,uCA;uniform vec3 uFlashCol;varying vec2 vUv;
+      uniform sampler2D tC,tD,tB;uniform vec2 uRes,uRadC;uniform float uNear,uFar,uFocus,uAp,uMax,uRadial,uDir,uSlit,uFlash,uExpo,uBloom,uCA,uGlitch,uSeed;
+      float gh(float n){return fract(sin(n*91.345+uSeed*13.17)*43758.5453);}uniform vec3 uFlashCol;varying vec2 vUv;
       float lin(vec2 uv){float z=texture2D(tD,uv).x*2.-1.;return 2.*uNear*uFar/(uFar+uNear-z*(uFar-uNear));}
       float coc(float d){return clamp(uAp*abs(1.-uFocus/d),0.,uMax);}
       vec3 tm(vec3 c){vec3 o;for(int i=0;i<3;i++){float x=c[i];o[i]=x<.7?x:.7+.3*(1.-exp(-(x-.7)/.3));}return o;}
       void main(){
         vec2 uv=vUv;
+        if(uGlitch>0.){float sl=floor(uv.y*26.);if(gh(sl)>.52)uv.x+=(gh(sl+7.)-.5)*.1*uGlitch;float bl=floor(uv.y*6.+gh(1.)*6.);if(gh(bl+3.)>.7)uv.y+=(gh(bl+11.)-.5)*.03*uGlitch;}
         vec3 col;
         vec2 bv=(uv-uRadC)*uRadial+vec2(uDir,0.);
         float bl=length(bv*uRes);
@@ -1496,6 +1517,7 @@ function buildPost() {
         } else col=texture2D(tC,uv).rgb;
         vec2 cd=uv-.5;float ca=dot(cd,cd)*uCA*6.;
         if(bl<=1.5){col.r=mix(col.r,texture2D(tC,uv+cd*ca).r,.6);col.b=mix(col.b,texture2D(tC,uv-cd*ca).b,.6);}
+        if(uGlitch>0.){col.r=mix(col.r,texture2D(tC,uv+vec2(.016*uGlitch,.003*uGlitch)).r,.85);col.b=mix(col.b,texture2D(tC,uv-vec2(.016*uGlitch,0.)).b,.85);}
         col+=texture2D(tB,uv).rgb*uBloom;
         col*=uExpo;
         float L=dot(col,vec3(.2126,.7152,.0722));
@@ -1602,15 +1624,19 @@ function mixPose(a, b, k) { return { p: a.p.clone().lerp(b.p, k), q: a.q.clone()
 function setFov(f) { if (Math.abs(camera.fov - f) > 1e-4) { camera.fov = f; camera.updateProjectionMatrix(); } TANH = Math.tan(f * DEG / 2); }
 const K_OVER = 1.02;
 const qFlat = new THREE.Quaternion().setFromAxisAngle(V3(0, 1, 0), -12 * DEG).multiply(new THREE.Quaternion().setFromAxisAngle(V3(1, 0, 0), -Math.PI / 2));
-const BURSTS = [[0, .4], [.5, .9], [1.5, 1.9], [2.0, 2.4], [3.0, 3.4], [3.5, 3.9], [57.2, 57.6]];
+const BURSTS = [[0, .42], [.5, .92], [1.0, 1.42], [1.5, 1.92], [2.0, 2.42], [2.5, 2.92], [3.0, 3.42], [3.5, 3.86], [57.2, 57.6]];
+const NHB = 8;
 function buzzEnv(t) { let e = 0; for (const [a, b] of BURSTS) { if (t > a && t < b) e = Math.max(e, Math.min(1, (t - a) / .03, (b - t) / .05)); } return e; }
-function slide(t) { let s = 0; for (let i = 0; i < 6; i++) { const [a, b] = BURSTS[i]; s += E.sine(inv(a, b, t)); } return t > 30 ? 0 : s; }
+function slide(t) { let s = 0; for (let i = 0; i < NHB; i++) { const [a, b] = BURSTS[i]; s += E.sine(inv(a, b, t)); } return t > 30 ? 0 : s; }
 function phonePose(t) {
   const env = buzzEnv(t), sl = slide(t);
-  const flatP = V3(.009 * sl, PD / 2, .0045 * sl);
-  const jit = env * .0045;
+  const flatP = V3(.011 * sl, PD / 2, .0055 * sl);
+  const jit = env * .011;
   flatP.x += Math.sin(t * 2 * Math.PI * 41) * jit; flatP.z += Math.cos(t * 2 * Math.PI * 37) * jit;
-  const flatQ = new THREE.Quaternion().setFromAxisAngle(V3(0, 1, 0), -.003 * sl + Math.sin(t * 2 * Math.PI * 29) * env * .006).multiply(qFlat);
+  flatP.y += Math.abs(Math.sin(t * 2 * Math.PI * 33)) * env * .007;
+  const flatQ = new THREE.Quaternion().setFromAxisAngle(V3(0, 1, 0), -.006 * sl + Math.sin(t * 2 * Math.PI * 29) * env * .028)
+    .multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * 2 * Math.PI * 31) * env * .022, 0, Math.sin(t * 2 * Math.PI * 27 + 1) * env * .018)))
+    .multiply(qFlat);
   const flat = { p: flatP, q: flatQ };
   const bob = Math.sin(t * 1.3) * .03;
   const upQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * .7) * .06, Math.sin(t * .45) * .3 + .05, Math.sin(t * .9) * .02));
@@ -1663,7 +1689,7 @@ function computeHook() {
   HK = {
     a0: rollPose(relPose(7.4, 20, -42, .12), 10), a1: relPose(2.8, 7, -31, .16), a2: relPose(2.55, 4, -29, .16),
     b0: rollPose(relPose(2.55, -48, -40, .06), -6), b1: rollPose(relPose(2.35, -18, -33, .1), 2),
-    c0: look([1.25, .3, 1.2], [0, .06, -.14]), c1: look([.66, .25, 1.62], [0, .07, -.22])
+    c0: look([1.25, .52, 1.22], [0, .03, -.1]), c1: look([.64, .45, 1.6], [0, .04, -.2])
   };
   set(3.95);
   HK.sl0 = screenLook(1500, 1800, 7, -15); HK.sl1 = screenLook(1515, 1700, 2, -10);
@@ -1757,7 +1783,7 @@ function camQuat(extra) { const q = camera.quaternion.clone(); if (extra) q.mult
 function stageWidth(px, depth) { return px / W * 2 * TANH * depth * W / H; }
 
 /* ---------- état animé (piloté par GSAP) ---------- */
-const P = { radial: 0, dir: 0, flash: 0, rip: 0, pulse: 1, pglow: 0, scroll: 0, shade: 0, portal: 0, glow: 0, fov: FOV, punch: 0, knob: 0, shake: 0 };
+const P = { radial: 0, dir: 0, flash: 0, rip: 0, pulse: 1, pglow: 0, scroll: 0, shade: 0, portal: 0, glow: 0, fov: FOV, punch: 0, knob: 0, shake: 0, glitch: 0 };
 let tl;
 function splitWords(el) {
   const walk = (node) => {
@@ -1788,6 +1814,8 @@ function buildTimeline() {
   slamHard('t2', 1.0, .09);
   tl.fromTo('#t2 .hl', { color: '#F5EAE0' }, { color: '#E8B27A', duration: .2 }, 1.5);
   tl.fromTo(P, { radial: .24 }, { radial: 0, duration: .75, ease: 'power2.out' }, 0);
+  tl.fromTo(P, { glitch: 1 }, { glitch: 0, duration: .3, ease: 'power2.out' }, 0);
+  for (const a of [.96, 1.96]) tl.fromTo(P, { glitch: 0 }, { keyframes: [{ glitch: .85, duration: .02 }, { glitch: 0, duration: .16, ease: 'power2.out' }], immediateRender: false }, a);
   tl.fromTo(P, { flash: 0 }, { keyframes: [{ flash: .5, duration: .03 }, { flash: 0, duration: .22, ease: 'power2.out' }] }, .97);
   tl.fromTo(P, { flash: 0 }, { keyframes: [{ flash: .5, duration: .03 }, { flash: 0, duration: .22, ease: 'power2.out' }], ...ir }, 1.97);
   for (const a of [1.0, 2.0]) tl.fromTo(P, { dir: 0 }, { keyframes: [{ dir: .07, duration: .07, ease: 'power2.in' }, { dir: 0, duration: .16, ease: 'power2.out' }], ...ir }, a - .07);
@@ -1864,7 +1892,8 @@ function buildTimeline() {
   tl.fromTo('#endSweep', { x: 0, opacity: 0 }, { x: 2300, opacity: 1, duration: 1.4, ease: 'power2.inOut' }, 52.25);
   ['#e1', '#e2', '#e3', '#e4'].forEach((s, i) => tl.fromTo(s, { opacity: 0, y: 40, filter: 'blur(10px)' }, { opacity: 1, y: 0, filter: 'blur(0px)', duration: .45, ease: 'expo.out' }, 52.6 + i * .25));
   // petits coups de zoom sur les temps forts
-  [0, .5, 1.0, 1.5, 2.0, 2.5, 5.0, 8.3, 9.0, 14.6, 15.45, 16.75, 18.05, 19.35, 20.65, 22.75, 27.0, 31.0, 35.4, 36.0, 36.75, 37.5, 38.25, 39.0].forEach(a => tl.to(P, { keyframes: [{ punch: 2.4, duration: .07, ease: 'power2.out' }, { punch: 0, duration: .45, ease: 'power2.inOut' }] }, a));
+  [5.0, 8.3, 9.0, 14.6, 15.45, 16.75, 18.05, 19.35, 20.65, 22.75, 27.0, 31.0, 35.4, 36.0, 36.75, 37.5, 38.25, 39.0].forEach(a => tl.to(P, { keyframes: [{ punch: 2.4, duration: .07, ease: 'power2.out' }, { punch: 0, duration: .45, ease: 'power2.inOut' }] }, a));
+  [0, .5, 1.0, 1.5, 2.0, 2.5, 3.0].forEach(a => tl.to(P, { keyframes: [{ punch: 3.4, duration: .05, ease: 'power2.out' }, { punch: 0, duration: .4, ease: 'power2.inOut' }] }, a));
   // boucle : le logo se pose sur la photo de contact de l'appel, retour sur la table
   const ly = 960 + (905 - SCH / 2) * K_OVER;
   tl.to(['#e1', '#e2', '#e3', '#e4'], { opacity: 0, y: 30, duration: .18, ease: 'power2.in' }, 55.95);
@@ -1909,6 +1938,7 @@ function applyLayers(key, L, t) {
   if (Ly.glow && Ly.follow) { const f = Ly.follow; Ly.glow.position.set(f.lx, f.ly, f.m.position.z - .004); Ly.glow.material.opacity = P.pglow * clamp(L * 2); Ly.glow.scale.setScalar(P.pulse); }
 }
 const _hv = new THREE.Vector3();
+function buzzShakeQ(t) { const e = t < 3.95 ? buzzEnv(t) : 0; return new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * 2 * Math.PI * 23) * .0042 * e, Math.sin(t * 2 * Math.PI * 19 + 1) * .0042 * e, Math.sin(t * 2 * Math.PI * 27 + 2) * .006 * e)); }
 function shakeQ(t, a) { return new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * 93.1) * .011 * a, Math.sin(t * 71.7 + 1.3) * .011 * a, Math.sin(t * 57.3 + 2.1) * .018 * a)); }
 function camState(t, tShake = t) {
   const inB = t >= 41.0 && t < 51.0, fov = inB ? P.fov : FOV - P.punch;
@@ -1916,6 +1946,7 @@ function camState(t, tShake = t) {
   const ph = phonePose(t); phone.position.copy(ph.p); phone.quaternion.copy(ph.q); phone.updateMatrixWorld(true);
   const cp = inB ? camB(t) : camA(t);
   if (P.shake > .002 && !inB) { cp.q.multiply(shakeQ(tShake, P.shake)); cp.p.y += Math.sin(tShake * 83.3 + .7) * .012 * P.shake; }
+  if (!inB) cp.q.multiply(buzzShakeQ(tShake));
   return { p: cp.p, q: cp.q, fov };
 }
 function update(tr) {
@@ -1941,6 +1972,7 @@ function update(tr) {
   // ----- caméra
   const cp = inB ? camB(t) : camA(t);
   if (P.shake > .002 && !inB) { cp.q.multiply(shakeQ(t, P.shake)); cp.p.y += Math.sin(t * 83.3 + .7) * .012 * P.shake; }
+  if (!inB) cp.q.multiply(buzzShakeQ(t));
   camera.position.copy(cp.p); camera.quaternion.copy(cp.q); camera.updateMatrixWorld(true);
   // ----- écran
   const su = screenUniforms;
@@ -1948,7 +1980,7 @@ function update(tr) {
   const pq = phone.getWorldQuaternion(new THREE.Quaternion());
   const dFill = SW / (K_OVER * 2 * TANH * (W / H));
   const away = clamp((camera.position.distanceTo(scrC) - dFill) / (dFill * .5));
-  su.uBright.value = 1 + .18 * away; su.uGlass.value = Math.max(away, .3);
+  su.uBright.value = (1 + .18 * away) * (1 + (t < 3.95 ? .22 * buzzEnv(t) : 0)); su.uGlass.value = Math.max(away, .3);
   const Lc = liftCall(t), Lt = liftTT(t), Li = liftIG(t);
   const sw1 = E.expoInOut(inv(26.5, 26.8, t)), sw2 = E.expoInOut(inv(30.5, 30.8, t));
   let A, B = null, sw = 0;
@@ -2053,6 +2085,25 @@ function update(tr) {
   dust.material.uniforms.uT.value = t; dust.material.uniforms.uFocus.value = focus; dust.material.uniforms.uAp.value = ap * Q; dust.visible = away > .5;
   dustB.material.uniforms.uT.value = t; dustB.material.uniforms.uFocus.value = focus; dustB.material.uniforms.uAp.value = ap * Q;
   document.getElementById('topShade').style.opacity = P.shade;
+  // ----- accroche : ondes de vibration, lumière de l'écran qui pulse, texte qui tremble
+  const hookOn = t < 7.45 || t > 57.0, env = buzzEnv(t);
+  vibFx.visible = hookOn && !inB && !inEnd;
+  if (vibFx.visible) {
+    const rr = [-1, -1, -1, -1], aa = [0, 0, 0, 0]; let k = 0;
+    for (let i = BURSTS.length - 1; i >= 0 && k < 4; i--) { const age = t - BURSTS[i][0]; if (age < 0 || age > 1.3) continue; rr[k] = .015 + age * 1.15; aa[k] = Math.exp(-age * 2.4) * Math.min(1, age / .04) * 1.5; k++; }
+    const mu = vibFx.material.uniforms; mu.uR.value.set(...rr); mu.uA.value.set(...aa); mu.uEnv.value = env;
+    mu.uC.value.set(phone.position.x, phone.position.z); mu.uYaw.value = -12 * DEG; mu.uOn.value = clamp(1 - Math.max(0, phone.position.y - PD / 2) * 4);
+  }
+  screenLight.visible = hookOn; screenLight.position.set(phone.position.x, phone.position.y + .1, phone.position.z); screenLight.intensity = hookOn ? (.16 + .42 * env) * clamp(1 - Math.max(0, phone.position.y - PD / 2) * 4) : 0;
+  if (t < 3.95) { u.uCA.value = .0007 + .0035 * env + .008 * P.glitch; u.uExpo.value *= 1 + .1 * env; } else u.uCA.value = .0007;
+  u.uGlitch.value = P.glitch; u.uSeed.value = Math.floor(tr * 30) % 97;
+  const uiEl = document.getElementById('ui');
+  if (t < 3.3) {
+    const jx = Math.sin(t * 2 * Math.PI * 31) * 7 * env + (P.glitch > .05 ? (Math.sin(tr * 997) * 26 * P.glitch) : 0), jy = Math.sin(t * 2 * Math.PI * 23 + 1) * 5 * env;
+    uiEl.style.transform = `translate(${jx.toFixed(1)}px,${jy.toFixed(1)}px)`;
+    const k2 = (4.5 * env + 14 * P.glitch).toFixed(1);
+    for (const id of ['t1', 't2']) document.getElementById(id).style.textShadow = `${-k2}px 0 rgba(255,40,90,.55), ${k2}px 0 rgba(70,190,255,.45), 0 4px 22px rgba(20,3,9,.65), 0 1px 3px rgba(20,3,9,.5)`;
+  } else if (uiEl.style.transform) { uiEl.style.transform = ''; for (const id of ['t1', 't2']) document.getElementById(id).style.textShadow = ''; }
   // ----- rendu
   if (inEnd) { renderer.setRenderTarget(null); renderer.setClearColor(0x000000); renderer.clear(); return; }
   if (!inB && su.uPortal.value > .001) updatePortalCam();
