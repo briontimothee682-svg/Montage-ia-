@@ -40,19 +40,19 @@ function sitePageMobile() {
   P('SERVICES', 70, y, 28, '#d58bff', 700); H1("Tout ce qu'il faut pour", 70, y + 90, 62); H1('exister sur les réseaux', 70, y + 168, 62);
   ['Vidéos IA', 'Montage & cover', 'Scripts & accroches', 'Pubs Instagram', 'Visuels & affiches', 'Stratégie'].forEach((l, i) => { const x = 70 + (i % 2) * 480, yy = y + 230 + Math.floor(i / 2) * 230; card(x, yy, 460, 200); P(l, x + 34, yy + 80, 36, '#fff', 700); lines(x + 34, yy + 116, 2, 360); });
   // comment ça marche
-  y = 3960;
+  y = 3900;
   P('COMMENT ÇA MARCHE', 70, y, 28, '#FFD23F', 700); H1('Une commande, livrée', 70, y + 90, 62); H1('en quelques jours', 70, y + 168, 62);
   ['Brief', 'Script', 'Création', 'Livraison'].forEach((l, i) => { const yy = y + 240 + i * 120; H1('0' + (i + 1), 70, yy + 70, 58, '#9aa6ff'); P(l, 200, yy + 52, 40, '#fff', 700); lines(200, yy + 74, 1, 600); });
   // tarifs
-  y = 4560;
+  y = 4660;
   P('TARIFS', 540, y, 28, '#d58bff', 700, 'center'); H1('Des vidéos à la demande,', 540, y + 90, 58, '#fff', 'center'); H1('sans abonnement', 540, y + 166, 58, '#fff', 'center');
   [['Vidéo unique', '89€'], ['Pack 3 vidéos', '229€'], ['Pack 5 vidéos', '359€']].forEach(([a, b], i) => { const x = 50 + i * 333, yy = y + 250; card(x, yy, 313, 470, i === 1); if (i === 1) { g.fillStyle = '#FFD23F'; rr(g, x + 66, yy - 24, 180, 48, 24); g.fill(); P('POPULAIRE', x + 156, yy + 10, 24, '#2a0b17', 700, 'center'); } P(a, x + 30, yy + 80, 30, '#fff', 700); H1(b, x + 30, yy + 180, 70); for (let k = 0; k < 3; k++) { check(g, x + 44, yy + 250 + k * 50, 22, '#5ee0a0', 5); g.fillStyle = 'rgba(255,255,255,.35)'; rr(g, x + 72, yy + 242 + k * 50, 190 - k * 30, 14, 7); g.fill(); } g.fillStyle = i === 1 ? '#7c5cff' : 'rgba(255,255,255,.14)'; rr(g, x + 30, yy + 400, 253, 50, 25); g.fill(); });
   // FAQ
-  y = 5420;
+  y = 5480;
   H1('Questions fréquentes', 540, y, 58, '#fff', 'center');
   for (let i = 0; i < 4; i++) { card(70, y + 50 + i * 104, 940, 84); g.fillStyle = 'rgba(255,255,255,.55)'; rr(g, 104, y + 86 + i * 104, 420 + (i * 97) % 220, 14, 7); g.fill(); P('+', 975, y + 106 + i * 104, 40, '#fff', 600, 'right'); }
   // contact
-  y = 5980;
+  y = 6020;
   H1('Prêt à faire décoller', 70, y, 64); H1('ta visibilité ?', 70, y + 80, 64, '#E8B27A');
   g.fillStyle = '#7c5cff'; rr(g, 70, y + 140, 480, 100, 50); g.fill(); P('Me contacter', 310, y + 204, 36, '#fff', 700, 'center');
   P('🔗 ' + CFG.site + '  ·  ' + CFG.handle, 70, y + 310, 34, 'rgba(255,255,255,.85)', 600);
