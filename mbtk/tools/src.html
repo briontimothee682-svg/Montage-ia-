@@ -59,7 +59,7 @@ body{cursor:pointer}
 #endFlash{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,#ffd9b8 0%,#c0405e 35%,#5E1426 100%);opacity:0}
 #fx{z-index:5}
 #vig{position:absolute;inset:0;background:radial-gradient(ellipse 78% 62% at 50% 46%,rgba(0,0,0,0) 55%,rgba(10,1,4,.42) 100%)}
-#grain{position:absolute;inset:-64px;opacity:.035;mix-blend-mode:overlay}
+#grain{position:absolute;inset:-64px;opacity:.022;mix-blend-mode:overlay}
 #launch{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20;gap:28px;font-family:'Space Grotesk',system-ui,sans-serif;color:#F5EAE0}
 #go{font:700 22px 'Space Grotesk',system-ui,sans-serif;color:#F5EAE0;background:transparent;border:2px solid #9E2A43;border-radius:999px;padding:18px 42px;letter-spacing:.04em;cursor:pointer}
 #go:disabled{opacity:.45}
@@ -314,6 +314,10 @@ function thumb(g, x, y, w, h, i) {
   g.restore();
 }
 const BIO = ['Agence marketing & branding', 'pour commerçants 📈', 'Pubs · Reels · TikTok · Logos · Affiches', '🎁 Maquette offerte · Dispo 7j/7'];
+/* ---- pictogrammes téléphone (décrocher / raccrocher), tracés vectoriels nets ---- */
+const ICON_CALL = new Path2D('M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z');
+const ICON_END = new Path2D('M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z');
+function drawIcon(g, path, cx, cy, size, col) { g.save(); g.translate(cx - size / 2, cy - size / 2); g.scale(size / 24, size / 24); g.fillStyle = col; g.fill(path); g.restore(); }
 /* ---- appel entrant façon iPhone : « faire glisser pour répondre » (curseur et texte animés dans le shader) ---- */
 const SLY = 1860, SLX0 = 90, SLW = 900, SLH = 180;
 function pageIncoming() {
@@ -338,7 +342,7 @@ function knobTex() {
   const s = 2, { c, g } = mk(192 * s, 192 * s); g.scale(s, s);
   g.save(); g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 16; g.shadowOffsetY = 4; g.fillStyle = '#fff'; g.beginPath(); g.arc(96, 96, 74, 0, 7); g.fill(); g.restore();
   g.fillStyle = lingrad(g, 0, 22, 0, 170, [[0, '#ffffff'], [1, '#ece6e2']]); g.beginPath(); g.arc(96, 96, 74, 0, 7); g.fill();
-  handset(g, 96, 86, 66, Math.PI, '#34C759');
+  drawIcon(g, ICON_CALL, 96, 96, 92, '#34C759');
   return c;
 }
 function slideTextTex() {
@@ -369,7 +373,7 @@ function defPages() {
       { k: 'name', box: [90, 370, 900, 112], h: .11, d: .1, draw: g => txt(g, 'MBTK Design', 540, 452, F(700, 90, 'u'), '#F5EAE0', 'center') },
       { k: 'avatar', box: [320, 640, 440, 440], h: .21, d: 0, draw: g => creamLogoCircle(g, 540, 860, 190) },
       ...CALL_BTNS.map((b, i) => ({ k: 'b' + i, box: [b.x - 108, b.y - 108, 216, 300], h: .045 + (i % 3 === 1 ? .03 : 0) + (i < 3 ? .02 : 0), d: .2 + i * .05, draw: g => drawCallButton(g, b) })),
-      { k: 'end', box: [430, 1770, 220, 220], h: .14, d: .45, draw: g => { g.fillStyle = '#EB4D3D'; g.beginPath(); g.arc(540, 1880, 100, 0, 7); g.fill(); handset(g, 540, 1866, 92, Math.PI * 1.75, '#fff'); } }
+      { k: 'end', box: [430, 1770, 220, 220], h: .14, d: .45, draw: g => { g.fillStyle = '#EB4D3D'; g.beginPath(); g.arc(540, 1880, 100, 0, 7); g.fill(); drawIcon(g, ICON_END, 540, 1882, 128, '#fff'); } }
     ]
   };
   PAGES.tt = {
@@ -784,14 +788,14 @@ const screenUniforms = {
   uTimerOn: { value: 0 }, uTimerRect: { value: new THREE.Vector4(300 / 1080, 1 - 600 / 2341, 480 / 1080, 96 / 2341) },
   uPulse: { value: 1 }, uPulseRect: { value: new THREE.Vector4(0, 0, 0, 0) }, uPulseGlow: { value: 0 }, uPulseCol: { value: new THREE.Color(1, .17, .33) },
   uGlass: { value: 1 }, uAspect: { value: 0.4613 }, uPortal: { value: 0 }, uRes: { value: new THREE.Vector2(RW, RH) }, uGlow: { value: 0 },
-  tKnob: { value: null }, tSlTxt: { value: null }, uSlideOn: { value: 0 }, uSlide: { value: 0 }, uShine: { value: 0 }
+  tKnob: { value: null }, tSlTxt: { value: null }, uSlideOn: { value: 0 }, uSlide: { value: 0 }, uShine: { value: 0 }, uPress: { value: 0 }
 };
 const screenMat = new THREE.ShaderMaterial({
   uniforms: screenUniforms,
   vertexShader: `varying vec2 vUv;varying vec3 vN;varying vec3 vV;
     void main(){vUv=uv;vec4 wp=modelMatrix*vec4(position,1.);vN=normalize(mat3(modelMatrix)*normal);vV=normalize(cameraPosition-wp.xyz);gl_Position=projectionMatrix*viewMatrix*wp;}`,
   fragmentShader: `
-    uniform sampler2D tA,tB,tTimer,tPortal,tKnob,tSlTxt;uniform float uSwipe,uBlur,uBright,uFlash,uRip,uTimerOn,uPulse,uPulseGlow,uGlass,uAspect,uPortal,uGlow,uSlideOn,uSlide,uShine;
+    uniform sampler2D tA,tB,tTimer,tPortal,tKnob,tSlTxt;uniform float uSwipe,uBlur,uBright,uFlash,uRip,uTimerOn,uPulse,uPulseGlow,uGlass,uAspect,uPortal,uGlow,uSlideOn,uSlide,uShine,uPress;
     uniform vec3 uFlashCol,uPulseCol;uniform vec2 uRipC,uRes;uniform vec4 uTimerRect,uPulseRect;
     varying vec2 vUv;varying vec3 vN;varying vec3 vV;
     vec3 toLin(vec3 c){return mix(c/12.92,pow((c+.055)/1.055,vec3(2.4)),step(.04045,c));}
@@ -810,6 +814,7 @@ const screenMat = new THREE.ShaderMaterial({
         float tr=smoothstep(${SLH / 2}.,${SLH / 2 - 3}.,length(vec2(max(abs(px.x-(180.+kx)*.5)-(kx-180.)*.5,0.),px.y-${SLY}.)));
         col=mix(col,vec3(.2,.78,.35),tr*.22*smoothstep(0.,.08,uSlide)*(1.-.5*smoothstep(-200.,700.,kx-px.x)));
         vec2 kt=vec2((px.x-kx)/192.+.5,.5-(px.y-${SLY}.)/192.);
+        float kd=length(vec2(px.x-kx,px.y-${SLY}.));col+=vec3(1.)*uPress*.22*exp(-pow((kd-86.)/16.,2.));
         if(kt.x>0.&&kt.x<1.&&kt.y>0.&&kt.y<1.){vec4 kc=texture2D(tKnob,kt);col=mix(col,kc.rgb,kc.a);}
       }
       return col;}
@@ -1432,7 +1437,11 @@ function buildHouse() {
 }
 
 /* ---------- post-production : profondeur de champ, bloom, flous de mouvement, étalonnage, FXAA ---------- */
-let rtMain, rtH1, rtH2, rtLDR, rtPortal, postScene, postCam, quad, matBright, matBlur, matComp, matFxaa;
+let rtMain, rtH1, rtH2, rtLDR, rtLDR2, rtPortal, postScene, postCam, quad, matBright, matBlur, matComp, matFxaa, matMB;
+// flou de mouvement caméra (obturateur à 180°) : chaque pixel est reprojeté avec la caméra d'un demi-intervalle plus tôt
+const MB_DT = QS.has('mb') ? parseFloat(QS.get('mb')) : (isMobile ? 0 : 1 / 120);
+const MB = { on: false, prevVP: new THREE.Matrix4() }, camPrev = new THREE.PerspectiveCamera(FOV, W / H, 0.03, 80);
+const CUTS = [1.0, 2.0, 41.0];
 const camP = new THREE.PerspectiveCamera(FOV, W / H, 0.03, 80);
 function buildPost() {
   const canHalf = renderer.capabilities.isWebGL2 ? !!renderer.extensions.get('EXT_color_buffer_float') || !!renderer.extensions.get('EXT_color_buffer_half_float') : !!renderer.extensions.get('OES_texture_half_float') && !!renderer.extensions.get('EXT_color_buffer_half_float');
@@ -1442,6 +1451,7 @@ function buildPost() {
   rtMain.depthTexture = new THREE.DepthTexture(RW, RH); rtMain.depthTexture.type = THREE.UnsignedIntType;
   rtPortal = new THREE.WebGLRenderTarget(RW, RH, { ...lin, type });
   rtLDR = new THREE.WebGLRenderTarget(RW, RH, { ...lin, type: THREE.UnsignedByteType });
+  rtLDR2 = rtLDR.clone();
   const bw = Math.round(RW / 4), bh = Math.round(RH / 4);
   rtH1 = new THREE.WebGLRenderTarget(bw, bh, { ...lin, type });
   rtH2 = rtH1.clone();
@@ -1521,6 +1531,25 @@ function buildPost() {
         c+=(fract(sin(dot(vUv*uRes+uTime,vec2(12.9898,78.233)))*43758.5453)-.5)/255.;
         gl_FragColor=vec4(c,1.);}`
   });
+  matMB = new THREE.ShaderMaterial({
+    uniforms: { tC: { value: null }, tD: { value: null }, uCamWorld: { value: new THREE.Matrix4() }, uPrevVP: { value: new THREE.Matrix4() }, uTanH: { value: 1 }, uAspect: { value: W / H }, uNear: { value: camera.near }, uFar: { value: camera.far }, uRes: { value: new THREE.Vector2(RW, RH) }, uMax: { value: 42 * Q } }, vertexShader: vs,
+    fragmentShader: `uniform sampler2D tC,tD;uniform mat4 uCamWorld,uPrevVP;uniform float uTanH,uAspect,uNear,uFar,uMax;uniform vec2 uRes;varying vec2 vUv;
+      float lin(vec2 uv){float z=texture2D(tD,uv).x*2.-1.;return 2.*uNear*uFar/(uFar+uNear-z*(uFar-uNear));}
+      void main(){
+        vec3 col=texture2D(tC,vUv).rgb;
+        float d=lin(vUv);
+        vec4 wp=uCamWorld*vec4((vUv*2.-1.)*vec2(uTanH*uAspect,uTanH)*d,-d,1.);
+        vec4 pc=uPrevVP*wp;
+        if(pc.w>.001){
+          vec2 v=(vUv-(pc.xy/pc.w*.5+.5))*uRes; float L=length(v);
+          if(L>1.2){
+            vec2 st=v/L*min(L,uMax)/uRes; vec3 acc=vec3(0.);
+            for(int i=0;i<14;i++){float f=float(i)/13.-.5;acc+=texture2D(tC,vUv+st*f).rgb;}
+            col=acc/14.;
+          }
+        }
+        gl_FragColor=vec4(col,1.);}`
+  });
   quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), matComp); postScene.add(quad);
 }
 function renderFrame(scene) {
@@ -1540,12 +1569,18 @@ function renderFrame(scene) {
   quad.material = matComp; const u = matComp.uniforms;
   u.tC.value = rtMain.texture; u.tD.value = rtMain.depthTexture; u.tB.value = rtH1.texture;
   renderer.setRenderTarget(rtLDR); renderer.render(postScene, postCam);
-  quad.material = matFxaa; matFxaa.uniforms.tC.value = rtLDR.texture;
+  let ldr = rtLDR;
+  if (MB.on) {
+    const m = matMB.uniforms; quad.material = matMB;
+    m.tC.value = rtLDR.texture; m.tD.value = rtMain.depthTexture; m.uCamWorld.value.copy(camera.matrixWorld); m.uPrevVP.value.copy(MB.prevVP); m.uTanH.value = Math.tan(camera.fov * DEG / 2);
+    renderer.setRenderTarget(rtLDR2); renderer.render(postScene, postCam); ldr = rtLDR2;
+  }
+  quad.material = matFxaa; matFxaa.uniforms.tC.value = ldr.texture;
   renderer.setRenderTarget(null); renderer.render(postScene, postCam);
 }
 
 /* ---------- temps : la vidéo ralentit sur les moments de lecture (même table que soundtrack.py) ---------- */
-const WARP = {"ramp": 0.06, "segments": [[8.95, 9.6, 1.6], [10.45, 11.1, 1.6], [11.95, 12.6, 1.6], [13.45, 14.1, 1.6], [15.6, 16.25, 2.2], [16.9, 17.55, 2.2], [18.2, 18.85, 2.2], [19.5, 20.15, 2.2], [20.8, 22.2, 2.05], [23.15, 25.3, 1.25], [35.5, 35.95, 1.4], [36.5, 36.72, 2.6], [37.25, 37.47, 2.6], [38.0, 38.22, 2.6], [38.75, 38.97, 2.6], [39.5, 39.7, 2.4], [42.9, 44.6, 1.15], [44.6, 46.05, 1.4], [46.33, 46.67, 2.6], [47.43, 47.67, 4.0], [48.43, 48.67, 4.0], [49.43, 49.67, 4.0], [50.43, 50.62, 4.0], [52.95, 55.9, 1.2]]};
+const WARP = {"ramp": 0.06, "segments": [[3.92, 4.0, 7.25], [8.95, 9.6, 1.6], [10.45, 11.1, 1.6], [11.95, 12.6, 1.6], [13.45, 14.1, 1.6], [15.6, 16.25, 2.2], [16.9, 17.55, 2.2], [18.2, 18.85, 2.2], [19.5, 20.15, 2.2], [20.8, 22.2, 2.05], [23.15, 25.3, 1.25], [35.5, 35.95, 1.4], [36.5, 36.72, 2.6], [37.25, 37.47, 2.6], [38.0, 38.22, 2.6], [38.75, 38.97, 2.6], [39.5, 39.7, 2.4], [42.9, 44.6, 1.15], [44.6, 46.05, 1.4], [46.33, 46.67, 2.6], [47.43, 47.67, 4.0], [48.43, 48.67, 4.0], [49.43, 49.67, 4.0], [50.43, 50.62, 4.0], [52.95, 55.9, 1.2]]};
 const WSTEP = 1 / 400, WN = Math.ceil(SDUR / WSTEP) + 1, WR = new Float64Array(WN);
 const sstep = (a, b, x) => { const k = clamp((x - a) / (b - a)); return k * k * (3 - 2 * k); };
 function slowAt(s) { let f = 1; const e = WARP.ramp; for (const [a, b, k] of WARP.segments) f += (k - 1) * sstep(a - e, a + e, s) * (1 - sstep(b - e, b + e, s)); return f; }
@@ -1759,11 +1794,13 @@ function buildTimeline() {
   [0, .5, 1.0, 1.5, 2.0, 2.5].forEach((a, i) => tl.fromTo(P, { shake: 0 }, { keyframes: [{ shake: i % 2 ? .6 : 1, duration: .02 }, { shake: 0, duration: .4, ease: 'power2.out' }], ...(i ? ir : {}) }, a));
   tl.to(['#t1', '#t2'], { opacity: 0, scale: 1.5, y: -120, filter: 'blur(18px)', duration: .35, ease: 'power3.in', transformOrigin: '50% 0%' }, 3.0);
   tl.to(P, { shade: 0, duration: .35 }, 3.05);
-  tl.fromTo(P, { radial: 0 }, { radial: .15, duration: .7, ease: 'expo.in', ...ir }, 3.1).to(P, { radial: 0, duration: .18, ease: 'power2.out' }, 3.8);
+  tl.fromTo(P, { radial: 0 }, { radial: .15, duration: .7, ease: 'expo.in', ...ir }, 3.1).to(P, { radial: 0, duration: .1, ease: 'power2.out' }, 3.8);
   // 2 · « faire glisser pour répondre » : le doigt pousse le curseur, décroché, l'interface sort de l'écran
-  tl.fromTo('#hand', { opacity: 0, scale: .8 }, { opacity: 1, scale: 1, duration: .2, ease: 'back.out(2)' }, 3.82);
+  tl.fromTo('#hand', { opacity: 0, scale: 1.25, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: .16, ease: 'power3.out' }, 3.72);
+  tl.to('#hand', { keyframes: [{ scale: .9, duration: .05 }, { scale: .94, duration: .1 }] }, 4.0);
   tl.fromTo(P, { knob: 0 }, { knob: 1, duration: .82, ease: 'power2.inOut' }, 4.02);
   tl.to('#hand', { opacity: 0, duration: .15 }, 4.95);
+  tl.set('#hand', { scale: 1 }, 5.3);
   tl.fromTo(P, { rip: 0 }, { rip: 1, duration: .3, ease: 'power2.out' }, 4.95);
   tl.fromTo(P, { flash: 0 }, { flash: .45, duration: .05, ...ir }, 5.02).to(P, { flash: 0, duration: .45, ease: 'power2.out' }, 5.07);
   tl.fromTo(P, { radial: 0 }, { radial: .05, duration: .12, ...ir }, 7.35).to(P, { radial: 0, duration: .5 }, 7.47);
@@ -1872,8 +1909,28 @@ function applyLayers(key, L, t) {
   if (Ly.glow && Ly.follow) { const f = Ly.follow; Ly.glow.position.set(f.lx, f.ly, f.m.position.z - .004); Ly.glow.material.opacity = P.pglow * clamp(L * 2); Ly.glow.scale.setScalar(P.pulse); }
 }
 const _hv = new THREE.Vector3();
+function shakeQ(t, a) { return new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * 93.1) * .011 * a, Math.sin(t * 71.7 + 1.3) * .011 * a, Math.sin(t * 57.3 + 2.1) * .018 * a)); }
+function camState(t, tShake = t) {
+  const inB = t >= 41.0 && t < 51.0, fov = inB ? P.fov : FOV - P.punch;
+  setFov(fov);
+  const ph = phonePose(t); phone.position.copy(ph.p); phone.quaternion.copy(ph.q); phone.updateMatrixWorld(true);
+  const cp = inB ? camB(t) : camA(t);
+  if (P.shake > .002 && !inB) { cp.q.multiply(shakeQ(tShake, P.shake)); cp.p.y += Math.sin(tShake * 83.3 + .7) * .012 * P.shake; }
+  return { p: cp.p, q: cp.q, fov };
+}
 function update(tr) {
   const t = storyOf(tr);
+  MB.on = false;
+  if (MB_DT > 0 && tr > MB_DT) {
+    const tp = storyOf(tr - MB_DT);
+    const noRender = x => (x >= 46.1 && x < 56.1);
+    if (!CUTS.some(c => tp < c && t >= c) && !noRender(t) && !noRender(tp)) {
+      tl.time(Math.min(tp, SDUR));
+      const st = camState(tp, t - (t - tp) * .3);
+      camPrev.fov = st.fov; camPrev.updateProjectionMatrix(); camPrev.position.copy(st.p); camPrev.quaternion.copy(st.q); camPrev.updateMatrixWorld(true);
+      MB.prevVP.multiplyMatrices(camPrev.projectionMatrix, camPrev.matrixWorldInverse); MB.on = true;
+    }
+  }
   tl.time(Math.min(t, SDUR));
   const inB = t >= 41.0 && t < 51.0, inEnd = (t >= 51.0 && t < 56.1) || (t >= 46.1 && t < 51.0);
   setFov(inB ? P.fov : FOV - P.punch);
@@ -1883,7 +1940,7 @@ function update(tr) {
   contact.position.x = phone.position.x; contact.position.z = phone.position.z; contact.rotation.z = -12 * DEG; contact.material.opacity = clamp(1 - hgt * 3) * .85; contact.visible = hgt < .3;
   // ----- caméra
   const cp = inB ? camB(t) : camA(t);
-  if (P.shake > .002 && !inB) { const a = P.shake; cp.q.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * 93.1) * .011 * a, Math.sin(t * 71.7 + 1.3) * .011 * a, Math.sin(t * 57.3 + 2.1) * .018 * a))); cp.p.y += Math.sin(t * 83.3 + .7) * .012 * a; }
+  if (P.shake > .002 && !inB) { cp.q.multiply(shakeQ(t, P.shake)); cp.p.y += Math.sin(t * 83.3 + .7) * .012 * P.shake; }
   camera.position.copy(cp.p); camera.quaternion.copy(cp.q); camera.updateMatrixWorld(true);
   // ----- écran
   const su = screenUniforms;
@@ -1891,7 +1948,7 @@ function update(tr) {
   const pq = phone.getWorldQuaternion(new THREE.Quaternion());
   const dFill = SW / (K_OVER * 2 * TANH * (W / H));
   const away = clamp((camera.position.distanceTo(scrC) - dFill) / (dFill * .5));
-  su.uBright.value = 1 + .18 * away; su.uGlass.value = away;
+  su.uBright.value = 1 + .18 * away; su.uGlass.value = Math.max(away, .3);
   const Lc = liftCall(t), Lt = liftTT(t), Li = liftIG(t);
   const sw1 = E.expoInOut(inv(26.5, 26.8, t)), sw2 = E.expoInOut(inv(30.5, 30.8, t));
   let A, B = null, sw = 0;
@@ -1903,7 +1960,7 @@ function update(tr) {
   else A = Li > 0 ? 'igBase' : 'ig';
   setPages(A, B || A); su.uSwipe.value = sw; su.uBlur.value = Math.sin(Math.PI * sw) * .2;
   su.uRip.value = t > 4.95 && t < 5.2 ? P.rip : 0; su.uRipC.value.set(900 / 1080, 1 - SLY / 2341);
-  su.uSlideOn.value = A === 'in' ? 1 : 0; su.uSlide.value = t >= 56 ? 0 : P.knob; su.uShine.value = (t * .62) % 1 * 1.7 - .35;
+  su.uSlideOn.value = A === 'in' ? 1 : 0; su.uSlide.value = t >= 56 ? 0 : P.knob; su.uShine.value = (tr * .62) % 1 * 1.7 - .35; su.uPress.value = t >= 56 ? 0 : clamp(inv(3.97, 4.03, t) * (1 - inv(4.9, 5.0, t)));
   if (t >= 5.15 && t < 26.8) { const s = Math.max(1, Math.floor(t - 5.15) + 1); if (s !== lastTimer) { drawTimer(TIMER, s); TIMER_TEX.needsUpdate = true; lastTimer = s; } }
   su.uTimerOn.value = t >= 5.15 && t < 26.5 && Lc <= 0 ? 1 : 0;
   su.uPulseRect.value.set(0, 0, 0, 0); su.uPulse.value = 1; su.uPulseGlow.value = 0;

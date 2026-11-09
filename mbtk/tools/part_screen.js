@@ -6,14 +6,14 @@ const screenUniforms = {
   uTimerOn: { value: 0 }, uTimerRect: { value: new THREE.Vector4(300 / 1080, 1 - 600 / 2341, 480 / 1080, 96 / 2341) },
   uPulse: { value: 1 }, uPulseRect: { value: new THREE.Vector4(0, 0, 0, 0) }, uPulseGlow: { value: 0 }, uPulseCol: { value: new THREE.Color(1, .17, .33) },
   uGlass: { value: 1 }, uAspect: { value: 0.4613 }, uPortal: { value: 0 }, uRes: { value: new THREE.Vector2(RW, RH) }, uGlow: { value: 0 },
-  tKnob: { value: null }, tSlTxt: { value: null }, uSlideOn: { value: 0 }, uSlide: { value: 0 }, uShine: { value: 0 }
+  tKnob: { value: null }, tSlTxt: { value: null }, uSlideOn: { value: 0 }, uSlide: { value: 0 }, uShine: { value: 0 }, uPress: { value: 0 }
 };
 const screenMat = new THREE.ShaderMaterial({
   uniforms: screenUniforms,
   vertexShader: `varying vec2 vUv;varying vec3 vN;varying vec3 vV;
     void main(){vUv=uv;vec4 wp=modelMatrix*vec4(position,1.);vN=normalize(mat3(modelMatrix)*normal);vV=normalize(cameraPosition-wp.xyz);gl_Position=projectionMatrix*viewMatrix*wp;}`,
   fragmentShader: `
-    uniform sampler2D tA,tB,tTimer,tPortal,tKnob,tSlTxt;uniform float uSwipe,uBlur,uBright,uFlash,uRip,uTimerOn,uPulse,uPulseGlow,uGlass,uAspect,uPortal,uGlow,uSlideOn,uSlide,uShine;
+    uniform sampler2D tA,tB,tTimer,tPortal,tKnob,tSlTxt;uniform float uSwipe,uBlur,uBright,uFlash,uRip,uTimerOn,uPulse,uPulseGlow,uGlass,uAspect,uPortal,uGlow,uSlideOn,uSlide,uShine,uPress;
     uniform vec3 uFlashCol,uPulseCol;uniform vec2 uRipC,uRes;uniform vec4 uTimerRect,uPulseRect;
     varying vec2 vUv;varying vec3 vN;varying vec3 vV;
     vec3 toLin(vec3 c){return mix(c/12.92,pow((c+.055)/1.055,vec3(2.4)),step(.04045,c));}
@@ -32,6 +32,7 @@ const screenMat = new THREE.ShaderMaterial({
         float tr=smoothstep(${SLH / 2}.,${SLH / 2 - 3}.,length(vec2(max(abs(px.x-(180.+kx)*.5)-(kx-180.)*.5,0.),px.y-${SLY}.)));
         col=mix(col,vec3(.2,.78,.35),tr*.22*smoothstep(0.,.08,uSlide)*(1.-.5*smoothstep(-200.,700.,kx-px.x)));
         vec2 kt=vec2((px.x-kx)/192.+.5,.5-(px.y-${SLY}.)/192.);
+        float kd=length(vec2(px.x-kx,px.y-${SLY}.));col+=vec3(1.)*uPress*.22*exp(-pow((kd-86.)/16.,2.));
         if(kt.x>0.&&kt.x<1.&&kt.y>0.&&kt.y<1.){vec4 kc=texture2D(tKnob,kt);col=mix(col,kc.rgb,kc.a);}
       }
       return col;}

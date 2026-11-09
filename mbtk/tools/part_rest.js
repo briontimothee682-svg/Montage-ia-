@@ -1,5 +1,9 @@
 /* ---------- post-production : profondeur de champ, bloom, flous de mouvement, étalonnage, FXAA ---------- */
-let rtMain, rtH1, rtH2, rtLDR, rtPortal, postScene, postCam, quad, matBright, matBlur, matComp, matFxaa;
+let rtMain, rtH1, rtH2, rtLDR, rtLDR2, rtPortal, postScene, postCam, quad, matBright, matBlur, matComp, matFxaa, matMB;
+// flou de mouvement caméra (obturateur à 180°) : chaque pixel est reprojeté avec la caméra d'un demi-intervalle plus tôt
+const MB_DT = QS.has('mb') ? parseFloat(QS.get('mb')) : (isMobile ? 0 : 1 / 120);
+const MB = { on: false, prevVP: new THREE.Matrix4() }, camPrev = new THREE.PerspectiveCamera(FOV, W / H, 0.03, 80);
+const CUTS = [1.0, 2.0, 41.0];
 const camP = new THREE.PerspectiveCamera(FOV, W / H, 0.03, 80);
 function buildPost() {
   const canHalf = renderer.capabilities.isWebGL2 ? !!renderer.extensions.get('EXT_color_buffer_float') || !!renderer.extensions.get('EXT_color_buffer_half_float') : !!renderer.extensions.get('OES_texture_half_float') && !!renderer.extensions.get('EXT_color_buffer_half_float');
@@ -9,6 +13,7 @@ function buildPost() {
   rtMain.depthTexture = new THREE.DepthTexture(RW, RH); rtMain.depthTexture.type = THREE.UnsignedIntType;
   rtPortal = new THREE.WebGLRenderTarget(RW, RH, { ...lin, type });
   rtLDR = new THREE.WebGLRenderTarget(RW, RH, { ...lin, type: THREE.UnsignedByteType });
+  rtLDR2 = rtLDR.clone();
   const bw = Math.round(RW / 4), bh = Math.round(RH / 4);
   rtH1 = new THREE.WebGLRenderTarget(bw, bh, { ...lin, type });
   rtH2 = rtH1.clone();
@@ -88,6 +93,25 @@ function buildPost() {
         c+=(fract(sin(dot(vUv*uRes+uTime,vec2(12.9898,78.233)))*43758.5453)-.5)/255.;
         gl_FragColor=vec4(c,1.);}`
   });
+  matMB = new THREE.ShaderMaterial({
+    uniforms: { tC: { value: null }, tD: { value: null }, uCamWorld: { value: new THREE.Matrix4() }, uPrevVP: { value: new THREE.Matrix4() }, uTanH: { value: 1 }, uAspect: { value: W / H }, uNear: { value: camera.near }, uFar: { value: camera.far }, uRes: { value: new THREE.Vector2(RW, RH) }, uMax: { value: 42 * Q } }, vertexShader: vs,
+    fragmentShader: `uniform sampler2D tC,tD;uniform mat4 uCamWorld,uPrevVP;uniform float uTanH,uAspect,uNear,uFar,uMax;uniform vec2 uRes;varying vec2 vUv;
+      float lin(vec2 uv){float z=texture2D(tD,uv).x*2.-1.;return 2.*uNear*uFar/(uFar+uNear-z*(uFar-uNear));}
+      void main(){
+        vec3 col=texture2D(tC,vUv).rgb;
+        float d=lin(vUv);
+        vec4 wp=uCamWorld*vec4((vUv*2.-1.)*vec2(uTanH*uAspect,uTanH)*d,-d,1.);
+        vec4 pc=uPrevVP*wp;
+        if(pc.w>.001){
+          vec2 v=(vUv-(pc.xy/pc.w*.5+.5))*uRes; float L=length(v);
+          if(L>1.2){
+            vec2 st=v/L*min(L,uMax)/uRes; vec3 acc=vec3(0.);
+            for(int i=0;i<14;i++){float f=float(i)/13.-.5;acc+=texture2D(tC,vUv+st*f).rgb;}
+            col=acc/14.;
+          }
+        }
+        gl_FragColor=vec4(col,1.);}`
+  });
   quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), matComp); postScene.add(quad);
 }
 function renderFrame(scene) {
@@ -107,7 +131,13 @@ function renderFrame(scene) {
   quad.material = matComp; const u = matComp.uniforms;
   u.tC.value = rtMain.texture; u.tD.value = rtMain.depthTexture; u.tB.value = rtH1.texture;
   renderer.setRenderTarget(rtLDR); renderer.render(postScene, postCam);
-  quad.material = matFxaa; matFxaa.uniforms.tC.value = rtLDR.texture;
+  let ldr = rtLDR;
+  if (MB.on) {
+    const m = matMB.uniforms; quad.material = matMB;
+    m.tC.value = rtLDR.texture; m.tD.value = rtMain.depthTexture; m.uCamWorld.value.copy(camera.matrixWorld); m.uPrevVP.value.copy(MB.prevVP); m.uTanH.value = Math.tan(camera.fov * DEG / 2);
+    renderer.setRenderTarget(rtLDR2); renderer.render(postScene, postCam); ldr = rtLDR2;
+  }
+  quad.material = matFxaa; matFxaa.uniforms.tC.value = ldr.texture;
   renderer.setRenderTarget(null); renderer.render(postScene, postCam);
 }
 
@@ -326,11 +356,13 @@ function buildTimeline() {
   [0, .5, 1.0, 1.5, 2.0, 2.5].forEach((a, i) => tl.fromTo(P, { shake: 0 }, { keyframes: [{ shake: i % 2 ? .6 : 1, duration: .02 }, { shake: 0, duration: .4, ease: 'power2.out' }], ...(i ? ir : {}) }, a));
   tl.to(['#t1', '#t2'], { opacity: 0, scale: 1.5, y: -120, filter: 'blur(18px)', duration: .35, ease: 'power3.in', transformOrigin: '50% 0%' }, 3.0);
   tl.to(P, { shade: 0, duration: .35 }, 3.05);
-  tl.fromTo(P, { radial: 0 }, { radial: .15, duration: .7, ease: 'expo.in', ...ir }, 3.1).to(P, { radial: 0, duration: .18, ease: 'power2.out' }, 3.8);
+  tl.fromTo(P, { radial: 0 }, { radial: .15, duration: .7, ease: 'expo.in', ...ir }, 3.1).to(P, { radial: 0, duration: .1, ease: 'power2.out' }, 3.8);
   // 2 · « faire glisser pour répondre » : le doigt pousse le curseur, décroché, l'interface sort de l'écran
-  tl.fromTo('#hand', { opacity: 0, scale: .8 }, { opacity: 1, scale: 1, duration: .2, ease: 'back.out(2)' }, 3.82);
+  tl.fromTo('#hand', { opacity: 0, scale: 1.25, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: .16, ease: 'power3.out' }, 3.72);
+  tl.to('#hand', { keyframes: [{ scale: .9, duration: .05 }, { scale: .94, duration: .1 }] }, 4.0);
   tl.fromTo(P, { knob: 0 }, { knob: 1, duration: .82, ease: 'power2.inOut' }, 4.02);
   tl.to('#hand', { opacity: 0, duration: .15 }, 4.95);
+  tl.set('#hand', { scale: 1 }, 5.3);
   tl.fromTo(P, { rip: 0 }, { rip: 1, duration: .3, ease: 'power2.out' }, 4.95);
   tl.fromTo(P, { flash: 0 }, { flash: .45, duration: .05, ...ir }, 5.02).to(P, { flash: 0, duration: .45, ease: 'power2.out' }, 5.07);
   tl.fromTo(P, { radial: 0 }, { radial: .05, duration: .12, ...ir }, 7.35).to(P, { radial: 0, duration: .5 }, 7.47);
@@ -439,8 +471,28 @@ function applyLayers(key, L, t) {
   if (Ly.glow && Ly.follow) { const f = Ly.follow; Ly.glow.position.set(f.lx, f.ly, f.m.position.z - .004); Ly.glow.material.opacity = P.pglow * clamp(L * 2); Ly.glow.scale.setScalar(P.pulse); }
 }
 const _hv = new THREE.Vector3();
+function shakeQ(t, a) { return new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * 93.1) * .011 * a, Math.sin(t * 71.7 + 1.3) * .011 * a, Math.sin(t * 57.3 + 2.1) * .018 * a)); }
+function camState(t, tShake = t) {
+  const inB = t >= 41.0 && t < 51.0, fov = inB ? P.fov : FOV - P.punch;
+  setFov(fov);
+  const ph = phonePose(t); phone.position.copy(ph.p); phone.quaternion.copy(ph.q); phone.updateMatrixWorld(true);
+  const cp = inB ? camB(t) : camA(t);
+  if (P.shake > .002 && !inB) { cp.q.multiply(shakeQ(tShake, P.shake)); cp.p.y += Math.sin(tShake * 83.3 + .7) * .012 * P.shake; }
+  return { p: cp.p, q: cp.q, fov };
+}
 function update(tr) {
   const t = storyOf(tr);
+  MB.on = false;
+  if (MB_DT > 0 && tr > MB_DT) {
+    const tp = storyOf(tr - MB_DT);
+    const noRender = x => (x >= 46.1 && x < 56.1);
+    if (!CUTS.some(c => tp < c && t >= c) && !noRender(t) && !noRender(tp)) {
+      tl.time(Math.min(tp, SDUR));
+      const st = camState(tp, t - (t - tp) * .3);
+      camPrev.fov = st.fov; camPrev.updateProjectionMatrix(); camPrev.position.copy(st.p); camPrev.quaternion.copy(st.q); camPrev.updateMatrixWorld(true);
+      MB.prevVP.multiplyMatrices(camPrev.projectionMatrix, camPrev.matrixWorldInverse); MB.on = true;
+    }
+  }
   tl.time(Math.min(t, SDUR));
   const inB = t >= 41.0 && t < 51.0, inEnd = (t >= 51.0 && t < 56.1) || (t >= 46.1 && t < 51.0);
   setFov(inB ? P.fov : FOV - P.punch);
@@ -450,7 +502,7 @@ function update(tr) {
   contact.position.x = phone.position.x; contact.position.z = phone.position.z; contact.rotation.z = -12 * DEG; contact.material.opacity = clamp(1 - hgt * 3) * .85; contact.visible = hgt < .3;
   // ----- caméra
   const cp = inB ? camB(t) : camA(t);
-  if (P.shake > .002 && !inB) { const a = P.shake; cp.q.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * 93.1) * .011 * a, Math.sin(t * 71.7 + 1.3) * .011 * a, Math.sin(t * 57.3 + 2.1) * .018 * a))); cp.p.y += Math.sin(t * 83.3 + .7) * .012 * a; }
+  if (P.shake > .002 && !inB) { cp.q.multiply(shakeQ(t, P.shake)); cp.p.y += Math.sin(t * 83.3 + .7) * .012 * P.shake; }
   camera.position.copy(cp.p); camera.quaternion.copy(cp.q); camera.updateMatrixWorld(true);
   // ----- écran
   const su = screenUniforms;
@@ -458,7 +510,7 @@ function update(tr) {
   const pq = phone.getWorldQuaternion(new THREE.Quaternion());
   const dFill = SW / (K_OVER * 2 * TANH * (W / H));
   const away = clamp((camera.position.distanceTo(scrC) - dFill) / (dFill * .5));
-  su.uBright.value = 1 + .18 * away; su.uGlass.value = away;
+  su.uBright.value = 1 + .18 * away; su.uGlass.value = Math.max(away, .3);
   const Lc = liftCall(t), Lt = liftTT(t), Li = liftIG(t);
   const sw1 = E.expoInOut(inv(26.5, 26.8, t)), sw2 = E.expoInOut(inv(30.5, 30.8, t));
   let A, B = null, sw = 0;
@@ -470,7 +522,7 @@ function update(tr) {
   else A = Li > 0 ? 'igBase' : 'ig';
   setPages(A, B || A); su.uSwipe.value = sw; su.uBlur.value = Math.sin(Math.PI * sw) * .2;
   su.uRip.value = t > 4.95 && t < 5.2 ? P.rip : 0; su.uRipC.value.set(900 / 1080, 1 - SLY / 2341);
-  su.uSlideOn.value = A === 'in' ? 1 : 0; su.uSlide.value = t >= 56 ? 0 : P.knob; su.uShine.value = (t * .62) % 1 * 1.7 - .35;
+  su.uSlideOn.value = A === 'in' ? 1 : 0; su.uSlide.value = t >= 56 ? 0 : P.knob; su.uShine.value = (tr * .62) % 1 * 1.7 - .35; su.uPress.value = t >= 56 ? 0 : clamp(inv(3.97, 4.03, t) * (1 - inv(4.9, 5.0, t)));
   if (t >= 5.15 && t < 26.8) { const s = Math.max(1, Math.floor(t - 5.15) + 1); if (s !== lastTimer) { drawTimer(TIMER, s); TIMER_TEX.needsUpdate = true; lastTimer = s; } }
   su.uTimerOn.value = t >= 5.15 && t < 26.5 && Lc <= 0 ? 1 : 0;
   su.uPulseRect.value.set(0, 0, 0, 0); su.uPulse.value = 1; su.uPulseGlow.value = 0;

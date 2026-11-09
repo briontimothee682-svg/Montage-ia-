@@ -17,7 +17,7 @@ s = rep(s, "#hand{position:absolute;font-size:120px;left:700px;top:905px;opacity
         "#hand{position:absolute;font-size:120px;left:0;top:0;opacity:0;filter:drop-shadow(0 8px 18px rgba(0,0,0,.5))}\n"
         "#t10{top:470px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:50px}\n"
         ".url{display:inline-block;padding:14px 40px;border-radius:999px;background:var(--cream);color:var(--bordD);text-shadow:none;box-shadow:0 12px 30px rgba(20,3,9,.45)}")
-s = rep(s, "#grain{position:absolute;inset:-64px;opacity:.075;", "#grain{position:absolute;inset:-64px;opacity:.035;")
+s = rep(s, "#grain{position:absolute;inset:-64px;opacity:.075;", "#grain{position:absolute;inset:-64px;opacity:.022;")
 s = rep(s, "background:linear-gradient(180deg,rgba(24,4,11,.62) 0%,rgba(24,4,11,.38) 45%,rgba(24,4,11,0) 100%)}",
         "background:linear-gradient(180deg,rgba(18,6,20,.66) 0%,rgba(18,6,20,.4) 45%,rgba(18,6,20,0) 100%)}")
 # ---- DOM

@@ -1,3 +1,7 @@
+/* ---- pictogrammes téléphone (décrocher / raccrocher), tracés vectoriels nets ---- */
+const ICON_CALL = new Path2D('M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z');
+const ICON_END = new Path2D('M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z');
+function drawIcon(g, path, cx, cy, size, col) { g.save(); g.translate(cx - size / 2, cy - size / 2); g.scale(size / 24, size / 24); g.fillStyle = col; g.fill(path); g.restore(); }
 /* ---- appel entrant façon iPhone : « faire glisser pour répondre » (curseur et texte animés dans le shader) ---- */
 const SLY = 1860, SLX0 = 90, SLW = 900, SLH = 180;
 function pageIncoming() {
@@ -22,7 +26,7 @@ function knobTex() {
   const s = 2, { c, g } = mk(192 * s, 192 * s); g.scale(s, s);
   g.save(); g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 16; g.shadowOffsetY = 4; g.fillStyle = '#fff'; g.beginPath(); g.arc(96, 96, 74, 0, 7); g.fill(); g.restore();
   g.fillStyle = lingrad(g, 0, 22, 0, 170, [[0, '#ffffff'], [1, '#ece6e2']]); g.beginPath(); g.arc(96, 96, 74, 0, 7); g.fill();
-  handset(g, 96, 86, 66, Math.PI, '#34C759');
+  drawIcon(g, ICON_CALL, 96, 96, 92, '#34C759');
   return c;
 }
 function slideTextTex() {
@@ -53,7 +57,7 @@ function defPages() {
       { k: 'name', box: [90, 370, 900, 112], h: .11, d: .1, draw: g => txt(g, 'MBTK Design', 540, 452, F(700, 90, 'u'), '#F5EAE0', 'center') },
       { k: 'avatar', box: [320, 640, 440, 440], h: .21, d: 0, draw: g => creamLogoCircle(g, 540, 860, 190) },
       ...CALL_BTNS.map((b, i) => ({ k: 'b' + i, box: [b.x - 108, b.y - 108, 216, 300], h: .045 + (i % 3 === 1 ? .03 : 0) + (i < 3 ? .02 : 0), d: .2 + i * .05, draw: g => drawCallButton(g, b) })),
-      { k: 'end', box: [430, 1770, 220, 220], h: .14, d: .45, draw: g => { g.fillStyle = '#EB4D3D'; g.beginPath(); g.arc(540, 1880, 100, 0, 7); g.fill(); handset(g, 540, 1866, 92, Math.PI * 1.75, '#fff'); } }
+      { k: 'end', box: [430, 1770, 220, 220], h: .14, d: .45, draw: g => { g.fillStyle = '#EB4D3D'; g.beginPath(); g.arc(540, 1880, 100, 0, 7); g.fill(); drawIcon(g, ICON_END, 540, 1882, 128, '#fff'); } }
     ]
   };
   PAGES.tt = {
