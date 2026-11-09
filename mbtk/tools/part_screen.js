@@ -5,14 +5,15 @@ const screenUniforms = {
   uRip: { value: 0 }, uRipC: { value: new THREE.Vector2(830 / 1080, 1 - 1880 / 2341) },
   uTimerOn: { value: 0 }, uTimerRect: { value: new THREE.Vector4(300 / 1080, 1 - 600 / 2341, 480 / 1080, 96 / 2341) },
   uPulse: { value: 1 }, uPulseRect: { value: new THREE.Vector4(0, 0, 0, 0) }, uPulseGlow: { value: 0 }, uPulseCol: { value: new THREE.Color(1, .17, .33) },
-  uGlass: { value: 1 }, uAspect: { value: 0.4613 }, uPortal: { value: 0 }, uRes: { value: new THREE.Vector2(RW, RH) }, uGlow: { value: 0 }
+  uGlass: { value: 1 }, uAspect: { value: 0.4613 }, uPortal: { value: 0 }, uRes: { value: new THREE.Vector2(RW, RH) }, uGlow: { value: 0 },
+  tKnob: { value: null }, tSlTxt: { value: null }, uSlideOn: { value: 0 }, uSlide: { value: 0 }, uShine: { value: 0 }
 };
 const screenMat = new THREE.ShaderMaterial({
   uniforms: screenUniforms,
   vertexShader: `varying vec2 vUv;varying vec3 vN;varying vec3 vV;
     void main(){vUv=uv;vec4 wp=modelMatrix*vec4(position,1.);vN=normalize(mat3(modelMatrix)*normal);vV=normalize(cameraPosition-wp.xyz);gl_Position=projectionMatrix*viewMatrix*wp;}`,
   fragmentShader: `
-    uniform sampler2D tA,tB,tTimer,tPortal;uniform float uSwipe,uBlur,uBright,uFlash,uRip,uTimerOn,uPulse,uPulseGlow,uGlass,uAspect,uPortal,uGlow;
+    uniform sampler2D tA,tB,tTimer,tPortal,tKnob,tSlTxt;uniform float uSwipe,uBlur,uBright,uFlash,uRip,uTimerOn,uPulse,uPulseGlow,uGlass,uAspect,uPortal,uGlow,uSlideOn,uSlide,uShine;
     uniform vec3 uFlashCol,uPulseCol;uniform vec2 uRipC,uRes;uniform vec4 uTimerRect,uPulseRect;
     varying vec2 vUv;varying vec3 vN;varying vec3 vV;
     vec3 toLin(vec3 c){return mix(c/12.92,pow((c+.055)/1.055,vec3(2.4)),step(.04045,c));}
@@ -22,6 +23,17 @@ const screenMat = new THREE.ShaderMaterial({
       if(uPulseRect.z>0.&&d.x<hs.x&&d.y<hs.y){uv=c+(uv-c)/uPulse;}
       vec3 col=texture2D(tA,uv).rgb;
       if(uTimerOn>0.){vec2 t=(uv-uTimerRect.xy)/uTimerRect.zw; if(t.x>0.&&t.x<1.&&t.y>0.&&t.y<1.){vec4 tc=texture2D(tTimer,t);col=mix(col,tc.rgb,tc.a*uTimerOn);}}
+      if(uSlideOn>0.){
+        vec2 px=vec2(uv.x*1080.,(1.-uv.y)*2341.);
+        vec2 lt=vec2((px.x-270.)/720.,1.-(px.y-${SLY - 60}.)/120.);
+        if(lt.x>0.&&lt.x<1.&&lt.y>0.&&lt.y<1.){float a=texture2D(tSlTxt,lt).a;float band=exp(-pow((lt.x-uShine)*4.,2.));
+          col=mix(col,vec3(1.),a*(1.-smoothstep(0.,.4,uSlide))*(.42+.58*band));}
+        float kx=180.+uSlide*720.;
+        float tr=smoothstep(${SLH / 2}.,${SLH / 2 - 3}.,length(vec2(max(abs(px.x-(180.+kx)*.5)-(kx-180.)*.5,0.),px.y-${SLY}.)));
+        col=mix(col,vec3(.2,.78,.35),tr*.22*smoothstep(0.,.08,uSlide)*(1.-.5*smoothstep(-200.,700.,kx-px.x)));
+        vec2 kt=vec2((px.x-kx)/192.+.5,.5-(px.y-${SLY}.)/192.);
+        if(kt.x>0.&&kt.x<1.&&kt.y>0.&&kt.y<1.){vec4 kc=texture2D(tKnob,kt);col=mix(col,kc.rgb,kc.a);}
+      }
       return col;}
     vec3 pageAt(float x,float y){float u=x-uSwipe; if(u>=0.) return pageA(vec2(u,y)); return texture2D(tB,vec2(u+1.,y)).rgb;}
     void main(){

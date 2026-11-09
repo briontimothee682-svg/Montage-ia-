@@ -59,8 +59,13 @@ function buildPost() {
         col=mix(col,col*vec3(1.06,.94,1.0)+vec3(.010,.002,.012),1.-smoothstep(.0,.35,L));
         col=mix(col,col*vec3(1.05,1.0,.92),smoothstep(.4,1.2,L));
         col=tm(col);
+        float Lg=dot(col,vec3(.2126,.7152,.0722));
+        col=max(mix(vec3(Lg),col,1.14-.14*smoothstep(.45,1.,Lg)),0.);
+        col=mix(col,col*vec3(.88,.94,1.16)+vec3(0.,.002,.008),(1.-smoothstep(.0,.16,Lg))*.5);
+        col=mix(col,col*vec3(1.05,1.01,.94),smoothstep(.3,.85,Lg)*.6);
         col=mix(col,uFlashCol,uFlash);
         col=pow(max(col,0.),vec3(1./2.2));
+        col=clamp(col,0.,1.);col=mix(col,col*col*(3.-2.*col),.2);
         gl_FragColor=vec4(col,1.);
       }`
   });
@@ -106,6 +111,19 @@ function renderFrame(scene) {
   renderer.setRenderTarget(null); renderer.render(postScene, postCam);
 }
 
+/* ---------- temps : la vidéo ralentit sur les moments de lecture (même table que soundtrack.py) ---------- */
+const WARP = __WARP__;
+const WSTEP = 1 / 400, WN = Math.ceil(SDUR / WSTEP) + 1, WR = new Float64Array(WN);
+const sstep = (a, b, x) => { const k = clamp((x - a) / (b - a)); return k * k * (3 - 2 * k); };
+function slowAt(s) { let f = 1; const e = WARP.ramp; for (const [a, b, k] of WARP.segments) f += (k - 1) * sstep(a - e, a + e, s) * (1 - sstep(b - e, b + e, s)); return f; }
+{ let r = 0; for (let i = 0; i < WN; i++) { WR[i] = r; r += WSTEP * slowAt((i + .5) * WSTEP); } }
+DUR = WR[WN - 1];
+function storyOf(r) {
+  if (r <= 0) return 0; if (r >= DUR) return SDUR;
+  let lo = 0, hi = WN - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (WR[m] <= r) lo = m; else hi = m; }
+  return (lo + (r - WR[lo]) / (WR[hi] - WR[lo])) * WSTEP;
+}
+
 /* =====================================================================
    POSES & ANIMATION
    ===================================================================== */
@@ -116,9 +134,9 @@ function mixPose(a, b, k) { return { p: a.p.clone().lerp(b.p, k), q: a.q.clone()
 function setFov(f) { if (Math.abs(camera.fov - f) > 1e-4) { camera.fov = f; camera.updateProjectionMatrix(); } TANH = Math.tan(f * DEG / 2); }
 const K_OVER = 1.02;
 const qFlat = new THREE.Quaternion().setFromAxisAngle(V3(0, 1, 0), -12 * DEG).multiply(new THREE.Quaternion().setFromAxisAngle(V3(1, 0, 0), -Math.PI / 2));
-const BURSTS = [[0, .4], [.6, 1.0], [1.6, 2.0], [2.2, 2.6], [3.2, 3.6], [3.8, 4.2], [4.8, 5.0], [57.2, 57.6]];
+const BURSTS = [[0, .4], [.5, .9], [1.5, 1.9], [2.0, 2.4], [3.0, 3.4], [3.5, 3.9], [57.2, 57.6]];
 function buzzEnv(t) { let e = 0; for (const [a, b] of BURSTS) { if (t > a && t < b) e = Math.max(e, Math.min(1, (t - a) / .03, (b - t) / .05)); } return e; }
-function slide(t) { let s = 0; for (let i = 0; i < 7; i++) { const [a, b] = BURSTS[i]; s += E.sine(inv(a, b, t)); } return t > 30 ? 0 : s; }
+function slide(t) { let s = 0; for (let i = 0; i < 6; i++) { const [a, b] = BURSTS[i]; s += E.sine(inv(a, b, t)); } return t > 30 ? 0 : s; }
 function phonePose(t) {
   const env = buzzEnv(t), sl = slide(t);
   const flatP = V3(.009 * sl, PD / 2, .0045 * sl);
@@ -166,9 +184,34 @@ const CAMA = {
   C6: look([-.7, 3.35, 7.3], [0, .78, 0]),
 };
 const S = () => screenPose();
+// point de l'écran (coordonnées de page 1080×2341) et cadrage d'une bande de page de hauteur V
+const scrLocal = (px, py) => V3((px / SCW - .5) * SW, (.5 - py / SCH) * SH, SZ);
+function screenLook(py, V, yaw = 0, pitch = 0) { return relPose((V / SCH * SH) / (2 * Math.tan(FOV * DEG / 2)), yaw, pitch, (.5 - py / SCH) * SH); }
+let HK = null;
+function rollPose(pose, deg) { pose.q.multiply(new THREE.Quaternion().setFromAxisAngle(V3(0, 0, 1), deg * DEG)); return pose; }
+function computeHook() {
+  const set = tt => { const ph = phonePose(tt); phone.position.copy(ph.p); phone.quaternion.copy(ph.q); phone.updateMatrixWorld(true); };
+  set(0);
+  HK = {
+    a0: rollPose(relPose(7.4, 20, -42, .12), 10), a1: relPose(2.8, 7, -31, .16), a2: relPose(2.55, 4, -29, .16),
+    b0: rollPose(relPose(2.55, -48, -40, .06), -6), b1: rollPose(relPose(2.35, -18, -33, .1), 2),
+    c0: look([1.25, .3, 1.2], [0, .06, -.14]), c1: look([.66, .25, 1.62], [0, .07, -.22])
+  };
+  set(3.95);
+  HK.sl0 = screenLook(1500, 1800, 7, -15); HK.sl1 = screenLook(1515, 1700, 2, -10);
+}
+// 0–5 s : crash zoom, plongée zénithale, contre-plongée au ras de la table, puis plongée dans l'écran et curseur
+function camHook(t) {
+  if (t < 1.0) return mixPose(mixPose(HK.a0, HK.a1, E.expoOut(inv(0, .75, t))), HK.a2, inv(.75, 1.0, t));
+  if (t < 2.0) return mixPose(HK.b0, HK.b1, E.sine(inv(1.0, 2.0, t)));
+  if (t < 3.0) return mixPose(HK.c0, HK.c1, E.sine(inv(2.0, 3.0, t)));
+  if (t < 3.8) return mixPose(HK.c1, HK.sl0, E.expoIn(inv(3.0, 3.8, t)));
+  if (t < 5.0) return mixPose(HK.sl0, HK.sl1, E.sine(inv(3.8, 5.0, t)));
+  return mixPose(HK.sl1, S(), E.cubicInOut(inv(5.0, 5.3, t)));
+}
 let POSE73 = null;
 const KA = [
-  [0, CAMA.A0], [3.4, CAMA.A1, E.sine], [4.38, S, E.expoIn], [5.3, S],
+  [5.3, S],
   [6.2, () => relPose(2.75, 16, -34), E.expoOut], [7.3, () => relPose(2.95, 30, -30), E.sine], [8.5, CAMA.C1],
   [14.3, CAMA.C2, E.sine], [15.2, CAMA.C3, E.cubicInOut], [22.3, CAMA.C3b, E.sine], [23.0, CAMA.C4, E.expoOut], [25.45, CAMA.C4b, E.sine],
   [26.25, S, E.expoInOut], [26.85, S], [27.7, () => relPose(3.25, -20, 8, .2), E.expoOut], [29.75, () => relPose(3.35, -27, 5, .2), E.sine], [30.25, S, E.cubicInOut],
@@ -177,7 +220,8 @@ const KA = [
 ];
 function evalPose(p) { return typeof p === 'function' ? p() : p; }
 function camA(t) {
-  if (t >= 56) { if (t < 57.45) return S(); return mixPose(S(), CAMA.A0, E.expoOut(inv(57.45, 58, t))); }
+  if (t >= 56) { if (t < 57.45) return S(); return mixPose(S(), HK.a0, E.expoOut(inv(57.45, 58, t))); }
+  if (t < 5.3) return camHook(t);
   if (t >= 7.3 && t < 8.5) { // le téléphone se lève et pivote : la caméra le garde au centre
     const k = E.cubicInOut(inv(7.3, 8.5, t));
     const p0 = POSE73;
@@ -190,7 +234,6 @@ function camA(t) {
   const a = KA[i], b = KA[i + 1];
   if (!b) return evalPose(a[1]);
   const pose = mixPose(evalPose(a[1]), evalPose(b[1]), (b[2] || E.lin)(inv(a[0], b[0], t)));
-  if (t < 3.4) { const h = Math.sin(Math.PI * Math.min(1, t / 3.4)) * .006; pose.p.x += Math.sin(t * 1.7) * h; pose.p.y += Math.sin(t * 2.3 + 1) * h; }
   return pose;
 }
 // ---- couloir → chambre
@@ -246,7 +289,7 @@ function camQuat(extra) { const q = camera.quaternion.clone(); if (extra) q.mult
 function stageWidth(px, depth) { return px / W * 2 * TANH * depth * W / H; }
 
 /* ---------- état animé (piloté par GSAP) ---------- */
-const P = { radial: 0, dir: 0, flash: 0, rip: 0, pulse: 1, pglow: 0, scroll: 0, shade: 0, portal: 0, glow: 0, fov: FOV, punch: 0 };
+const P = { radial: 0, dir: 0, flash: 0, rip: 0, pulse: 1, pglow: 0, scroll: 0, shade: 0, portal: 0, glow: 0, fov: FOV, punch: 0, knob: 0, shake: 0 };
 let tl;
 function splitWords(el) {
   const walk = (node) => {
@@ -270,17 +313,26 @@ function buildTimeline() {
   const slamIn = (id, at, st = .06) => { const el = $(id); const ws = splitWords(el); tl.set(el, { opacity: 1 }, at); tl.fromTo(ws, { opacity: 0, y: 70, scale: 1.4, filter: 'blur(14px)' }, { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: .45, ease: 'expo.out', stagger: st }, at); return ws; };
   const out = (id, at, d = .28) => { tl.to($(id), { opacity: 0, y: -50, filter: 'blur(12px)', duration: d, ease: 'power2.in' }, at); };
   const ir = { immediateRender: false };
-  // 1 · accroche
-  tl.to(P, { shade: 1, duration: .2 }, .25);
-  slamIn('t1', .3, 0);
-  slamIn('t2', 1.0, .06);
-  tl.to(['#t1', '#t2'], { opacity: 0, scale: 1.5, y: -120, filter: 'blur(18px)', duration: .45, ease: 'power3.in', transformOrigin: '50% 0%' }, 3.35);
-  tl.to(P, { shade: 0, duration: .4 }, 3.45);
-  tl.fromTo(P, { radial: 0 }, { radial: .16, duration: .88, ease: 'expo.in' }, 3.5).to(P, { radial: 0, duration: .16, ease: 'power2.out' }, 4.38);
-  // 2 · décroché, l'interface sort de l'écran
-  tl.fromTo(P, { rip: 0 }, { rip: 1, duration: .3, ease: 'power2.out' }, 5.0);
-  tl.fromTo(P, { pulse: 1 }, { pulse: .9, duration: .08, ease: 'power2.out' }, 5.0).to(P, { pulse: 1, duration: .2, ease: 'back.out(3)' }, 5.08);
-  tl.fromTo(P, { flash: 0 }, { flash: .5, duration: .06 }, 5.12).to(P, { flash: 0, duration: .45, ease: 'power2.out' }, 5.18);
+  // 1 · accroche (0–3 s) : crash zoom, coupes franches sur les temps, mots qui claquent, secousses
+  tl.set(P, { shade: 1 }, 0);
+  const slamHard = (id, at, st) => { const el = $(id); const ws = splitWords(el); tl.set(el, { opacity: 1 }, at); tl.fromTo(ws, { opacity: 0, y: 34, scale: 2.3, filter: 'blur(16px)' }, { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: .3, ease: 'expo.out', stagger: st }, at); };
+  slamHard('t1', 0, .12);
+  slamHard('t2', 1.0, .09);
+  tl.fromTo('#t2 .hl', { color: '#F5EAE0' }, { color: '#E8B27A', duration: .2 }, 1.5);
+  tl.fromTo(P, { radial: .24 }, { radial: 0, duration: .75, ease: 'power2.out' }, 0);
+  tl.fromTo(P, { flash: 0 }, { keyframes: [{ flash: .5, duration: .03 }, { flash: 0, duration: .22, ease: 'power2.out' }] }, .97);
+  tl.fromTo(P, { flash: 0 }, { keyframes: [{ flash: .5, duration: .03 }, { flash: 0, duration: .22, ease: 'power2.out' }], ...ir }, 1.97);
+  for (const a of [1.0, 2.0]) tl.fromTo(P, { dir: 0 }, { keyframes: [{ dir: .07, duration: .07, ease: 'power2.in' }, { dir: 0, duration: .16, ease: 'power2.out' }], ...ir }, a - .07);
+  [0, .5, 1.0, 1.5, 2.0, 2.5].forEach((a, i) => tl.fromTo(P, { shake: 0 }, { keyframes: [{ shake: i % 2 ? .6 : 1, duration: .02 }, { shake: 0, duration: .4, ease: 'power2.out' }], ...(i ? ir : {}) }, a));
+  tl.to(['#t1', '#t2'], { opacity: 0, scale: 1.5, y: -120, filter: 'blur(18px)', duration: .35, ease: 'power3.in', transformOrigin: '50% 0%' }, 3.0);
+  tl.to(P, { shade: 0, duration: .35 }, 3.05);
+  tl.fromTo(P, { radial: 0 }, { radial: .15, duration: .7, ease: 'expo.in', ...ir }, 3.1).to(P, { radial: 0, duration: .18, ease: 'power2.out' }, 3.8);
+  // 2 · « faire glisser pour répondre » : le doigt pousse le curseur, décroché, l'interface sort de l'écran
+  tl.fromTo('#hand', { opacity: 0, scale: .8 }, { opacity: 1, scale: 1, duration: .2, ease: 'back.out(2)' }, 3.82);
+  tl.fromTo(P, { knob: 0 }, { knob: 1, duration: .82, ease: 'power2.inOut' }, 4.02);
+  tl.to('#hand', { opacity: 0, duration: .15 }, 4.95);
+  tl.fromTo(P, { rip: 0 }, { rip: 1, duration: .3, ease: 'power2.out' }, 4.95);
+  tl.fromTo(P, { flash: 0 }, { flash: .45, duration: .05, ...ir }, 5.02).to(P, { flash: 0, duration: .45, ease: 'power2.out' }, 5.07);
   tl.fromTo(P, { radial: 0 }, { radial: .05, duration: .12, ...ir }, 7.35).to(P, { radial: 0, duration: .5 }, 7.47);
   // 3 · ce qu'on crée
   tl.to(P, { shade: .8, duration: .3 }, 8.2);
@@ -321,12 +373,12 @@ function buildTimeline() {
   slamIn('t8', 43.0, .07);
   slamIn('t9', 43.5, .05);
   tl.fromTo('#t10', { opacity: 0, y: 30, scale: .9 }, { opacity: 1, y: 0, scale: 1, duration: .45, ease: 'back.out(2)' }, 44.0);
-  out('t8', 45.35, .2); out('t9', 45.35, .2); out('t10', 45.35, .2);
-  tl.to(P, { shade: 0, duration: .2 }, 45.4);
+  out('t8', 44.92, .22); out('t9', 44.92, .22); out('t10', 44.92, .22);
+  tl.to(P, { shade: 0, duration: .25 }, 44.98);
   tl.set(P, { scroll: 0 }, 41.0);
   tl.fromTo(P, { radial: 0 }, { radial: .1, duration: .5, ease: 'expo.in', ...ir }, 45.55).to(P, { radial: 0, duration: .2 }, 46.05);
   tl.fromTo('#site', { opacity: 0, scale: 1.22, rotateX: 10, transformPerspective: 1400, filter: 'blur(10px)' }, { opacity: 1, scale: 1, rotateX: 0, transformPerspective: 1400, filter: 'blur(0px)', duration: .45, ease: 'power3.out' }, 45.75);
-  tl.fromTo('#siteCv', { y: 0 }, { keyframes: [{ y: 0, duration: .5 }, { y: -1250, duration: .75, ease: 'power3.inOut' }, { y: -1250, duration: .3 }, { y: -2450, duration: .75, ease: 'power3.inOut' }, { y: -2450, duration: .3 }, { y: -3650, duration: .75, ease: 'power3.inOut' }, { y: -3650, duration: .3 }, { y: -SITE_H - 170 + 1920, duration: .75, ease: 'power3.inOut' }], ...ir }, 46.3);
+  tl.fromTo('#siteCv', { y: 0 }, { keyframes: [{ y: 0, duration: .4 }, { y: -1250, duration: .7, ease: 'power3.inOut' }, { y: -1250, duration: .3 }, { y: -2450, duration: .7, ease: 'power3.inOut' }, { y: -2450, duration: .3 }, { y: -3650, duration: .7, ease: 'power3.inOut' }, { y: -3650, duration: .3 }, { y: -SITE_H - 170 + 1920, duration: .7, ease: 'power3.inOut' }], ...ir }, 46.3);
   tl.to('#site', { scale: 1.12, filter: 'blur(6px)', duration: .35, ease: 'power2.in' }, 50.65);
   tl.set('#site', { opacity: 0 }, 51.0);
   // 9 · fin
@@ -342,7 +394,7 @@ function buildTimeline() {
   tl.fromTo('#endSweep', { x: 0, opacity: 0 }, { x: 2300, opacity: 1, duration: 1.4, ease: 'power2.inOut' }, 52.25);
   ['#e1', '#e2', '#e3', '#e4'].forEach((s, i) => tl.fromTo(s, { opacity: 0, y: 40, filter: 'blur(10px)' }, { opacity: 1, y: 0, filter: 'blur(0px)', duration: .45, ease: 'expo.out' }, 52.6 + i * .25));
   // petits coups de zoom sur les temps forts
-  [.3, 1.0, 8.3, 9.0, 14.6, 15.45, 16.75, 18.05, 19.35, 20.65, 22.75, 27.0, 31.0, 35.4, 36.0, 36.75, 37.5, 38.25, 39.0].forEach(a => tl.to(P, { keyframes: [{ punch: 2.4, duration: .07, ease: 'power2.out' }, { punch: 0, duration: .45, ease: 'power2.inOut' }] }, a));
+  [0, .5, 1.0, 1.5, 2.0, 2.5, 5.0, 8.3, 9.0, 14.6, 15.45, 16.75, 18.05, 19.35, 20.65, 22.75, 27.0, 31.0, 35.4, 36.0, 36.75, 37.5, 38.25, 39.0].forEach(a => tl.to(P, { keyframes: [{ punch: 2.4, duration: .07, ease: 'power2.out' }, { punch: 0, duration: .45, ease: 'power2.inOut' }] }, a));
   // boucle : le logo se pose sur la photo de contact de l'appel, retour sur la table
   const ly = 960 + (905 - SCH / 2) * K_OVER;
   tl.to(['#e1', '#e2', '#e3', '#e4'], { opacity: 0, y: 30, duration: .18, ease: 'power2.in' }, 55.95);
@@ -350,7 +402,7 @@ function buildTimeline() {
   tl.to(['#endBg', '#endSweep'], { opacity: 0, duration: .2, ease: 'power1.inOut' }, 56.12);
   tl.to('#end', { opacity: 0, duration: .08 }, 56.32);
   tl.fromTo(P, { radial: 0 }, { keyframes: [{ radial: .12, duration: .1 }, { radial: 0, duration: .35, ease: 'power2.out' }], ...ir }, 57.45);
-  tl.set({}, {}, DUR);
+  tl.set({}, {}, SDUR);
 }
 
 /* ---------- carte de fin (logo découpé, jamais déformé) ---------- */
@@ -387,8 +439,9 @@ function applyLayers(key, L, t) {
   if (Ly.glow && Ly.follow) { const f = Ly.follow; Ly.glow.position.set(f.lx, f.ly, f.m.position.z - .004); Ly.glow.material.opacity = P.pglow * clamp(L * 2); Ly.glow.scale.setScalar(P.pulse); }
 }
 const _hv = new THREE.Vector3();
-function update(t) {
-  tl.time(Math.min(t, DUR));
+function update(tr) {
+  const t = storyOf(tr);
+  tl.time(Math.min(t, SDUR));
   const inB = t >= 41.0 && t < 51.0, inEnd = (t >= 51.0 && t < 56.1) || (t >= 46.1 && t < 51.0);
   setFov(inB ? P.fov : FOV - P.punch);
   // ----- téléphone
@@ -397,6 +450,7 @@ function update(t) {
   contact.position.x = phone.position.x; contact.position.z = phone.position.z; contact.rotation.z = -12 * DEG; contact.material.opacity = clamp(1 - hgt * 3) * .85; contact.visible = hgt < .3;
   // ----- caméra
   const cp = inB ? camB(t) : camA(t);
+  if (P.shake > .002 && !inB) { const a = P.shake; cp.q.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * 93.1) * .011 * a, Math.sin(t * 71.7 + 1.3) * .011 * a, Math.sin(t * 57.3 + 2.1) * .018 * a))); cp.p.y += Math.sin(t * 83.3 + .7) * .012 * a; }
   camera.position.copy(cp.p); camera.quaternion.copy(cp.q); camera.updateMatrixWorld(true);
   // ----- écran
   const su = screenUniforms;
@@ -415,15 +469,16 @@ function update(t) {
   else if (t < 30.8) { A = 'tt'; B = 'ig'; sw = sw2; }
   else A = Li > 0 ? 'igBase' : 'ig';
   setPages(A, B || A); su.uSwipe.value = sw; su.uBlur.value = Math.sin(Math.PI * sw) * .2;
-  su.uRip.value = t > 5.0 && t < 5.2 ? P.rip : 0; su.uRipC.value.set(830 / 1080, 1 - 1880 / 2341);
+  su.uRip.value = t > 4.95 && t < 5.2 ? P.rip : 0; su.uRipC.value.set(900 / 1080, 1 - SLY / 2341);
+  su.uSlideOn.value = A === 'in' ? 1 : 0; su.uSlide.value = t >= 56 ? 0 : P.knob; su.uShine.value = (t * .62) % 1 * 1.7 - .35;
   if (t >= 5.15 && t < 26.8) { const s = Math.max(1, Math.floor(t - 5.15) + 1); if (s !== lastTimer) { drawTimer(TIMER, s); TIMER_TEX.needsUpdate = true; lastTimer = s; } }
   su.uTimerOn.value = t >= 5.15 && t < 26.5 && Lc <= 0 ? 1 : 0;
-  if (t > 4.95 && t < 5.2) { su.uPulseRect.value.set(730 / 1080, 1 - 1980 / 2341, 200 / 1080, 200 / 2341); su.uPulse.value = P.pulse; su.uPulseGlow.value = 0; }
-  else { su.uPulseRect.value.set(0, 0, 0, 0); su.uPulse.value = 1; su.uPulseGlow.value = 0; }
+  su.uPulseRect.value.set(0, 0, 0, 0); su.uPulse.value = 1; su.uPulseGlow.value = 0;
   su.uFlash.value = 0; su.uPortal.value = t < 41 ? P.portal : 0; su.uGlow.value = P.glow;
   applyLayers('call', Lc, t); applyLayers('tt', Lt, t); applyLayers('ig', Li, t);
   // main qui montre "S'abonner"
   const hk = Lt > 0 ? 'tt' : Li > 0 ? 'ig' : null;
+  if (t > 3.7 && t < 5.1) { _hv.copy(scrLocal(180 + P.knob * 720, SLY)).applyMatrix4(phone.matrixWorld).project(camera); const hd = document.getElementById('hand'); hd.style.left = ((_hv.x * .5 + .5) * W - 46) + 'px'; hd.style.top = ((-_hv.y * .5 + .5) * H - 14) + 'px'; }
   if (hk) { const f = LAYERS[hk].follow.m; f.getWorldPosition(_hv); _hv.project(camera); const hd = document.getElementById('hand'); hd.style.left = ((_hv.x * .5 + .5) * W + 40) + 'px'; hd.style.top = ((-_hv.y * .5 + .5) * H + 34) + 'px'; }
   // ----- cartes
   const ringQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(.28, .95, 0));
@@ -483,8 +538,10 @@ function update(t) {
   siteUniforms.uScroll.value = P.scroll;
   // ----- mise au point
   let focus = camera.position.distanceTo(scrC), ap = 0;
-  if (t < 3.4) ap = 7; else if (t < 4.38) ap = 7 * (1 - inv(3.4, 4.1, t));
-  else if (t < 5.3) ap = 0;
+  if (t < 1.0) ap = 7;
+  else if (t < 2.0) ap = 4.5;
+  else if (t < 3.8) { ap = 11 * (1 - inv(3.05, 3.55, t)); focus = camera.position.distanceTo(phone.position); }
+  else if (t < 5.3) { ap = 2.5 * (1 - inv(5.0, 5.3, t)); focus = camera.position.distanceTo(scrLocal(540, SLY).applyMatrix4(phone.matrixWorld)); }
   else if (t < 7.6) { ap = 5 * Math.min(Lc * 1.5, 1); focus -= .1 * Lc; }
   else if (t < 8.5) ap = lerp(5, 9, inv(7.6, 8.4, t));
   else if (t < 14.5) { ap = 9; for (let i = 0; i < 4; i++) { const t0 = CARD_T[i]; const w = Math.min(inv(t0, t0 + .2, t), 1 - inv(t0 + 1.0, t0 + 1.35, t)); if (w > 0) focus = lerp(focus, 1.55, E.sine(w)); } }
@@ -579,11 +636,11 @@ async function init() {
   GLOWRECT = T(rectGlowTex());
   TIMER = mk(480, 96); TIMER_TEX = T(TIMER.c, { keep: true }); screenUniforms.tTimer.value = TIMER_TEX; drawTimer(TIMER, 1);
   defPages();
-  PAGE.in = T(pageIncoming());
+  PAGE.in = T(pageIncoming()); screenUniforms.tKnob.value = T(knobTex()); screenUniforms.tSlTxt.value = T(slideTextTex());
   for (const k of ['call', 'tt', 'ig']) { PAGE[k] = T(renderPage(PAGES[k], true)); PAGE[k + 'Base'] = T(renderPage(PAGES[k], false)); }
   const st = T(sitePage()); st.anisotropy = MAXANI; siteUniforms.tSite.value = st;
   { const sc = sitePageMobile(); sc.id = 'siteCv'; sc.style.cssText = 'position:absolute;left:0;top:170px;width:1080px;height:' + SITE_H + 'px'; document.getElementById('site').appendChild(sc); document.getElementById('siteUrl').textContent = CFG.site; }
-  buildSceneA(); buildHouse(); buildPost(); buildLogoPieces(); computeHall();
+  buildSceneA(); buildHouse(); buildPost(); buildLogoPieces(); computeHook(); computeHall();
   endBgTex(document.getElementById('endBg'));
   buildTimeline();
   // préchauffage (compilation des shaders + envoi des textures)

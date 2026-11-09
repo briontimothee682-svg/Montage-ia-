@@ -1,6 +1,6 @@
 # MBTK Design — vidéo de lancement
 
-- `mbtk_lancement.mp4` : la vidéo prête à publier (1080×1920, 30 i/s, 58 s, avec musique et bruitages).
+- `mbtk_lancement.mp4` : la vidéo prête à publier (1080×1920, 30 i/s, 71 s, avec musique et bruitages).
 - `mbtk_lancement_sans_musique.mp4` : la même avec les bruitages seuls (pour mettre une musique TikTok).
 - `mbtk_lancement.html` : la version animée en direct (Three.js), à ouvrir dans Safari ou Chrome.
 
@@ -17,6 +17,7 @@ Options dans l'adresse :
 
 ## Modifier
 Ton site et ton pseudo : ligne `const CFG` au début du script de `tools/src_v1.html`, puis reconstruire.
+Temps de lecture : `tools/warp.json` liste les passages ralentis (début, fin, facteur) ; la vidéo et la bande-son s'y calent toutes les deux.
 
 ```
 cd mbtk/tools

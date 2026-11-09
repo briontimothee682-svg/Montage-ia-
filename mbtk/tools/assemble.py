@@ -25,7 +25,7 @@ s = rep(s, '    <div class="tx" id="t9">Services · Réalisations · Tarifs</div
         '    <div class="tx" id="t9">Services · Réalisations · Tarifs</div>\n    <div class="tx" id="t10"><span class="url" id="urlTxt">ton-site.fr</span></div>\n')
 s = rep(s, '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>',
         '<script>window.MBTK_AUDIO={mix:"__MIX__",sfx:"__SFX__"};</script>\n<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>')
-s = rep(s, "MBTK DESIGN — vidéo de lancement (9:16, 1080×1920, 60 fps, ≈36 s)", "MBTK DESIGN — vidéo de lancement (9:16, 1080×1920, 60 fps, 58 s, avec bande-son)")
+s = rep(s, "MBTK DESIGN — vidéo de lancement (9:16, 1080×1920, 60 fps, ≈36 s)", "MBTK DESIGN — vidéo de lancement (9:16, 1080×1920, 60 fps, ≈71 s, avec bande-son)")
 # ---- textures : envoi immédiat au GPU puis libération du canvas (limite mémoire des canvas sur iPhone)
 s = rep(s, "if (o.repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(o.repeat[0], o.repeat[1]); } return t; }",
         "if (o.repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(o.repeat[0], o.repeat[1]); }\n  if (!o.keep) { try { renderer.initTexture(t); cv.width = cv.height = 1; } catch (e) { } }\n  return t; }")
@@ -47,7 +47,6 @@ if (window.__libfail || typeof THREE === 'undefined' || typeof gsap === 'undefin
 """)
 # ---- qualité : résolution adaptée à l'écran, pages plus fines sur ordinateur, lumières adoucies
 s = rep(s, "const Q = QS.has('q') ? parseFloat(QS.get('q')) : 1;", "const Q = QS.has('q') ? parseFloat(QS.get('q')) : (isMobile ? Math.min(1.2, Math.max(1, (window.devicePixelRatio || 1) * Math.min(innerWidth / 1080, innerHeight / 1920))) : 1.5);\nconst PXS = QS.has('px') ? parseFloat(QS.get('px')) : (isMobile ? 1 : 1.5);")
-s = rep(s, "const { c, g } = mk(SCW, SCH); callBg(g, false)", "const { c, g } = mk(Math.round(SCW * PXS), Math.round(SCH * PXS)); g.scale(PXS, PXS); callBg(g, false)")
 s = rep(s, "const w = 1024, h = 4096, { c, g } = mk(w, h);", "const w = 1024, h = 4096, { c, g } = mk(Math.round(w * PXS), Math.round(h * PXS)); g.scale(PXS, PXS);")
 s = rep(s, "new THREE.MeshBasicMaterial({ map: GLOWRECT, color: opts.glow, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })", "new THREE.MeshBasicMaterial({ map: GLOWRECT, color: opts.glow, transparent: true, opacity: .5, blending: THREE.AdditiveBlending, depthWrite: false })")
 # ---- site en plein écran (zoom dans l'ordi) + "vidéos comme celle-ci" dans Pourquoi nous
@@ -60,13 +59,13 @@ s = rep(s, "function keyboardTex() {", part('part_site.js') + "\nfunction keyboa
 s = rep(s, '&display=block" rel="stylesheet">', '&display=swap" rel="stylesheet" media="print" onload="this.media=\'all\'">')
 s = rep(s, "const F = (w, s, fam) => `${w} ${s}px ${fam === 'u' ? 'Unbounded' : \"'Space Grotesk'\"}`;", "const F = (w, s, fam) => `${w} ${s}px ${fam === 'u' ? \"Unbounded, 'Arial Black', 'Helvetica Neue', Arial, sans-serif\" : \"'Space Grotesk', 'Helvetica Neue', Arial, sans-serif\"}`;")
 # ---- constantes
-s = rep(s, "const W = 1080, H = 1920, DUR = 36;", "const W = 1080, H = 1920, DUR = 58;")
+s = rep(s, "const W = 1080, H = 1920, DUR = 36;", "const W = 1080, H = 1920, SDUR = 58; let DUR = 58;")
 s = rep(s, "(isMobile ? 32 : 44)", "(isMobile ? 32 : 48)")
 s = rep(s, "const TANH = Math.tan(FOV * DEG / 2);", "let TANH = Math.tan(FOV * DEG / 2);")
 # ---- flous sans ctx.filter
 s = cut(s, "function glowTex()", "/* ---------------- écrans du téléphone", part('part_glow.js') + "\n")
 # ---- pages
-s = cut(s, "function pageInCall() {", "function timerCanvas()", "")
+s = cut(s, "function pageIncoming() {", "function timerCanvas()", "")
 s = cut(s, "function pageTikTok() {", "/* ---------------- cartes 3D (768×1024)", part('part_pages.js') + "\n")
 # vignettes signées MBTK
 s = rep(s, "  play(g, x + 34, y + h - 34, 22, 'rgba(255,255,255,.9)');\n  g.restore();",
@@ -80,6 +79,8 @@ s = cut(s, "/* ---------- shader écran du téléphone ---------- */", "function
 s = cut(s, "/* ---------- variables de scène ---------- */", "/* ---------- post-production ---------- */", part('part_scenes.js') + "\n")
 # ---- post, animation, son, lecture
 i = s.index("/* ---------- post-production ---------- */"); j = s.index("init();\n</script>")
-s = s[:i] + part('part_rest.js') + s[j + len("init();\n"):]
+import json
+warp = json.load(open(os.path.join(D, 'warp.json')))
+s = s[:i] + part('part_rest.js').replace('__WARP__', json.dumps({'ramp': warp['ramp'], 'segments': warp['segments']})) + s[j + len("init();\n"):]
 open(os.path.join(D, 'src.html'), 'w').write(s)
 print('src.html', len(s))

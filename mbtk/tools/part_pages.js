@@ -1,3 +1,35 @@
+/* ---- appel entrant façon iPhone : « faire glisser pour répondre » (curseur et texte animés dans le shader) ---- */
+const SLY = 1860, SLX0 = 90, SLW = 900, SLH = 180;
+function pageIncoming() {
+  const { c, g } = mk(Math.round(SCW * PXS), Math.round(SCH * PXS)); g.scale(PXS, PXS); callBg(g, false); statusBar(g, '#F5EAE0');
+  txt(g, 'appel mobile…', 540, 340, F(500, 42, 's'), 'rgba(245,234,224,.72)', 'center');
+  txt(g, 'MBTK Design', 540, 452, F(700, 90, 'u'), '#F5EAE0', 'center');
+  g.save(); g.strokeStyle = '#E8B27A'; g.lineWidth = 3; for (let i = 1; i <= 3; i++) { g.beginPath(); g.arc(540, 900, 250 + i * 34, 0, Math.PI * 2); g.globalAlpha = .28 / i; g.stroke(); } g.restore();
+  creamLogoCircle(g, 540, 900, 250);
+  // actions secondaires (rappel / message), au-dessus du curseur comme sur iPhone
+  const by = 1545;
+  [[250, 'Me rappeler'], [830, 'Message']].forEach(([x, l]) => { g.fillStyle = 'rgba(245,234,224,.16)'; g.beginPath(); g.arc(x, by, 62, 0, 7); g.fill(); txt(g, l, x, by + 112, F(500, 34, 's'), 'rgba(245,234,224,.8)', 'center'); });
+  g.strokeStyle = '#F5EAE0'; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.arc(250, by, 25, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.moveTo(250, by - 13); g.lineTo(250, by); g.lineTo(261, by + 8); g.stroke();
+  g.fillStyle = '#F5EAE0'; rr(g, 800, by - 22, 60, 42, 12); g.fill(); g.beginPath(); g.moveTo(812, by + 16); g.lineTo(806, by + 32); g.lineTo(826, by + 18); g.fill();
+  // rail du curseur : verre fumé, léger reflet
+  g.save(); g.fillStyle = 'rgba(16,5,14,.42)'; rr(g, SLX0, SLY - SLH / 2, SLW, SLH, SLH / 2); g.fill();
+  g.fillStyle = lingrad(g, 0, SLY - SLH / 2, 0, SLY + SLH / 2, [[0, 'rgba(255,255,255,.10)'], [.5, 'rgba(255,255,255,.02)'], [1, 'rgba(255,255,255,.06)']]); rr(g, SLX0, SLY - SLH / 2, SLW, SLH, SLH / 2); g.fill();
+  g.strokeStyle = 'rgba(245,234,224,.20)'; g.lineWidth = 2; rr(g, SLX0 + 1, SLY - SLH / 2 + 1, SLW - 2, SLH - 2, SLH / 2 - 1); g.stroke(); g.restore();
+  homeBar(g, 'rgba(245,234,224,.85)');
+  return c;
+}
+function knobTex() {
+  const s = 2, { c, g } = mk(192 * s, 192 * s); g.scale(s, s);
+  g.save(); g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 16; g.shadowOffsetY = 4; g.fillStyle = '#fff'; g.beginPath(); g.arc(96, 96, 74, 0, 7); g.fill(); g.restore();
+  g.fillStyle = lingrad(g, 0, 22, 0, 170, [[0, '#ffffff'], [1, '#ece6e2']]); g.beginPath(); g.arc(96, 96, 74, 0, 7); g.fill();
+  handset(g, 96, 86, 66, Math.PI, '#34C759');
+  return c;
+}
+function slideTextTex() {
+  const s = 2, { c, g } = mk(720 * s, 120 * s); g.scale(s, s);
+  txt(g, 'faire glisser pour répondre', 360, 76, F(500, 44, 's'), '#fff', 'center');
+  return c;
+}
 /* ---- pages construites en "calques" : fond + éléments qui peuvent sortir de l'écran en 3D ---- */
 const CALL_BTNS = ['silence', 'clavier', 'haut-parleur', 'ajouter', 'vidéo', 'contacts'].map((l, i) => ({ l, i, x: [250, 540, 830][i % 3], y: i < 3 ? 1290 : 1560 }));
 function drawCallButton(g, b) {

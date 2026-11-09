@@ -1,20 +1,37 @@
-"""Bande-son originale de la vidéo MBTK Design (58 s, 120 BPM, ré mineur).
-Musique (beat feutré, piano électrique, nappes, basse, mélodie) + bruitages calés sur l'image.
+"""Bande-son originale de la vidéo MBTK Design (≈71 s, 120 BPM, ré mineur).
+Musique (house dynamique : kick à chaque temps, claps, charleston, basse qui roule, accords, mélodie) + bruitages calés sur l'image.
 Tout est synthétisé ici : aucun droit à payer.
 Sorties : mix.mp3 (musique + bruitages) et sfx.mp3 (bruitages seuls).
 Usage : python3 soundtrack.py <dossier_sortie>
 """
 import numpy as np, subprocess, sys, wave, os
 
+import json
 SR = 44100
-DUR = 58.0
+SDUR = 58.0
+_W = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'warp.json')))
+_STEP = 1 / 400
+_n = int(np.ceil(SDUR / _STEP)) + 1
+_ss = lambda a, b, x: (lambda k: k * k * (3 - 2 * k))(np.clip((x - a) / (b - a), 0, 1))
+_f = np.ones(_n); _sx = (np.arange(_n) + .5) * _STEP
+for _a, _b, _k in _W['segments']:
+    _e = _W['ramp']; _f += (_k - 1) * _ss(_a - _e, _a + _e, _sx) * (1 - _ss(_b - _e, _b + _e, _sx))
+_WR = np.concatenate([[0], np.cumsum(_STEP * _f)])[:_n]
+
+
+def R(st):
+    """temps du scénario (comme dans la timeline JS) -> temps réel de la vidéo"""
+    return float(np.interp(st, np.arange(_n) * _STEP, _WR))
+
+
+DUR = R(SDUR)
 N = int(DUR * SR)
 BEAT = 0.5
 O = 1.0  # origine de la grille des mesures (mesures sur les secondes impaires)
 rng = np.random.default_rng(47)
 
 # ---------------------------------------------------------------- repères (identiques à la timeline JS)
-VIB = [(0, .4), (.6, 1.0), (1.6, 2.0), (2.2, 2.6), (3.2, 3.6), (3.8, 4.2), (4.8, 5.0), (57.2, 57.6)]
+VIB = [(0, .4), (.5, .9), (1.5, 1.9), (2.0, 2.4), (3.0, 3.4), (3.5, 3.9), (57.2, 57.6)]
 DROP = 5.0          # décroché : le beat démarre
 CARDS = [8.5, 10.0, 11.5, 13.0]
 ARGS = [15.0, 16.3, 17.6, 18.9, 20.2]
@@ -222,155 +239,273 @@ def vibration(dur):
     return x / (np.max(np.abs(x)) + 1e-9)
 
 
+# ---------------------------------------------------------------- nouveaux sons (version dynamique)
+def kick2():
+    n = int(.42 * SR); t = T(n)
+    f = 48 + 130 * np.exp(-t * 38)
+    body = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 7.5)
+    click = fftfilt(rng.normal(0, 1, n) * np.exp(-t * 900), lo=1500, hi=9000) * .35
+    return np.tanh((body + click) * 1.6) * .95
+
+
+def snare2(vol=1.0):
+    n = int(.26 * SR); t = T(n)
+    tone = (np.sin(2 * np.pi * 186 * t) * .7 + np.sin(2 * np.pi * 332 * t) * .35) * np.exp(-t * 28)
+    nz = fftfilt(rng.normal(0, 1, n), lo=1600, hi=10000) * np.exp(-t * 22)
+    return np.tanh((tone + nz * .9) * 1.2) * .7 * vol
+
+
+def ohat(vol=1.0):
+    n = int(.3 * SR); t = T(n)
+    return fftfilt(rng.normal(0, 1, n), lo=7200, hi=15000) * np.exp(-t * 11) * np.minimum(1, t / .003) * .5 * vol
+
+
+def chat(vol=1.0):
+    n = int(.05 * SR); t = T(n)
+    return fftfilt(rng.normal(0, 1, n), lo=7000, hi=16000) * np.exp(-t * 62) * .9 * vol
+
+
+def crash(vol=1.0):
+    n = int(2.4 * SR); t = T(n)
+    nz = fftfilt(rng.normal(0, 1, n), lo=3800, hi=15000) * np.exp(-t * 1.9)
+    met = sum(np.sin(2 * np.pi * f * t + k) for k, f in enumerate([3150, 4270, 5340, 6810, 8270, 9620])) * .05 * np.exp(-t * 2.6)
+    return (nz + met) * np.minimum(1, t / .002) * .55 * vol
+
+
+def rim(vol=1.0):
+    n = int(.08 * SR); t = T(n)
+    return (np.sin(2 * np.pi * 1720 * t) * .6 + fftfilt(rng.normal(0, 1, n), lo=2500, hi=7000) * .5) * np.exp(-t * 80) * .5 * vol
+
+
+def additive(f, n, dec0, dec1, maxf=9000, nmax=36):
+    t = T(n); s = np.zeros(n)
+    for h in range(1, int(min(nmax, maxf / f)) + 1):
+        s += np.sin(2 * np.pi * f * h * t + h * .37) / h * np.exp(-t * (dec0 + dec1 * (h - 1)))
+    return s
+
+
+def bass_pluck(m, dur=.22, vel=1.0):
+    f = note(m); n = int((dur + .04) * SR); t = T(n)
+    s = additive(f, n, 3.0, 4.2, 7000) + .7 * np.sin(2 * np.pi * f / 2 * t)
+    env = np.minimum(1, t / .003) * np.where(t > dur, np.exp(-(t - dur) * 70), 1) * np.exp(-t * 1.5)
+    return np.tanh(s * env * 1.4) * .75 * vel
+
+
+def stab(ms, dur=.2, vel=.6):
+    n = int((dur + .25) * SR); t = T(n); s = np.zeros(n)
+    for m in ms:
+        for det in (-.09, .09):
+            s += additive(note(m) * 2 ** (det / 12), n, 5.0, 2.6, 8000)
+    env = np.minimum(1, t / .004) * np.where(t > dur, np.exp(-(t - dur) * 18), 1)
+    return s * env * vel / len(ms)
+
+
+def pluck_lead(m, vel=.6):
+    n = int(.6 * SR); t = T(n)
+    s = additive(note(m), n, 4.0, 3.0, 9000) + .4 * additive(note(m) * 2.003, n, 6.0, 5.0, 9000)
+    return s * np.minimum(1, t / .002) * vel
+
+
+def lpsweep(x, fc_of_t, order=2):
+    """passe-bas glissant (STFT), x stéréo"""
+    win, hop = 2048, 512
+    w = np.hanning(win); n = len(x)
+    out = np.zeros((n + win, 2)); norm = np.zeros(n + win)
+    xp = np.pad(x, ((0, win), (0, 0)))
+    f = np.fft.rfftfreq(win, 1 / SR)
+    for k in range(0, n, hop):
+        fc = fc_of_t(k / SR)
+        H = 1 / np.sqrt(1 + (f / fc) ** (2 * order))
+        for c in range(2):
+            out[k:k + win, c] += np.fft.irfft(np.fft.rfft(xp[k:k + win, c] * w) * H, win) * w
+        norm[k:k + win] += w * w
+    return (out / np.maximum(norm, 1e-3)[:, None])[:n]
+
+
 # ---------------------------------------------------------------- musique
 def music():
-    drums = np.zeros((N, 2)); bass = np.zeros((N, 2)); keys = np.zeros((N, 2)); pads = np.zeros((N, 2)); lead = np.zeros((N, 2)); fx = np.zeros((N, 2))
-    # énergie par mesure (0 = silence de batterie, 1 = feutré, 2 = groove, 3 = plein, 4 = couloir)
-    def energy(t):
-        if t < DROP: return 0
-        if 40.5 <= t < HALL: return 0
-        if t < 15: return 2
-        if t < 40.5: return 3
-        if t < ROOM: return 4
-        if t < 45: return 1
-        if t < 50.5: return 2
-        if t < END: return 0
-        if t < 52.0: return 0
-        if t < 56: return 2
-        return 0
+    drums = np.zeros((N, 2)); bass = np.zeros((N, 2)); keys = np.zeros((N, 2)); pads = np.zeros((N, 2)); lead = np.zeros((N, 2)); fx = np.zeros((N, 2)); perc = np.zeros((N, 2))
+    r = R
+    # sections en temps réel
+    B_ARGS, B_SOCIAL, B_TRADES, B_PORTAL = r(14.6), r(26.5), r(34.5), r(39.95)
+    B_HALL, B_ROOM, B_SITE, B_END, B_LAND, B_OUT = r(41.0), r(42.9), r(46.3), r(51.0), r(52.0), r(56.0)
+    GAPS = [(4.78, 5.0), (B_HALL - .16, B_HALL), (B_END - .12, B_END)]
+
+    def section(t):
+        if t < DROP: return 'intro'
+        for a, b in GAPS:
+            if a <= t < b: return 'gap'
+        if t < B_ARGS: return 'A'
+        if t < B_PORTAL - .5: return 'B'
+        if t < B_HALL: return 'build'
+        if t < B_ROOM: return 'hall'
+        if t < B_SITE - 1.0: return 'room'
+        if t < B_SITE: return 'build2'
+        if t < B_END: return 'B'
+        if t < B_LAND: return 'A'
+        if t < B_OUT: return 'C'
+        return 'outro'
     # progression (2 s par mesure) : Rém9 | Si♭maj9 | Solm9 | La7sus4→La7
-    prog = [(38, [53, 57, 60, 64], [62, 65, 69, 72, 76]),
-            (34, [53, 57, 60, 62], [58, 62, 65, 69, 72]),
-            (31, [53, 57, 58, 62], [55, 58, 62, 65, 69]),
-            (33, [52, 55, 57, 62], [57, 61, 64, 67, 69])]
+    prog = [(38, [53, 57, 60, 64], [62, 65, 69, 72, 76], [62, 65, 69, 72]),
+            (34, [53, 57, 60, 62], [58, 62, 65, 69, 72], [58, 62, 65, 69]),
+            (31, [53, 57, 58, 62], [55, 58, 62, 65, 69], [55, 58, 62, 65]),
+            (33, [52, 55, 57, 62], [57, 61, 64, 67, 69], [57, 61, 64, 67])]
     kicks = []
-    bar0 = O - 2.0
-    b = 0
+    bar0 = O - 2.0; b = 0
     while bar0 + b * 2 < DUR:
         ts = bar0 + b * 2
-        root, epv, padv = prog[b % 4]
-        # nappe (toujours là, plus présente dans l'intro et la fin)
+        root, epv, padv, stv = prog[b % 4]
+        # nappe continue
         n = int(2.6 * SR); s = np.zeros(n)
         for mm in padv[:4]: s += pad_note(mm, n, seed=b)
         tt = T(n); env = np.minimum(1, tt / .9) * np.minimum(1, (2.6 - tt) / .7)
-        ps = s * env * .05
-        place(pads, ps, max(ts - .2, 0), 1.0, -.25); place(pads, ps[::-1][::-1] * .95, max(ts - .18, 0), 1.0, .25)
-        e = energy(ts + .01)
-        if ts + .01 >= DROP:
-            # piano électrique : accord sur le 1, rappel sur le "et" du 3
-            if e >= 1 or ts >= END:
-                for k, mm in enumerate(epv):
-                    place(keys, ep(mm, 1.1, .55 + .05 * k), ts + .012 * k, 1, -.3 + .2 * k)
-                    if b % 4 == 3 and mm == 62: mm = 61
-                    place(keys, ep(mm, .4, .32), ts + 1.25 + .01 * k, 1, .3 - .2 * k)
-            # basse
-            if e >= 2:
-                place(bass, sub(root + 12, .95), ts, .95)
-                place(bass, sub(root + 12, .3, .7), ts + 1.25, .95)
-                place(bass, sub(root + 24 if b % 2 else root + 12, .4, .6), ts + 1.5, .9)
-            elif e == 1:
-                place(bass, sub(root + 12, 1.8, .7), ts, .9)
-        # batterie (croches)
-        for k in range(8):
-            t8 = ts + k * .5 / 2 * 2 if False else ts + k * .25
-            if t8 < 0 or t8 >= DUR: continue
-            e = energy(t8 + .001)
-            if e == 0: continue
-            if e >= 2:
-                if k in (0, 4) or (e >= 3 and k == 7 and b % 2 == 1) or (e == 4 and k % 2 == 0):
-                    place(drums, kick(), t8, .95); kicks.append(t8)
-                if k in (2, 6): place(drums, snap(), t8, .55, .1)
-                if e >= 3 and k in (2, 6): place(drums, clap(), t8 + .004, .45, -.1)
-            if e == 1 and k in (2, 6): place(drums, snap(), t8, .4, .1)
-            # shaker en doubles croches
-            for h in range(2):
-                t16 = t8 + h * .125
-                acc = 1.0 if h == 1 else .55
-                place(drums, shaker(acc), t16 + (.012 if h else 0), .7 if e >= 2 else .45, .35)
-            if e >= 3 and k % 2 == 1: place(drums, hat(), t8, .6, -.3)
-        # mélodie (cloches) à partir de "Pourquoi nous"
-        if 15 <= ts < 40.5 or 52 <= ts < 56:
+        sc = section(ts + .01)
+        pv = .07 if sc in ('room', 'outro', 'intro', 'build2') else .045
+        place(pads, s * env * pv, max(ts - .2, 0), 1.0, -.25); place(pads, s * env * pv * .95, max(ts - .18, 0), 1.0, .25)
+        for k in range(16):
+            t16 = ts + k * .125
+            if t16 < 0 or t16 >= DUR: continue
+            sc = section(t16 + .001)
+            if sc == 'gap': continue
+            beat = k % 4 == 0; off8 = k % 4 == 2
+            pan_h = .3 if k % 2 else -.15
+            if sc in ('A', 'B', 'C', 'hall', 'intro', 'build'):
+                if beat: place(drums, kick2(), t16, 1.0); kicks.append(t16)
+                if k in (4, 12): place(drums, clap(), t16 + .003, .95, -.08); place(drums, snare2(.7), t16, .75, .08)
+                if sc == 'hall' and k in (0, 8): place(drums, snare2(.5), t16, .6)
+                hv = [1, .45, .7, .5][k % 4] * (.6 if sc == 'intro' else 1)
+                if not off8 or sc in ('intro',): place(perc, chat(hv), t16 + (.008 if k % 2 else 0), .8, pan_h)
+                if off8 and sc != 'intro': place(perc, ohat(.8), t16, .7, .25)
+                if sc in ('B', 'C', 'hall') and k in (3, 7, 11, 14): place(perc, rim(.7), t16, .7, -.4)
+                if sc in ('B', 'C') and k % 2 == 0: place(perc, shaker(.9), t16 + .062, .55, .45)
+            if sc == 'room':  # demi-tempo : kick sur 1 et le « et » du 3, clap sur 3
+                if k in (0, 10): place(drums, kick2(), t16, .85); kicks.append(t16)
+                if k == 8: place(drums, clap(), t16, .8); place(drums, snare2(.55), t16, .6)
+                if k % 2 == 0: place(perc, chat(.7 if k % 4 else .45), t16, .7, .3)
+                if k == 14: place(perc, ohat(.6), t16, .6, -.2)
+            if sc == 'build2':
+                place(drums, snare2(.25 + .75 * ((t16 - (B_SITE - 1.0)) / 1.0)), t16, .8)
+                if beat: place(drums, kick2(), t16, .8); kicks.append(t16)
+            if sc == 'build':
+                prog_b = np.clip((t16 - (B_PORTAL - .5)) / (B_HALL - (B_PORTAL - .5)), 0, 1)
+                place(drums, snare2(.2 + .8 * prog_b), t16, .8, .05)
+                if prog_b > .5: place(drums, snare2(.15 + .6 * prog_b), t16 + .0625, .7, -.05)
+            # basse : croches à contretemps qui roulent (+ doubles en couloir)
+            if sc in ('A', 'B', 'C', 'build'):
+                if off8: place(bass, bass_pluck(root + 12, .2, 1.0), t16, 1.0)
+                if k in (7, 15) and sc in ('B', 'C'): place(bass, bass_pluck(root + 24, .1, .6), t16, 1.0)
+            if sc == 'hall' and not beat: place(bass, bass_pluck(root + 12 + (12 if k % 4 == 3 else 0), .1, .85), t16, 1.0)
+            if sc == 'intro' and off8 and ts >= 1.0: place(bass, bass_pluck(root + 12, .16, .5), t16, 1.0)
+            # accords plaqués syncopés
+            if sc in ('B', 'C') and k in (0, 3, 6, 10): place(keys, stab(stv, .14, .55), t16, 1.0, -.2 if k % 2 else .2)
+            if sc == 'A' and k in (3, 10): place(keys, stab(stv, .14, .45), t16, 1.0, .15)
+        # piano électrique (nappe harmonique) : sections calmes et groove A
+        sc = section(ts + .01)
+        if sc in ('A', 'room', 'outro', 'build2') or (sc == 'C' and ts >= B_LAND):
+            for k2, mm in enumerate(epv):
+                place(keys, ep(mm, 1.1, .5 + .05 * k2), ts + .012 * k2, .9, -.3 + .2 * k2)
+                place(keys, ep(mm, .4, .3), ts + 1.25 + .01 * k2, .9, .3 - .2 * k2)
+        if sc in ('room',):
+            place(bass, sub(root + 12, 1.8, .7), ts, .9)
+        # mélodie : cloches + pluck en écho
+        if sc in ('B', 'C', 'room') and not (B_HALL <= ts < B_ROOM):
             motif = [(0, 69), (.75, 72), (1.0, 74), (1.5, 76), (1.75, 74)] if b % 2 == 0 else [(0, 77), (.5, 76), (.75, 74), (1.25, 72), (1.5, 69)]
+            vel = .3 if sc == 'room' else .5
             for off, mm in motif:
-                place(lead, bell(mm, 1.0, .42), ts + off, 1, .2 if mm > 72 else -.2)
+                place(lead, bell(mm, 1.0, vel), ts + off, 1, .2 if mm > 72 else -.2)
+                if sc != 'room':
+                    pl = pluck_lead(mm - 12, .32)
+                    place(lead, pl, ts + off, 1, -.15)
+                    place(lead, pl * .35, ts + off + .375, 1, .55); place(lead, pl * .15, ts + off + .75, 1, -.55)
         b += 1
-    # sidechain : la nappe, la basse et les claviers respirent avec le kick
+    # sidechain marqué : tout respire avec le kick
     duck = np.ones(N)
     for tk in kicks:
-        i = int(tk * SR); m = min(N, i + int(.3 * SR)); tt = T(m - i)
-        duck[i:m] = np.minimum(duck[i:m], 1 - .45 * np.exp(-tt / .09))
+        i = int(tk * SR); m = min(N, i + int(.32 * SR)); tt = T(m - i)
+        duck[i:m] = np.minimum(duck[i:m], 1 - .62 * np.exp(-tt / .085))
     duck = duck[:, None]
-    # couleur : intro feutrée, couloir ouvert
-    pads = fftfilt(pads, hi=5200, lo=150, peak=[(300, -3, 1.0)])
-    keys = keys * (1 + .22 * np.sin(2 * np.pi * 4.6 * T(N)))[:, None] * np.array([1, .9])
-    mus = drums * 1.15 + bass * duck * .55 + keys * duck * .8 + pads * duck * .8 + lead * .6
-    wet = reverb(keys * .7 + lead * .6 + pads * .4 + drums * .15, sec=2.6, damp=9000)
-    mus = mus + wet * .32
-    mus = fftfilt(mus, lo=32, peak=[(250, -2.5, 1.0), (9000, 4.5, .6), (3500, 1.5, .8)])
-    # filtre d'intro : sourd jusqu'au décroché
+    pads = fftfilt(pads, hi=5600, lo=150, peak=[(300, -3, 1.0)])
+    mus = drums * 1.05 + perc * .8 + bass * duck * .62 + keys * duck * .7 + pads * duck * .85 + lead * duck ** .5 * .62
+    wet = reverb(keys * .6 + lead * .7 + pads * .4 + drums * .08 + perc * .1, sec=2.2, damp=9000)
+    mus = mus + wet * .28
+    mus = fftfilt(mus, lo=30, peak=[(60, 2.0, 1.2), (250, -2.5, 1.0), (9500, 4.0, .6), (3200, 1.5, .8)])
+    # accroche : filtre qui s'ouvre jusqu'au décroché, couloir/chambre : couleur
     t = T(N)
-    intro = np.clip((t - 0) / DROP, 0, 1)
-    lp_mix = fftfilt(mus, hi=700)
-    w = np.where(t < DROP, 1.0, 0.0)[:, None]
-    mus = mus * (1 - w) + lp_mix * w * (0.6 + .4 * intro[:, None])
-    # fin : extinction douce pour boucler sur l'intro
-    fade = np.clip((DUR - t) / 2.0, 0, 1)[:, None]
-    mus = mus * (.35 + .65 * fade) * np.where(t > 56, 1, 1)[:, None]
-    # transitions musicales
-    place(fx, riser(1.5, .55), DROP - 1.5, 1)
-    place(fx, riser(1.0, .5), HALL - 1.0, 1)
-    place(fx, boom(.8), HALL, 1)
-    place(fx, riser(.9, .45), END - .9, 1)
-    place(fx, boom(1.0, 1.8), LAND[-1], 1)
-    place(fx, boom(.5), DROP, 1)
+    def fc(tt):
+        if tt < DROP: return 380 * (2600 / 380) ** min(1, (tt / 4.6) ** 1.5)
+        if B_ROOM <= tt < B_SITE - 1.0: return 3200 + 5500 * np.sin(np.pi * .5 * np.clip((tt - B_ROOM) / (B_SITE - 1.0 - B_ROOM), 0, 1))
+        if B_SITE - 1.0 <= tt < B_SITE: return 1800 * (14000 / 1800) ** ((tt - (B_SITE - 1.0)) / 1.0)
+        if tt >= B_OUT: return 14000 * (500 / 14000) ** min(1, (tt - B_OUT) / (DUR - B_OUT))
+        return 16000
+    mus = lpsweep(mus, fc)
+    # fin : extinction douce pour boucler sur l'accroche
+    fade = np.clip((DUR - t) / 1.6, 0, 1)[:, None]
+    mus = mus * (.3 + .7 * fade)
+    # transitions
+    place(fx, boom(1.0, 1.3), 0.0, 1)
+    place(fx, crash(.8), 0.0, 1)
+    place(fx, riser(1.75, .6), DROP - 1.95, 1)
+    place(fx, boom(.9, 1.6), DROP, 1); place(fx, crash(1.0), DROP, 1)
+    place(fx, crash(.6), B_ARGS, 1); place(fx, crash(.5), B_SOCIAL, 1); place(fx, crash(.5), B_TRADES, 1)
+    place(fx, riser(B_HALL - B_PORTAL + .2, .55), B_PORTAL - .36, 1)
+    place(fx, boom(.9), B_HALL, 1); place(fx, crash(.9), B_HALL, 1)
+    place(fx, crash(.45), B_ROOM, 1)
+    place(fx, riser(1.0, .5), B_SITE - 1.0, 1); place(fx, crash(.7), B_SITE, 1); place(fx, boom(.6), B_SITE, 1)
+    place(fx, riser(.9, .45), B_END - .9, 1)
+    place(fx, boom(1.0, 1.8), B_LAND, 1); place(fx, crash(.9), B_LAND, 1)
     fxw = reverb(fx, 2.0) * .3 + fx
     return mus + fxw * .7
 
 
-# ---------------------------------------------------------------- bruitages
+# ---------------------------------------------------------------- bruitages (temps du scénario -> temps réel)
 def sfx():
-    s = np.zeros((N, 2))
-    for a, b in VIB: place(s, vibration(b - a), a, .2)
-    place(s, whoosh(1.1, 180, 3800, shape=.9), 3.4, .5)
-    place(s, tap(.7), DROP, 1)
-    place(s, shimmer(1.0, .25), DROP + .15, 1)
+    s = np.zeros((N, 2)); r = R
+    for a, b in VIB: place(s, vibration(r(b) - r(a)), r(a), .22)
+    # accroche : crash zoom, coupes, impacts des mots
+    place(s, whoosh(.7, 4200, 250, shape=.12), 0.0, .5)
+    for a in (.93, 1.93): place(s, whoosh(.3, 900, 6500, shape=.6), a, .45, .5 if a < 1.5 else -.5)
+    for a in (0, .5, 1.0, 1.5, 2.0, 2.5): place(s, fftfilt(boom(.35, .25), hi=500), a, 1)
+    place(s, whoosh(1.0, 180, 4200, shape=.85), 2.95, .5)
+    # curseur « faire glisser pour répondre »
+    place(s, whoosh(.85, 500, 2600, shape=.65), 4.0, .2, .3)
+    place(s, tap(.8), 4.95, 1, .3)
+    place(s, shimmer(1.0, .28), 5.0, 1)
     place(s, whoosh(.6, 400, 2600, shape=.5), 5.3, .25, -.2)
     place(s, whoosh(.7, 300, 1800, shape=.6), 7.3, .35, .2)
-    for i, c in enumerate(CARDS): place(s, whoosh(.45, 700, 5200, shape=.35), c - .05, .32, -.5 + i * .33)
-    place(s, whoosh(.7, 2600, 300, shape=.3), 14.5, .35)
+    for i, c in enumerate(CARDS): place(s, whoosh(.45, 700, 5200, shape=.35), r(c) - .05, .32, -.5 + i * .33)
+    place(s, whoosh(.7, 2600, 300, shape=.3), r(14.5), .35)
     for i, a in enumerate(ARGS):
-        place(s, whoosh(.45, 500, 3000, shape=.6), a - .05, .25, .6 if i % 2 else -.6)
-        place(s, tap(.25), a + .42, 1, .6 if i % 2 else -.6)
-    place(s, whoosh(.45, 3000, 300, shape=.2), 22.3, .35)
-    place(s, whoosh(.5, 300, 3200, shape=.6), 22.7, .4)
-    place(s, whoosh(.9, 200, 3600, shape=.9), 25.5, .45)
-    for a in (26.5, 30.5): place(s, whoosh(.32, 800, 7000, shape=.5), a, .5, .4)
-    for a in (26.8, 30.8): place(s, whoosh(.6, 400, 2400, shape=.5), a, .22)
-    for a in (28.1, 28.6, 32.1, 32.6): place(s, tap(.3), a, 1, .3)
-    place(s, whoosh(.7, 2400, 300, shape=.3), 34.5, .35)
-    place(s, shimmer(1.2, .2, 69), 34.7, 1)
-    for i, a in enumerate(SNAPS): place(s, whoosh(.4, 500, 2000, shape=.6), a, .18, -.3 + .15 * i)
-    place(s, shimmer(1.0, .25, 74), 40.0, 1)
-    place(s, whoosh(1.0, 200, 4200, shape=.95), 40.1, .5)
+        place(s, whoosh(.45, 500, 3000, shape=.6), r(a) - .05, .25, .6 if i % 2 else -.6)
+        place(s, tap(.25), r(a) + .42, 1, .6 if i % 2 else -.6)
+    place(s, whoosh(.45, 3000, 300, shape=.2), r(22.3), .35)
+    place(s, whoosh(.5, 300, 3200, shape=.6), r(22.7), .4)
+    place(s, whoosh(.9, 200, 3600, shape=.9), r(25.5), .45)
+    for a in (26.5, 30.5): place(s, whoosh(.32, 800, 7000, shape=.5), r(a), .5, .4)
+    for a in (26.8, 30.8): place(s, whoosh(.6, 400, 2400, shape=.5), r(a), .22)
+    for a in (28.1, 28.6, 32.1, 32.6): place(s, tap(.3), r(a), 1, .3)
+    place(s, whoosh(.7, 2400, 300, shape=.3), r(34.5), .35)
+    place(s, shimmer(1.2, .2, 69), r(34.7), 1)
+    for i, a in enumerate(SNAPS): place(s, whoosh(.4, 500, 2000, shape=.6), r(a), .18, -.3 + .15 * i)
+    place(s, shimmer(1.0, .25, 74), r(40.0), 1)
+    place(s, whoosh(1.0, 200, 4200, shape=.95), r(40.1), .5)
     # couloir : souffle de vitesse + passages
-    n = int(2.6 * SR); tt = T(n)
-    rush = fftfilt(noise(n), hi=900, lo=60) * (np.sin(np.pi * np.clip(tt / 2.6, 0, 1)) ** 1.5) * (1 + .3 * np.sin(2 * np.pi * 9 * tt))
-    place(s, rush / np.max(np.abs(rush)), HALL - .1, .35)
-    for i, a in enumerate([41.35, 41.75, 42.15, 42.5]): place(s, whoosh(.35, 600, 3000, shape=.5), a, .3, .8 if i % 2 else -.8)
-    place(s, whoosh(.55, 300, 2000, shape=.5), 42.85, .4)
-    place(s, whoosh(.9, 250, 2600, shape=.7), 43.1, .3, -.3)
-    place(s, whoosh(.6, 200, 4200, shape=.9), 45.45, .5)
-    place(s, shimmer(.9, .2, 76), 45.85, 1)
-    for a in (46.8, 47.85, 48.9, 49.95): place(s, whoosh(.5, 900, 3800, shape=.4), a, .14, .2)
-    place(s, whoosh(.6, 200, 3600, shape=.9), END - .5, .45)
-    place(s, shimmer(1.0, .22, 74), END, 1)
-    for a in LAND[:3]: place(s, fftfilt(boom(.25, .3), hi=600), a, 1)
-    place(s, whoosh(.4, 1200, 5000, shape=.5), 52.0, .15)
-    place(s, shimmer(1.2, .2, 81), 52.1, 1)
-    place(s, whoosh(.5, 2000, 400, shape=.4), 56.0, .25)
-    place(s, whoosh(.5, 2600, 250, shape=.25), 57.5, .4)
+    d = r(43.0) - r(41.0) + .5; n = int(d * SR); tt = T(n)
+    rush = fftfilt(noise(n), hi=900, lo=60) * (np.sin(np.pi * np.clip(tt / d, 0, 1)) ** 1.5) * (1 + .3 * np.sin(2 * np.pi * 9 * tt))
+    place(s, rush / np.max(np.abs(rush)), r(41.0) - .1, .35)
+    for i, a in enumerate([41.35, 41.75, 42.15, 42.5]): place(s, whoosh(.35, 600, 3000, shape=.5), r(a), .3, .8 if i % 2 else -.8)
+    place(s, whoosh(.55, 300, 2000, shape=.5), r(42.85), .4)
+    place(s, whoosh(1.1, 250, 2600, shape=.7), r(43.1), .3, -.3)
+    place(s, whoosh(.9, 200, 4200, shape=.9), r(45.3), .5)
+    place(s, shimmer(.9, .2, 76), r(45.85), 1)
+    for a in (46.7, 47.7, 48.7, 49.7): place(s, whoosh(.5, 900, 3800, shape=.4), r(a), .14, .2)
+    place(s, whoosh(.6, 200, 3600, shape=.9), r(END) - .5, .45)
+    place(s, shimmer(1.0, .22, 74), r(END), 1)
+    for a in LAND[:3]: place(s, fftfilt(boom(.25, .3), hi=600), r(a), 1)
+    place(s, whoosh(.4, 1200, 5000, shape=.5), r(52.0), .15)
+    place(s, shimmer(1.2, .2, 81), r(52.1), 1)
+    place(s, whoosh(.5, 2000, 400, shape=.4), r(56.0), .25)
+    place(s, whoosh(.5, 2600, 250, shape=.25), r(57.5), .4)
     return s
-
 
 def limiter(x, ceiling=.89, look=.006):
     a = np.max(np.abs(x), 1)
