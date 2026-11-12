@@ -312,7 +312,7 @@ def render(cfg, clips_dir, out_path, preview=False):
     vf = ["-vf", "scale=540:960"] if preview else []
     cmd = ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
            "-i", str(wav), "-map", "0:v", "-map", "1:a"] + vf + [
-           "-c:v", "libx264", "-preset", "medium" if preview else "slow", "-crf", "20" if preview else "15",
+           "-c:v", "libx264", "-preset", "medium" if preview else "slow", "-crf", "20" if preview else "19",
            "-pix_fmt", "yuv420p", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
            "-c:a", "aac", "-b:a", "320k", "-shortest", "-movflags", "+faststart", str(out_path)]
     ff = subprocess.Popen(cmd, stdin=subprocess.PIPE)
