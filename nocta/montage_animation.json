@@ -23,7 +23,7 @@
       "rampe": false,
       "son_du_clip": 0,
       "synchro": null,
-      "transition_suivante": "fondu"
+      "transition_suivante": "traversee"
     },
     "03a": {
       "fichier": "shot_03a.mp4",
@@ -32,7 +32,7 @@
       "rampe": false,
       "son_du_clip": 0,
       "synchro": null,
-      "transition_suivante": "fondu"
+      "transition_suivante": "traversee"
     },
     "03b": {
       "fichier": "shot_03b.mp4",
@@ -50,7 +50,7 @@
       "rampe": false,
       "son_du_clip": 0,
       "synchro": null,
-      "transition_suivante": "fondu"
+      "transition_suivante": "traversee"
     },
     "05": {
       "fichier": "shot_05.mp4",
@@ -59,7 +59,7 @@
       "rampe": false,
       "son_du_clip": 0,
       "synchro": null,
-      "transition_suivante": "fondu"
+      "transition_suivante": "traversee"
     },
     "06": {
       "fichier": "shot_06.mp4",
@@ -68,7 +68,7 @@
       "rampe": false,
       "son_du_clip": 0,
       "synchro": null,
-      "transition_suivante": "fondu"
+      "transition_suivante": "traversee"
     },
     "07": {
       "fichier": "shot_07.mp4",
@@ -77,7 +77,7 @@
       "rampe": false,
       "son_du_clip": 0,
       "synchro": null,
-      "transition_suivante": "traversee"
+      "transition_suivante": "fondu"
     },
     "08": {
       "fichier": "shot_08.mp4",

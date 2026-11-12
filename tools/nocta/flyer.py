@@ -248,8 +248,8 @@ class Flyer:
 
         out = tonemap(img) * self.vig
         # white strobe resolving into the flyer
-        wf = np.exp(-tau / 0.075) if tau < 0.5 else 0.0
-        out = out * (1 - wf) + wf
+        wf = 0.62 * np.exp(-tau / 0.09) if tau < 0.5 else 0.0
+        out = out * (1 - wf) + wf * np.array([0.78, 0.69, 0.96], np.float32)
 
         # chromatic split on the hit
         k = int(round(9 * p))

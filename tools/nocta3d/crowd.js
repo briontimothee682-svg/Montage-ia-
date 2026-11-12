@@ -77,7 +77,7 @@ export class Crowd {
         const idx = i * 2 + k;
         let a1, a2, fwd;
         if (club && (P.arms === 'wave' && sx < 0)) { a1 = lerp(0.4, 2.6, up); a2 = 0.6 + 0.3 * Math.sin(t * 6 + P.sw); fwd = 0.3; }
-        else if (club) { a1 = lerp(0.25 + 0.25 * bounce, 2.75 + 0.1 * Math.sin(t * 3 + P.sw + sx), up); a2 = lerp(1.2, 0.25, up); fwd = lerp(-0.6, 0.15, up); }
+        else if (club) { a1 = lerp(0.3 + 0.25 * bounce, 2.45 + 0.15 * Math.sin(t * 3 + P.sw + sx) + 0.1 * bounce, up); a2 = lerp(1.3, 0.75 + 0.25 * Math.sin(t * 2 + P.sw), up); fwd = lerp(-0.7, 0.2, up); }
         else if (P.phone && sx < 0) { a1 = 0.25; a2 = 1.5; fwd = -0.9; }
         else { a1 = 0.12; a2 = 0.25; fwd = -0.05; }
         const sh = V(sx * 0.2, 1.43, 0);

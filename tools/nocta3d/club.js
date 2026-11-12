@@ -21,7 +21,7 @@ export function buildClubInterior(scene) {
   const edge = new THREE.Mesh(new THREE.BoxGeometry(22, 0.05, 0.05), mat.emit(0x6a5aff, 4)); edge.position.set(x, 1.18, back - 7.1); g.add(edge);
   // LED wall (animated canvas)
   const ledTex = canvasTex(640, 256, () => {});
-  const led = new THREE.Mesh(new THREE.PlaneGeometry(26, 10.4), new THREE.MeshBasicMaterial({ map: ledTex, toneMapped: false }));
+  const led = new THREE.Mesh(new THREE.PlaneGeometry(26, 10.4), new THREE.MeshBasicMaterial({ map: ledTex, toneMapped: false, color: new THREE.Color(0.72, 0.72, 0.72) }));
   led.position.set(x, 1.2 + 5.2, back - 0.9); led.rotation.y = Math.PI; g.add(led);
   // side LED columns
   const cols = [];
@@ -33,7 +33,7 @@ export function buildClubInterior(scene) {
   const booth = new THREE.Group(); booth.position.set(x, 1.2, zStage + 1.0); g.add(booth);
   const desk = new THREE.Mesh(new RoundedBoxGeometry(3.4, 1.05, 1.0, 2, 0.05), black); desk.position.y = 0.525; booth.add(desk);
   const boothTex = canvasTex(512, 160, () => {});
-  const front2 = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 0.95), new THREE.MeshBasicMaterial({ map: boothTex, toneMapped: false }));
+  const front2 = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 0.95), new THREE.MeshBasicMaterial({ map: boothTex, toneMapped: false, color: new THREE.Color(0.7, 0.7, 0.7) }));
   front2.position.set(0, 0.525, -0.505); front2.rotation.y = Math.PI; booth.add(front2);
   const gear = mat.std(0x16161a, 0.35, 0.5);
   for (const gx of [-1.05, 0, 1.05]) {
@@ -52,7 +52,7 @@ export function buildClubInterior(scene) {
   const beams = [];
   const beamG = new THREE.CylinderGeometry(0.06, 1.5, 16, 24, 1, true); beamG.translate(0, -8, 0);
   for (const tz of [zStage - 2, front + 10]) for (let i = 0; i < 8; i++) {
-    const col = [0x4a7bff, 0xb050ff, 0xffffff, 0xff4fd0][i % 4];
+    const col = [0x4a7bff, 0xb050ff, 0xb8a8ff, 0xff4fd0][i % 4];
     const head = new THREE.Group(); head.position.set(x - 13 + i * (26 / 7), 10.2, tz); g.add(head);
     const b = new THREE.Mesh(beamG, new THREE.MeshBasicMaterial({ map: beamTex, color: new THREE.Color(col).multiplyScalar(0.35), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }));
     head.add(b);
@@ -67,7 +67,7 @@ export function buildClubInterior(scene) {
     const em = new THREE.Group(); em.position.set(lx, ly, lz); g.add(em);
     const fan = [];
     for (let k = 0; k < 7; k++) {
-      const l = new THREE.Mesh(laserG, mat.add(col, 6, 0.9));
+      const l = new THREE.Mesh(laserG, mat.add(col, 3.2, 0.85));
       const gl = new THREE.Mesh(laserGlowG, mat.add(col, 1.2, 0.18));
       const piv = new THREE.Group(); piv.add(l, gl); em.add(piv); fan.push(piv);
     }
@@ -114,7 +114,7 @@ export function buildClubInterior(scene) {
   const vipFace = new THREE.PointLight(0xe8e0ff, 14, 9, 2); vipFace.position.set(-1.2, 3.6, 0); vip.add(vipFace);
   // club lights
   const lights = [];
-  for (const [lx, ly, lz, col, k] of [[x, 8, zStage - 4, 0x6a5aff, 140], [x - 10, 6, front + 8, 0xff3fd0, 80], [x + 10, 6, front + 8, 0x3a6bff, 80], [x, 3, zStage + 3.5, 0xffffff, 30]]) {
+  for (const [lx, ly, lz, col, k] of [[x, 8, zStage - 4, 0x6a5aff, 140], [x - 10, 6, front + 8, 0xff3fd0, 80], [x + 10, 6, front + 8, 0x3a6bff, 80], [x, 3, zStage + 3.5, 0xb8a8ff, 14]]) {
     const l = new THREE.PointLight(col, k, 40, 2); l.position.set(lx, ly, lz); g.add(l); lights.push(l);
   }
   const strobe = new THREE.PointLight(0xffffff, 0, 60, 1.5); strobe.position.set(x, 9, (front + zStage) / 2); g.add(strobe);
@@ -146,7 +146,7 @@ function drawLED(tex, t, drop) {
   g.strokeStyle = `rgba(160,120,255,${0.25 + 0.5 * p})`; g.lineWidth = 3;
   for (let k = 0; k < 6; k++) { const rr = ((t * 60 + k * 40) % 240); g.beginPath(); g.ellipse(w / 2, h / 2, rr * 1.4, rr * 0.55, 0, 0, Math.PI * 2); g.stroke(); }
   if (drop > 0) {
-    g.fillStyle = `rgba(255,255,255,${drop})`; g.font = 'bold 120px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = `rgba(210,160,255,${drop * 0.85})`; g.font = 'bold 120px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.shadowColor = '#ff40d0'; g.shadowBlur = 30; g.fillText('NOCTA', w / 2, h / 2); g.shadowBlur = 0;
   }
   tex.needsUpdate = true;
@@ -161,7 +161,7 @@ function drawBooth(tex, t) {
     g.fillStyle = i % 2 ? '#3a6bff' : '#b040ff';
     g.fillRect(i * (w / 48) + 1, h - v * h * 0.8, w / 48 - 2, v * h * 0.8);
   }
-  g.fillStyle = '#ffffff'; g.font = 'bold 64px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = '#d8b8ff'; g.font = 'bold 64px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.shadowColor = '#ff40d0'; g.shadowBlur = 20; g.fillText('NOCTA', w / 2, h / 2); g.shadowBlur = 0;
   tex.needsUpdate = true;
 }
@@ -180,7 +180,7 @@ export function updateClub(C, t, djDrop) {
   for (const b of C.beams) {
     const a = t * 0.9 + b.i * 0.7;
     b.head.rotation.set(0.35 * Math.sin(a) + (b.tz > 0 ? 0.25 : -0.25), 0, 0.5 * Math.sin(a * 0.7 + b.i));
-    b.b.material.opacity = 0.55 + 0.45 * pulse;
+    b.b.material.opacity = 0.38 + 0.22 * pulse;
   }
   // laser fans
   C.lasers.forEach((L, li) => {
@@ -197,7 +197,7 @@ export function updateClub(C, t, djDrop) {
   let s = 0;
   if (after > 0) s = sp < 0.12 ? 1 : 0;
   if (after > -0.9 && after < 0) s = (Math.floor(t * 16) % 2) * 0.6;
-  C.strobe.intensity = s * 400;
+  C.strobe.intensity = s * 120;
   C.lights[0].intensity = 140 * (0.7 + 0.6 * pulse);
   // confetti
   const conf = C.conf, d = new THREE.Object3D();

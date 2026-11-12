@@ -58,45 +58,60 @@ export function sit(h, seat, yaw, o = {}) {
   h.pose(p);
 }
 
-// standing / dancing. o: { energy 0..1, arms: 'down' | 'up' | 'wave' | 'hug', hugL/hugR: world shoulder targets, t, look, face, phase }
+// expressive helpers -------------------------------------------------------------------------
+// irregular laugh: jaw 'ha-ha' pulses, returns { open, shake }
+export function laugh(t, seed = 0, k = 1) {
+  const r = (x) => Math.sin(x * 12.9898 + seed * 78.233) * 43758.5453 % 1;
+  const ph = t * 7.5 + seed;
+  const pulse = Math.pow(Math.abs(Math.sin(ph)), 1.5) * (0.75 + 0.25 * Math.sin(t * 1.3 + seed));
+  return { open: k * (0.28 + 0.42 * pulse), shake: k * 0.03 * Math.sin(ph * 2) };
+}
+// talking jaw (syllables)
+export function talk(t, seed = 0, k = 1) {
+  const v = Math.abs(Math.sin(t * 11 + seed) * Math.sin(t * 4.3 + seed * 2));
+  return k * (0.05 + 0.3 * v);
+}
+
+// standing / dancing. o: { energy 0..1, arms: 'groove' | 'up' | 'pump' | 'hug', hugL/hugR: world targets, t, look, face, phase }
 export function dance(h, pos, yaw, o = {}) {
   const t = o.t || 0, sc = h.s.scale || 1, e = o.energy ?? 1;
-  const ph = beatPhase(t + (o.phase || 0));
-  const bounce = Math.abs(Math.sin(Math.PI * ph));
+  const tp = t + (o.phase || 0);
+  const ph = beatPhase(tp);
+  const bounce = Math.abs(Math.sin(Math.PI * ph));          // knees: down on every beat
+  const half = Math.sin((tp / BEAT) * Math.PI);              // alternates every beat
   const L = (x, y, z) => local(pos, yaw, V(x, y, z));
-  const hipsY = h.hipH * sc - 0.035 * e - 0.03 * e * (1 - bounce);
-  const sway = Math.sin(((t + (o.phase || 0)) / BEAT) * Math.PI * 0.5) * e;
+  const hipsY = h.hipH * sc - 0.045 * e - 0.045 * e * (1 - bounce);
+  const sway = Math.sin((tp / BEAT) * Math.PI * 0.5) * e;    // two-beat hip sway
   const feet = {
-    L: { pos: L(0.12 * sc, 0.075, 0.03 + 0.02 * sway), pole: L(0.3, 0.6, 2) },
-    R: { pos: L(-0.12 * sc, 0.075, -0.02 - 0.02 * sway), pole: L(-0.3, 0.6, 2) },
+    L: { pos: L(0.13 * sc + 0.015 * sway, 0.075, 0.05 + 0.03 * Math.max(0, sway)), pole: L(0.35, 0.6, 2) },
+    R: { pos: L(-0.13 * sc + 0.015 * sway, 0.075, -0.01 + 0.03 * Math.max(0, -sway)), pole: L(-0.35, 0.6, 2) },
   };
   const hy = hipsY;
-  const shH = hy + 0.45 * sc;
+  const shH = hy + 0.42 * sc;
   const hands = {};
-  const arms = o.arms || 'down';
+  const arms = o.arms || 'groove';
   for (const [k, sx] of [['L', 1], ['R', -1]]) {
-    if (arms === 'up') {
-      const lift = 0.62 + 0.05 * bounce + 0.04 * Math.sin(t * 3 + sx);
-      hands[k] = { pos: L(sx * (0.2 + 0.06 * Math.sin(t * 2.1 + sx)), shH + lift * sc, 0.06 + 0.05 * Math.sin(t * 1.7 + sx * 2)), pole: L(sx * 1.2, shH, -0.3), palm: L(0, 0, 1).sub(L(0, 0, 0)), curl: 0.25, spread: 0.6 };
-    } else if (arms === 'wave') {
-      const up = sx > 0 ? 1 : 0.2;
-      hands[k] = { pos: L(sx * (0.25 + 0.05 * Math.sin(t * 4)), shH + (0.15 + 0.45 * up) * sc + 0.05 * bounce, 0.18), pole: L(sx * 1.2, shH - 0.3, -0.4), curl: 0.3 };
+    const own = sx > 0 ? half : -half;
+    if (arms === 'up') {                                      // hands up, elbows bent, small fist pumps
+      const pump = 0.06 * Math.max(0, own) * e;
+      hands[k] = { pos: L(sx * (0.27 + 0.04 * Math.sin(t * 1.9 + sx)), shH + (0.43 + pump) * sc, 0.1 + 0.04 * Math.sin(t * 1.4 + sx * 2)), pole: L(sx * 1.4, shH + 0.1, -0.2), palm: L(0, 0.2, 1).sub(L(0, 0, 0)), curl: 0.55 + 0.3 * Math.max(0, own), thumb: 0.5, spread: 0.2 };
+    } else if (arms === 'pump') {                             // one arm pumping the air on the beat
+      const up = sx > 0;
+      hands[k] = up
+        ? { pos: L(0.24, shH + (0.36 + 0.12 * bounce) * sc, 0.16), pole: L(1.3, shH - 0.1, -0.3), curl: 0.85, thumb: 0.6 }
+        : { pos: L(-0.2, hy + 0.2 + 0.06 * own, 0.22), pole: L(-0.9, hy, -0.5), curl: 0.7 };
     } else if (arms === 'hug' && o['hug' + k]) {
-      const tgt = o['hug' + k];
-      hands[k] = { pos: tgt, pole: L(sx * 0.3, shH + 0.4, -0.6), palm: V(0, -1, 0), curl: 0.6 };
-    } else if (arms === 'mic') {   // singing along: one hand to the chest, one up
-      hands[k] = sx > 0
-        ? { pos: L(0.22, shH + (0.5 + 0.08 * bounce) * sc, 0.12), pole: L(1, shH, -0.3), curl: 0.6 }
-        : { pos: L(-0.05, shH - 0.12, 0.2), pole: L(-1, shH - 0.3, -0.2), curl: 0.7 };
-    } else {
-      const sw = Math.sin(((t + (o.phase || 0)) / BEAT) * Math.PI + (sx > 0 ? 0 : Math.PI));
-      hands[k] = { pos: L(sx * 0.24, hy + 0.12 + 0.12 * e * Math.max(0, sw), 0.16 + 0.05 * sw * e), pole: L(sx * 0.8, hy, -0.6), curl: 0.6 };
+      hands[k] = { pos: o['hug' + k], pole: L(sx * 0.4, shH + 0.45, -0.7), palm: V(0, -1, 0), curl: 0.55, thumb: 0.4 };
+    } else {                                                   // groove: elbows bent ~90deg, forearms swinging with the beat
+      hands[k] = { pos: L(sx * (0.21 + 0.03 * own), hy + 0.24 + 0.09 * e * Math.max(0, own), 0.22 + 0.05 * own * e), pole: L(sx * 0.9, hy - 0.1, -0.7), curl: 0.7, thumb: 0.5 };
     }
     if (o.hands && o.hands[k]) hands[k] = o.hands[k];
   }
+  const sh = o.shake || 0;
   h.pose({
-    pos, yaw, hipsY: hy, hipsYaw: 0.08 * sway, hipsRoll: 0.03 * sway,
-    spine: { x: 0.04 + 0.05 * bounce * e + (o.lean || 0), y: -0.12 * sway, z: -0.04 * sway + (o.roll || 0) },
-    feet, hands, t, look: o.look, eyes: o.eyes, face: o.face, headTurn: o.headTurn || { x: 0.05 * bounce * e, z: 0.06 * sway },
+    pos, yaw, hipsY: hy, hipsYaw: 0.1 * sway, hipsRoll: 0.04 * sway,
+    spine: { x: 0.05 + 0.06 * bounce * e + (o.lean || 0) + sh, y: -0.14 * sway, z: -0.05 * sway + 0.03 * half * e + (o.roll || 0) },
+    feet, hands, t, look: o.look, eyes: o.eyes, face: o.face,
+    headTurn: o.headTurn || { x: 0.07 * bounce * e - 2 * sh, y: 0.04 * half * e, z: 0.07 * sway },
   });
 }

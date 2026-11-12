@@ -150,7 +150,7 @@ export function buildLakefront(scene) {
   const bulbG = new THREE.BoxGeometry(0.28, 0.04, 0.6); bulbG.translate(0, 7.29, 1.85);
   const N = 90, x0 = -1200, step = 26;
   const poles = new THREE.InstancedMesh(mergeGeometries([poleG, armG, headG]), mat.std(0x2a2d33, 0.5, 0.6), N);
-  const bulbs = new THREE.InstancedMesh(bulbG, mat.emit(0xffb35a, 6), N);
+  const bulbs = new THREE.InstancedMesh(bulbG, mat.emit(0xffb35a, 2.8), N);
   const poolTex = glowTex();
   const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: poolTex, color: new THREE.Color(0xff9a40).multiplyScalar(0.55), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }), N);
   const d = new THREE.Object3D();

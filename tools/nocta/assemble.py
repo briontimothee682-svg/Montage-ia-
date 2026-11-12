@@ -109,7 +109,7 @@ def zoom_blur(u8, amount, bright=0.0):
         x0, y0 = (W - cw) / 2, (H - ch) / 2
         acc += np.asarray(im.transform((W, H), Image.EXTENT, (x0, y0, x0 + cw, y0 + ch), Image.BILINEAR), np.float32)
     acc /= n
-    acc = acc * (1 + bright) + 255 * bright * 0.35
+    acc = acc * (1 + bright * 0.6) + np.array([150, 120, 230], np.float32) * bright * 0.25
     return np.clip(acc, 0, 255).astype(np.uint8)
 
 
@@ -334,7 +334,7 @@ def render(cfg, clips_dir, out_path, preview=False):
                     frame = (fa * (1 - w) + fb * w).astype(np.uint8)
                     bump = np.sin(np.pi * w)
                     if P.trans == "traversee":
-                        frame = zoom_blur(frame, 0.16 * bump, 0.18 * bump)
+                        frame = zoom_blur(frame, 0.24 * bump, 0.12 * bump)
                     else:
                         frame = zoom_blur(frame, 0.03 * bump)
                     break
@@ -342,7 +342,7 @@ def render(cfg, clips_dir, out_path, preview=False):
                 frame = seg.frame(t)
             if seg.trans == "flash" and t > seg.b - 3.5 / FPS:
                 wf = (t - (seg.b - 3.5 / FPS)) / (3.5 / FPS)
-                frame = (frame.astype(np.float32) * (1 - wf) + 255 * wf).astype(np.uint8)
+                frame = (frame.astype(np.float32) * (1 - 0.72 * wf) + np.array([200, 175, 245], np.float32) * 0.72 * wf).astype(np.uint8)
             if card is not None and NOTIF <= t < 6.0:
                 c, g = card.frame(t - NOTIF)
                 frame = composite(frame, c, g)

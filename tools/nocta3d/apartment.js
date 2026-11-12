@@ -112,7 +112,7 @@ export function buildApartment(scene) {
     c.rotation.set(-Math.PI / 2, 0, a + (rr() - 0.5) * 0.3); table.add(c);
   }
   // lamps
-  const lampShade = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc890).multiplyScalar(0.85), side: THREE.DoubleSide });
+  const lampShade = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffb878).multiplyScalar(0.6), side: THREE.DoubleSide });
   const floorLamp = new THREE.Group(); floorLamp.position.set(2.9, F, z0 - 1.7); g.add(floorLamp);
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1.55, 8), mat.std(0x1a1a1a, 0.4, 0.8)); pole.position.y = 0.78; floorLamp.add(pole);
   const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.24, 0.3, 24, 1, true), lampShade); shade.position.y = 1.62; floorLamp.add(shade);
@@ -127,9 +127,10 @@ export function buildApartment(scene) {
   // design pendant above the coffee table: warm key on the faces
   const pend = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat.std(0x1a1a1a, 0.4, 0.7, { side: THREE.DoubleSide }));
   pend.position.set(0, F + 2.35, z0 - 0.6); g.add(pend);
-  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 8), mat.emit(0xffd29a, 3)); bulb.position.set(0, F + 2.3, z0 - 0.6); g.add(bulb);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 8), mat.emit(0xffc27a, 1.05)); bulb.position.set(0, F + 2.3, z0 - 0.6); g.add(bulb);
   const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 1.05, 6), mat.std(0x111111, 0.5)); cord.position.set(0, F + 2.87, z0 - 0.6); g.add(cord);
-  const l3 = new THREE.PointLight(0xffc27a, 5, 0, 2); l3.position.set(0, F + 2.1, z0 - 0.3); l3.castShadow = false; g.add(l3);
+  const l3 = new THREE.PointLight(0xffc27a, 4, 0, 2); l3.position.set(0, F + 2.1, z0 - 0.3); l3.castShadow = false; g.add(l3);
+  const l4 = new THREE.PointLight(0xffd8b0, 2.2, 0, 2); l4.position.set(0.2, F + 1.4, z0 + 1.6); g.add(l4);
   const moon = new THREE.DirectionalLight(0x7f95ff, 0.35); moon.position.set(2, F + 8, zWin - 10); moon.target.position.set(0, F, z0); g.add(moon, moon.target);
   // shelf, plant, frames on the walls
   const plantM = mat.std(0x2c5a2e, 0.8);

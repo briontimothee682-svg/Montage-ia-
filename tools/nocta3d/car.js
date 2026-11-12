@@ -112,19 +112,19 @@ export class Golf {
     // front: honeycomb grille, LED light bar, red GTI line, headlights, X fog lights, logo
     const grille = new THREE.Mesh(new RoundedBoxGeometry(1.25, 0.24, 0.05, 2, 0.02), mat.std(0x08080a, 0.4, 0.4));
     grille.position.set(0, 0.47, 2.14); this.body.add(grille);
-    const bar = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.018, 0.02), mat.emit(0xeaf4ff, 3.5)); bar.position.set(0, 0.79, 2.06); this.body.add(bar);
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.018, 0.02), mat.emit(0xdfe8ff, 1.3)); bar.position.set(0, 0.79, 2.06); this.body.add(bar);
     const red = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.012, 0.02), mat.emit(0xff1020, 1.6)); red.position.set(0, 0.755, 2.07); this.body.add(red);
     this.lightsOn = [];
     for (const sx of [1, -1]) {
-      const hl = new THREE.Mesh(new RoundedBoxGeometry(0.34, 0.07, 0.06, 2, 0.02), mat.emit(0xf2f8ff, 4)); hl.position.set(sx * 0.66, 0.8, 1.99); hl.rotation.y = sx * 0.35; this.body.add(hl);
-      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), mat.emit(0xffffff, 6));
+      const hl = new THREE.Mesh(new RoundedBoxGeometry(0.34, 0.07, 0.06, 2, 0.02), mat.emit(0xe6eeff, 1.5)); hl.position.set(sx * 0.66, 0.8, 1.99); hl.rotation.y = sx * 0.35; this.body.add(hl);
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), mat.emit(0xe8eeff, 1.6));
       for (const [dx, dy] of [[0, 0], [0.035, 0.03], [-0.035, 0.03], [0.035, -0.03], [-0.035, -0.03]]) {
         const d2 = dot.clone(); d2.position.set(sx * (0.56 + dx), 0.45 + dy, 2.1); this.body.add(d2);
       }
-      const tl = new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.07, 0.05, 2, 0.02), mat.emit(0xff0a14, 3)); tl.position.set(sx * 0.58, 0.9, -2.1); tl.rotation.y = -sx * 0.3; this.body.add(tl);
-      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: new THREE.Color(0xdfeaff).multiplyScalar(1.6), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
-      glow.position.set(sx * 0.66, 0.8, 2.1); glow.scale.set(1.2, 0.6, 1); this.body.add(glow);
-      const tg = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: new THREE.Color(0xff1a20).multiplyScalar(1.2), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+      const tl = new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.07, 0.05, 2, 0.02), mat.emit(0xff0a14, 1.8)); tl.position.set(sx * 0.58, 0.9, -2.1); tl.rotation.y = -sx * 0.3; this.body.add(tl);
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: new THREE.Color(0xc8d6ff).multiplyScalar(0.45), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+      glow.position.set(sx * 0.66, 0.8, 2.1); glow.scale.set(0.8, 0.4, 1); this.body.add(glow);
+      const tg = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: new THREE.Color(0xff1a20).multiplyScalar(0.6), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
       tg.position.set(sx * 0.58, 0.9, -2.2); tg.scale.set(0.9, 0.4, 1); this.body.add(tg);
     }
     const logo = new THREE.Mesh(new THREE.CircleGeometry(0.085, 32), new THREE.MeshStandardMaterial({ map: logoTex(), transparent: true, metalness: 0.9, roughness: 0.2 }));

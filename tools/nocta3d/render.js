@@ -13,7 +13,7 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/pn
   let W = 1080, H = 1920;
   if (mode === 'shot' && args[7]) { W = parseInt(args[6]); H = parseInt(args[7]); }
   if (mode === 'test' && args[4]) { const s = args[4].split('x'); W = parseInt(s[0]); H = parseInt(s[1]); }
-  if (mode === 'multi' && args[3]) { const s = args[3].split('x'); W = parseInt(s[0]); H = parseInt(s[1]); }
+  if ((mode === 'multi' || mode === 'portrait') && args[3]) { const s = args[3].split('x'); W = parseInt(s[0]); H = parseInt(s[1]); }
   const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-gpu-sandbox'] });
   const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
   page.setDefaultTimeout(600000);
@@ -34,17 +34,26 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/pn
       catch (e) { if (attempt >= 2) throw e; console.error('retry', file); }
     }
   };
-  if (mode === 'info') {
+  if (mode === 'portrait') {
+    const list = JSON.parse(args[1]);
+    fs.mkdirSync(args[2], { recursive: true });
+    let i = 0;
+    for (const [name, opts] of list) {
+      await page.evaluate(([n, o]) => window.renderPortrait(n, o), [name, opts]);
+      await grab(path.join(args[2], `${String(i++).padStart(2, '0')}_${name}.png`));
+    }
+  } else if (mode === 'info') {
     const r = await page.evaluate(([s, tt]) => window.debugInfo(s, tt), [args[1], parseFloat(args[2])]);
     console.log(JSON.stringify(r));
   } else if (mode === 'multi') {
     const list = JSON.parse(args[1]);
     fs.mkdirSync(args[2], { recursive: true });
+    let idx = 0;
     for (const [id, t, dbg] of list) {
       const t0 = Date.now();
       await page.evaluate((d) => { window.debugCam = d || null; }, dbg || null);
       await page.evaluate(([s, tt]) => window.renderShot(s, tt), [id, t]);
-      const f = path.join(args[2], `${id}_${t.toFixed(2)}.png`);
+      const f = path.join(args[2], `${String(idx++).padStart(2, '0')}_${id}_${t.toFixed(2)}.png`);
       await grab(f);
       console.log(id, t, Date.now() - t0, 'ms');
     }
