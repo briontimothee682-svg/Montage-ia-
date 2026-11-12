@@ -1,0 +1,7 @@
+Fonts added for the NOCTA commercial (both under the SIL Open Font License 1.1, see OFL.txt):
+
+TiltNeon-Regular.ttf  - Copyright 2019 The Tilt Project Authors (https://github.com/googlefonts/Tilt-Fonts)
+Unbounded-Light.ttf   - Copyright 2022 The Unbounded Project Authors (https://github.com/googlefonts/unbounded)
+Unbounded-Bold.ttf    - Copyright 2022 The Unbounded Project Authors (https://github.com/googlefonts/unbounded)
+
+Converted from the Fontsource WOFF files (latin subset) to TTF, unmodified otherwise.

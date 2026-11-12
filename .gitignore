@@ -8,3 +8,5 @@ exports/frames/
 exports/holo/
 exports/frames3d_b/
 exports/postvid/
+exports/nocta/_mix_tmp.wav
+tools/nocta/__pycache__/
