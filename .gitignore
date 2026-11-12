@@ -10,3 +10,5 @@ exports/frames3d_b/
 exports/postvid/
 exports/nocta/_mix_tmp.wav
 tools/nocta/__pycache__/
+tools/nocta3d/node_modules/
+exports/nocta3d_frames/

@@ -1,0 +1,1 @@
+{ "name": "nocta-3d", "private": true, "version": "1.0.0", "dependencies": { "three": "0.160.0" } }

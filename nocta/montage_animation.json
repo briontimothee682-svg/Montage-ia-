@@ -1,0 +1,17 @@
+{
+  "adresse": "[ADRESSE]",
+  "notification": { "active": true, "hauteur_centre_px": 520 },
+  "etalonnage": 0.3,
+  "grain": 0.35,
+  "plans": {
+    "01":  { "fichier": "shot_01.mp4",  "debut_source": 0.0,   "vitesse": 1.0, "rampe": false, "son_du_clip": 0, "synchro": null, "transition_suivante": "fondu" },
+    "02":  { "fichier": "shot_02.mp4",  "debut_source": 0.125, "vitesse": 1.0, "rampe": false, "son_du_clip": 0, "synchro": null, "transition_suivante": "fondu" },
+    "03a": { "fichier": "shot_03a.mp4", "debut_source": 0.125, "vitesse": 1.0, "rampe": false, "son_du_clip": 0, "synchro": null, "transition_suivante": "fondu" },
+    "03b": { "fichier": "shot_03b.mp4", "debut_source": 0.125, "vitesse": 1.0, "rampe": false, "son_du_clip": 0, "synchro": null, "transition_suivante": "traversee" },
+    "04":  { "fichier": "shot_04.mp4",  "debut_source": 0.125, "vitesse": 1.0, "rampe": false, "son_du_clip": 0, "synchro": null, "transition_suivante": "fondu" },
+    "05":  { "fichier": "shot_05.mp4",  "debut_source": 0.125, "vitesse": 1.0, "rampe": false, "son_du_clip": 0, "synchro": null, "transition_suivante": "fondu" },
+    "06":  { "fichier": "shot_06.mp4",  "debut_source": 0.125, "vitesse": 1.0, "rampe": false, "son_du_clip": 0, "synchro": null, "transition_suivante": "fondu" },
+    "07":  { "fichier": "shot_07.mp4",  "debut_source": 0.125, "vitesse": 1.0, "rampe": false, "son_du_clip": 0, "synchro": null, "transition_suivante": "traversee" },
+    "08":  { "fichier": "shot_08.mp4",  "debut_source": 0.125, "vitesse": 1.0, "rampe": false, "son_du_clip": 0, "synchro": null, "transition_suivante": "flash" }
+  }
+}
