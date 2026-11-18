@@ -899,22 +899,26 @@ export class Human {
     this.neck.rotation.set(0, 0, 0); this.head.rotation.set(0, 0, 0);
     this.root.updateMatrixWorld(true);
 
-    // head look-at (split between neck and head)
+    // head look-at, computed as yaw/pitch in the chest frame (stable, no Euler flips), split neck/head
+    const soft = (v, lim) => lim * Math.tanh(v / lim);
+    const ht = p.headTurn || {};
+    const lf = p.life ?? 1, sd2 = this.seed % 89;
+    let yaw = 0, pitch = 0;
     if (p.look) {
-      this.head.lookAt(p.look);
-      const q = this.head.quaternion.clone();
-      const e = new THREE.Euler().setFromQuaternion(q, 'YXZ');
-      e.y = clamp(e.y, -1.25, 1.25); e.x = clamp(e.x, -0.7, 0.6);
-      const ht = p.headTurn || {};
-      const lf = p.life ?? 1, sd2 = this.seed % 89;
-      e.x += (ht.x || 0) + 0.025 * noise1(t * 0.9, sd2) * lf; e.y += (ht.y || 0) + 0.035 * noise1(t * 0.7, sd2 + 5) * lf; e.z = (ht.z || 0) + 0.03 * noise1(t * 0.6, sd2 + 9) * lf;
-      this.neck.rotation.set(e.x * 0.4, e.y * 0.4, e.z * 0.4, 'YXZ');
-      this.head.rotation.set(e.x * 0.6, e.y * 0.6, e.z * 0.6, 'YXZ');
-    } else if (p.headTurn) {
-      const ht = p.headTurn;
-      this.neck.rotation.set((ht.x || 0) * 0.4, (ht.y || 0) * 0.4, (ht.z || 0) * 0.4, 'YXZ');
-      this.head.rotation.set((ht.x || 0) * 0.6, (ht.y || 0) * 0.6, (ht.z || 0) * 0.6, 'YXZ');
+      const nb = this.neck.getWorldPosition(V()).add(this.toWorldDir(V(0, 0.16, 0)));
+      const d = p.look.clone().sub(nb);
+      const qs = this.spine.getWorldQuaternion(new THREE.Quaternion()).invert();
+      d.applyQuaternion(qs);
+      yaw = Math.atan2(d.x, Math.max(d.z, 0.02 + 0.5 * Math.abs(d.x) * 0));
+      if (d.z < 0) yaw = Math.sign(d.x || 1) * (Math.PI / 2 + Math.atan2(-d.z, Math.abs(d.x) + 1e-4) * 0.2);
+      pitch = Math.atan2(d.y, Math.hypot(d.x, Math.max(d.z, 0)));
+      yaw = soft(yaw, 1.15); pitch = soft(pitch, pitch > 0 ? 0.6 : 0.75);
     }
+    const ex = -pitch + (ht.x || 0) + 0.025 * noise1(t * 0.9, sd2) * lf;
+    const ey = yaw + (ht.y || 0) + 0.035 * noise1(t * 0.7, sd2 + 5) * lf;
+    const ez = (ht.z || 0) + 0.03 * noise1(t * 0.6, sd2 + 9) * lf;
+    this.neck.rotation.set(ex * 0.4, ey * 0.45, ez * 0.4, 'YXZ');
+    this.head.rotation.set(ex * 0.6, ey * 0.55, ez * 0.6, 'YXZ');
     this.root.updateMatrixWorld(true);
 
     // arms

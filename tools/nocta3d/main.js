@@ -317,6 +317,16 @@ window.renderPortrait = async (name, a = {}) => {
   renderPass.scene = studio.scene; composer.renderToScreen = true; composer.render();
 };
 window.film = film;
+window.headTrack = (id, n, t0, t1, step) => {
+  const out = [];
+  for (let t = t0; t <= t1 + 1e-6; t += step) {
+    stage(id, t);
+    const h = film.cast[n];
+    const e1 = new THREE.Euler().setFromQuaternion(h.head.quaternion, 'YXZ'), e2 = new THREE.Euler().setFromQuaternion(h.neck.quaternion, 'YXZ');
+    out.push([+t.toFixed(2), +(e1.y + e2.y).toFixed(3), +(e1.x + e2.x).toFixed(3), +(e1.z + e2.z).toFixed(3)]);
+  }
+  return out;
+};
 window.debugInfo = (id, t) => {
   stage(id, t);
   const h = film.cast.lucas, sw = film.car.steer;

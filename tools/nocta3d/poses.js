@@ -58,6 +58,18 @@ export function sit(h, seat, yaw, o = {}) {
   h.pose(p);
 }
 
+// gaze schedule: [[tStart, targetFn | Vector3], ...] -> smoothly turns between targets (~0.35 s)
+export function gaze(t, sched, dur = 0.35) {
+  const val = x => (typeof x === 'function' ? x() : x);
+  let i = 0;
+  while (i < sched.length - 1 && t >= sched[i + 1][0]) i++;
+  const cur = val(sched[i][1]);
+  if (i === 0 || t - sched[i][0] >= dur) return cur.clone();
+  const prev = val(sched[i - 1][1]);
+  const k = smooth((t - sched[i][0]) / dur);
+  return prev.clone().lerp(cur, k);
+}
+
 // expressive helpers -------------------------------------------------------------------------
 // irregular laugh: jaw 'ha-ha' pulses, returns { open, shake }
 export function laugh(t, seed = 0, k = 1) {

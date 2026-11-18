@@ -34,7 +34,10 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/pn
       catch (e) { if (attempt >= 2) throw e; console.error('retry', file); }
     }
   };
-  if (mode === 'portrait') {
+  if (mode === 'track') {
+    const r = await page.evaluate(([id, n, a, b, st]) => window.headTrack(id, n, a, b, st), [args[1], args[2], parseFloat(args[3]), parseFloat(args[4]), parseFloat(args[5])]);
+    console.log(JSON.stringify(r));
+  } else if (mode === 'portrait') {
     const list = JSON.parse(args[1]);
     fs.mkdirSync(args[2], { recursive: true });
     let i = 0;

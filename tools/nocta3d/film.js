@@ -5,7 +5,7 @@ import { Font } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { V, clamp, lerp, smooth, prog, keys, easeInOut, easeOut, easeIn, seeded, glowTex, mat, canvasTex, beatPulse, beatPhase, bar, BEAT, DROP } from './lib.js';
 import { Human } from './human.js';
-import { sit, dance, laugh, talk } from './poses.js';
+import { sit, dance, laugh, talk, gaze } from './poses.js';
 import { buildSky, nightEnvironment, buildMountains, buildLakefront, updateStreaks, buildTown, buildApartmentBuilding, buildClubExterior, CLUB, APT } from './city.js';
 import { buildApartment } from './apartment.js';
 import { Golf, CAR } from './car.js';
@@ -109,9 +109,10 @@ export class Film {
     this.scene.fog = new THREE.FogExp2(0x0b1230, 0.0012);
     this.scene.environmentIntensity = 0.45;
     const C = this.cast, S = this.apt.seats;
-    const heads = Object.fromEntries(Object.entries(C).map(([k, h]) => [k, h.headWorld()]));
     const notif = clamp((t - NOTIF) / 0.12);
     const surprise = Math.exp(-Math.max(0, t - NOTIF - 0.15) / 0.6) * (t > NOTIF + 0.1 ? 1 : 0);
+    for (let pass = 0; pass < 2; pass++) {
+    const heads = Object.fromEntries(Object.entries(C).map(([k, h]) => [k, h.headWorld()]));
     const o = {};
     if (shot === '01') {
       for (const n of Object.keys(C)) {
@@ -128,17 +129,26 @@ export class Film {
         const lower = smooth((t - 6.0) / 0.7);
         let look = C[n].phoneObj.position.clone(), smile = 0.25, open = 0.0;
         const mine = pairs.find(p => p[0] === n), seen = pairs.find(p => p[1] === n);
-        if (t > 6.15) look = heads[n === 'lucas' ? 'ines' : n].clone();
-        if (mine && t > mine[2]) { look = heads[mine[1]]; smile = 0.35 + 0.6 * smooth((t - mine[2] - 0.15) / 0.5); open = 0.25 * smooth((t - mine[2] - 0.35) / 0.5); }
-        if (seen && t > seen[2] + 0.1 && t < seen[2] + 0.75) look = heads[seen[0]];
+        const ph = () => C[n].phoneObj.position;
+        const H = k => () => heads[k];
+        const plan = {
+          lucas: [[5.6, ph], [6.25, H('malik')], [7.25, H('chloe')], [8.75, H('ines')], [9.6, H('malik')], [10.35, H('chloe')]],
+          malik: [[5.6, ph], [6.35, H('lucas')], [7.05, H('chloe')], [8.3, H('lucas')], [9.5, H('ines')], [10.3, H('lucas')]],
+          chloe: [[5.6, ph], [6.7, H('lucas')], [7.15, H('malik')], [7.85, H('ines')], [9.0, H('malik')], [9.8, H('lucas')], [10.5, H('ines')]],
+          ines: [[5.6, ph], [6.9, H('lucas')], [7.95, H('chloe')], [8.65, H('lucas')], [9.7, H('chloe')], [10.4, H('malik')]],
+        };
+        look = gaze(t, plan[n], 0.45);
+        if (mine && t > mine[2]) { smile = 0.35 + 0.6 * smooth((t - mine[2] - 0.15) / 0.5); open = 0.25 * smooth((t - mine[2] - 0.35) / 0.5); }
+        if (seen && t > seen[2] + 0.1) smile = Math.max(smile, 0.3 + 0.5 * smooth((t - seen[2] - 0.3) / 0.6));
         let nod = 0, roll = 0;
         if (mine && t > mine[2] && t < mine[2] + 0.9) { nod = 0.08 * Math.sin((t - mine[2]) * 9) * Math.exp(-(t - mine[2]) * 2); roll = 0.06 * smooth((t - mine[2]) / 0.4); }
-        if (t > 9.4) { const others = Object.keys(C).filter(k => k !== n); look = heads[others[Math.floor((t * 0.8 + n.length) % 3)]]; smile = 1; const lg = laugh(t, n.length, smooth((t - 9.4) / 0.4)); open = lg.open; nod = -lg.shake * 2; }
+        if (t > 9.4) { smile = 1; const lg = laugh(t, n.length, smooth((t - 9.4) / 0.4)); open = lg.open; nod = -lg.shake * 2; }
         else if (mine && t > mine[2] + 0.5) open = Math.max(open, talk(t, n.length, 0.7));
         o[n] = { phone: 1 - lower, screen: 1 - 0.6 * lower, lean: lerp(0.16, 0.04, lower), look, face: { smile, open, browUp: 0.3 * smooth((t - 9.4) / 0.4) + (mine && t > mine[2] && t < mine[2] + 0.8 ? 0.5 : 0) }, headTurn: { x: nod, z: roll * (n.length % 2 ? 1 : -1) } };
       }
     }
     this.seatAll(t, o);
+    }
     // phones: screens, lights, holograms
     for (const p of this.phoneFx) {
       const ph = p.h.phoneObj;
@@ -197,7 +207,7 @@ export class Film {
         const b2 = beatPulse(t, DROP, 5), hb = Math.sin((t - DROP) / BEAT * Math.PI);
         const up = n === 'malik' ? 0.22 + 0.06 * b2 : 0.05 * b2;
         o.hands = { L: { pos: L(V(p.x + 0.17, 0.78 + up * (n === 'malik' ? 1 : 0.3) + 0.03 * hb, p.z + 0.28)), curl: 0.7, pole: L(V(p.x + 0.8, 0.6, p.z - 0.3)) }, R: { pos: L(V(p.x - 0.15, 0.78 + 0.02 * hb, p.z + 0.25)), curl: 0.6, pole: L(V(p.x - 0.8, 0.6, p.z - 0.3)) } };
-        o.look = n === 'malik' ? (Math.sin(t * 0.8) > 0 ? L(V(0.37, 1.2, 0.1)) : L(V(-0.5, 1.1, 8))) : L(V(0, 1.1, 5));
+        o.look = n === 'malik' ? gaze(t, [[13, () => L(V(-0.5, 1.1, 8))], [15.6, () => L(V(0.37, 1.2, 0.1))], [17.4, () => L(V(-0.5, 1.1, 8))], [19.1, () => L(V(0.37, 1.2, 0.1))], [21.0, () => L(V(-0.6, 1.1, 8))], [23.2, () => L(V(0.37, 1.2, 0.1))], [25.2, () => L(V(-0.5, 1.1, 8))]], 0.4) : L(V(0, 1.1, 5));
         o.face = { smile: 0.9, open: n === 'malik' ? talk(t, 5, 0.8) : laugh(t, n.length, 0.5).open };
         o.headTurn = { x: 0.07 * b2, z: 0.05 * hb };
         o.roll = 0.04 * hb;
@@ -256,15 +266,16 @@ export class Film {
     const lg = k => laugh(t, k * 1.9, 1);
     const laughF = k => ({ smile: 1, open: lg(k).open, browUp: 0.25 + 0.15 * Math.sin(t * 2 + k) });
     const lookCam = this.camera.position;
+    const vipLook = (hd, per) => { const sch = []; for (let k = 36.0; k < 42; k += per / 2) sch.push([k, Math.round((k - 36) / (per / 2)) % 2 ? lookCam.clone() : hd]); return gaze(t, sch, 0.6); };
     const free = (x, z, sx, k) => {
       const b = Math.abs(Math.sin(Math.PI * beatPhase(t + k * 0.05)));
       return { pos: L(V(x + 0.05, 1.4 + 1.62 + 0.07 * b + 0.03 * Math.sin(t * 2.3 + k), z)), pole: L(V(x + 0.3, 1.4 + 1.5, z + sx * 0.9)), curl: 0.45 + 0.35 * b, thumb: 0.5, spread: 0.25 };
     };
     const cfg = {
-      malik: { arms: 'hug', hugL: S.chloe.L.clone().add(V(0, 0.05, 0)), hands: { R: free(1.95, -1.15, -1, 0) }, look: t % 2.4 < 1.2 ? heads.chloe : lookCam, face: laughF(0), shake: lg(0).shake },
-      chloe: { arms: 'hug', hugR: S.malik.R.clone().add(V(0, 0.04, 0)), hands: { L: free(1.97, -0.08, 1, 1) }, look: t % 2.0 < 0.9 ? heads.malik : lookCam, face: laughF(1), shake: lg(1).shake },
-      lucas: { arms: 'hug', hugL: S.ines.L.clone().add(V(0, 0.05, 0)), hands: { R: free(1.97, 0.1, -1, 2) }, look: t % 2.2 < 1.1 ? heads.ines : lookCam, face: laughF(2), shake: lg(2).shake },
-      ines: { arms: 'hug', hugR: S.lucas.R.clone().add(V(0, 0.04, 0)), hands: { L: free(1.95, 1.15, 1, 3) }, look: t % 1.8 < 0.8 ? heads.lucas : lookCam, face: laughF(3), shake: lg(3).shake },
+      malik: { arms: 'hug', hugL: S.chloe.L.clone().add(V(0, 0.05, 0)), hands: { R: free(1.95, -1.15, -1, 0) }, look: vipLook(heads.chloe, 2.4), face: laughF(0), shake: lg(0).shake },
+      chloe: { arms: 'hug', hugR: S.malik.R.clone().add(V(0, 0.04, 0)), hands: { L: free(1.97, -0.08, 1, 1) }, look: vipLook(heads.malik, 2.0), face: laughF(1), shake: lg(1).shake },
+      lucas: { arms: 'hug', hugL: S.ines.L.clone().add(V(0, 0.05, 0)), hands: { R: free(1.97, 0.1, -1, 2) }, look: vipLook(heads.ines, 2.2), face: laughF(2), shake: lg(2).shake },
+      ines: { arms: 'hug', hugR: S.lucas.R.clone().add(V(0, 0.04, 0)), hands: { L: free(1.95, 1.15, 1, 3) }, look: vipLook(heads.lucas, 1.8), face: laughF(3), shake: lg(3).shake },
     };
     names.forEach((n, i) => dance(C[n], pos[i], yaw + (i < 2 ? 0.15 : -0.15), { t, energy: 0.85, phase: i * 0.07, ...cfg[n] }));
   }
