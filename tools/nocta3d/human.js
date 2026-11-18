@@ -533,7 +533,7 @@ export class Human {
     this.eyes = [];
     const ex = F ? 0.0375 : 0.0385, ey = 0.006;
     const rEye = F ? 0.0128 : 0.0124;
-    const mIris = new THREE.MeshPhysicalMaterial({ map: irisTex(s.iris), roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.03 });
+    const mIris = new THREE.MeshPhysicalMaterial({ map: irisTex(s.iris), roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.1 });
     for (const side of [1, -1]) {
       const sp = this.faceAt(side * ex, ey);
       const c = sp.p.clone().addScaledVector(V(0, 0, 1), -rEye * 0.62);

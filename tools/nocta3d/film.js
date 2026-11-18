@@ -64,7 +64,7 @@ export class Film {
     scene.add(this.queue.group);
     // phone lights + notification holograms
     this.phoneFx = Object.values(this.cast).map(h => {
-      const l = new THREE.PointLight(0xbcd6ff, 0, 1.6, 2); scene.add(l);
+      const l = new THREE.PointLight(0xbcd6ff, 0, 0.8, 0);   // no inverse-square: soft, even screen glow (no blown-out faces) scene.add(l);
       const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: new THREE.Color(0xbfdcff), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0 }));
       glow.scale.set(0.35, 0.35, 1); scene.add(glow);
       const card = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.07), new THREE.MeshBasicMaterial({ map: holoTex(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }));
@@ -156,14 +156,14 @@ export class Film {
       ph.userData.screen.map = k > 0.5 ? this.screenTexLit : this.screenTexDim;
       ph.userData.screen.color.setScalar(0.42 + 0.28 * k);
       const n = V(0, 0, 1).applyQuaternion(ph.quaternion);
-      p.l.position.copy(ph.position).addScaledVector(n, 0.26);
-      p.l.intensity = 0.06 + 0.14 * k;
+      p.l.position.copy(ph.position).addScaledVector(n, 0.1);
+      p.l.intensity = 0.18 + 0.42 * k;
       p.glow.position.copy(ph.position).addScaledVector(n, 0.02);
       p.glow.material.opacity = 0; p.glow.visible = false;
       const rise = clamp((t - NOTIF) / 0.7);
-      p.card.position.copy(ph.position).add(V(0, 0.09 + 0.16 * easeOut(rise), 0)).addScaledVector(n, 0.03);
+      p.card.position.copy(ph.position).add(V(0, 0.05 + 0.06 * easeOut(rise), 0)).addScaledVector(n, 0.03);   // stays under the chin
       p.card.lookAt(cam.position);
-      p.card.material.opacity = shot === '01' ? 0.55 * smooth(rise * 3) * (1 - smooth((t - 5.2) / 0.6)) : 0;
+      p.card.material.opacity = shot === '01' ? 0.4 * smooth(rise * 3) * (1 - smooth((t - 5.2) / 0.6)) : 0;
     }
   }
 

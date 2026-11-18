@@ -203,7 +203,7 @@ function scleraTex() {
 // eye with sclera texture, iris cap, thick lids with a lash line and a pink waterline
 export function buildEye(socket, rEye, mSkin, mIris, F, side) {
   const ball = new THREE.Group(); socket.add(ball);
-  const mWhite = mat.phys(0xffffff, { map: scleraTex(), roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.03 });
+  const mWhite = mat.phys(0xffffff, { map: scleraTex(), roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.1 });
   const sclera = new THREE.Mesh(new THREE.SphereGeometry(rEye, 32, 24), mWhite); ball.add(sclera);
   const capA = 0.52;
   const capG = new THREE.SphereGeometry(rEye * 1.005, 32, 14, 0, Math.PI * 2, 0, capA);

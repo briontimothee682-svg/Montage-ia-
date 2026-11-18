@@ -5,6 +5,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { V, clamp, lerp, smooth, keys, easeInOut, easeOut, seeded, bar, DROP, beatPulse } from './lib.js';
 import { Film, SHOTS, carX } from './film.js';
 import { APT, CLUB, updateStreaks } from './city.js';
@@ -26,6 +27,13 @@ const target = new THREE.WebGLRenderTarget(W, H, { samples: 4, type: THREE.HalfF
 const composer = new EffectComposer(renderer, target);
 const renderPass = new RenderPass(new THREE.Scene(), camera);
 composer.addPass(renderPass);
+// firefly clamp: a mirror-sharp eye/chrome highlight can reach thousands in the half-float buffer and the
+// bloom then spreads it into a huge white haze. Clamp HDR (and kill NaN) before the bloom.
+composer.addPass(new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, maxV: { value: 16.0 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: 'uniform sampler2D tDiffuse; uniform float maxV; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); vec3 v = c.rgb; if (any(isnan(v)) || any(isinf(v))) v = vec3(0.0); float m = max(v.r, max(v.g, v.b)); if (m > maxV) v *= maxV / m; gl_FragColor = vec4(max(v, vec3(0.0)), c.a); }',
+}));
 const bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), 0.4, 0.5, 1.3);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
@@ -71,7 +79,7 @@ function setCam(pos, look, fov, roll = 0) {
       const hp = h.headWorld();
       const fwd = h.headGroup.localToWorld(V(0, 0, 1)).sub(hp).normalize().applyAxisAngle(V(0, 1, 0), d.ang || 0);
       look = hp.clone().add(V(0, -0.02, 0)); pos = hp.clone().addScaledVector(fwd, d.dist || 0.6); fov = d.fov || 26;
-    } else { pos = L(d.pos); look = L(d.look); fov = d.fov || fov; }
+    } else if (d.pos) { pos = L(d.pos); look = L(d.look); fov = d.fov || fov; }
     roll = 0;
     film.car.body.visible = !d.hideBody;
     film.cast.lucas.headGroup.visible = true;
