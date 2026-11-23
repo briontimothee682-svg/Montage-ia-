@@ -12,3 +12,5 @@ exports/nocta/_mix_tmp.wav
 tools/nocta/__pycache__/
 tools/nocta3d/node_modules/
 exports/nocta3d_frames/
+exports/nocta_ia_work/
+tools/nocta_ia/__pycache__/

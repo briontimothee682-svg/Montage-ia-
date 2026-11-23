@@ -67,7 +67,8 @@
    "engine": "wan",
    "priority": 1,
    "seconds": 3.5,
-   "prompt": "Four friends sit around a coffee table at night scrolling their phones; their phone screens suddenly light up brighter at the same moment, they blink, raise their eyebrows in surprise and glance up from their phones. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera."
+   "prompt": "Four friends sit around a coffee table at night scrolling their phones; their phone screens suddenly light up brighter at the same moment, they blink, raise their eyebrows in surprise and glance up from their phones. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
+   "speed": 1.0
   },
   {
    "id": "c08",
@@ -75,7 +76,8 @@
    "engine": "wan",
    "priority": 2,
    "seconds": 3.5,
-   "prompt": "Four friends in a nightclub VIP booth dance, laugh and sing along with their arms around each other, bouncing to the beat, lasers sweeping over them through the haze. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera."
+   "prompt": "Four friends in a nightclub VIP booth dance, laugh and sing along with their arms around each other, bouncing to the beat, lasers sweeping over them through the haze. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
+   "speed": 0.74
   },
   {
    "id": "c02",
@@ -83,7 +85,8 @@
    "engine": "wan",
    "priority": 3,
    "seconds": 3.5,
-   "prompt": "The four friends look at each other one after another and break into knowing, excited smiles, one of them laughs and nods, natural eye contact and blinking, the camera slowly pushes in. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera."
+   "prompt": "The four friends look at each other one after another and break into knowing, excited smiles, one of them laughs and nods, natural eye contact and blinking, the camera slowly pushes in. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
+   "speed": 0.66
   },
   {
    "id": "c04",
@@ -91,7 +94,8 @@
    "engine": "wan",
    "priority": 4,
    "seconds": 3.5,
-   "prompt": "Driver point of view in a car at night driving fast along a lakeside road, streetlights streaking past through the windshield, the driver's hands hold the steering wheel and the right hand taps the wheel to the beat, slight engine vibration. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera."
+   "prompt": "Driver point of view in a car at night driving fast along a lakeside road, streetlights streaking past through the windshield, the driver's hands hold the steering wheel and the right hand taps the wheel to the beat, slight engine vibration. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
+   "speed": 0.62
   },
   {
    "id": "c07b",
@@ -99,7 +103,8 @@
    "engine": "wan",
    "priority": 5,
    "seconds": 3.5,
-   "prompt": "The DJ dances behind the mixer and pumps both hands toward the ceiling as the beat drops, lasers sweep through the haze, confetti falls, the crowd's hands jump in the foreground. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera."
+   "prompt": "The DJ dances behind the mixer and pumps both hands toward the ceiling as the beat drops, lasers sweep through the haze, confetti falls, the crowd's hands jump in the foreground. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
+   "speed": 1.0
   },
   {
    "id": "c01b",
@@ -107,7 +112,8 @@
    "engine": "wan",
    "priority": 6,
    "seconds": 3.0,
-   "prompt": "The young woman looks at her phone, the screen lights up brighter, her eyes widen and she slowly smiles, then glances up at her friend beside her. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera."
+   "prompt": "The young woman looks at her phone, the screen lights up brighter, her eyes widen and she slowly smiles, then glances up at her friend beside her. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
+   "speed": 1.0
   },
   {
    "id": "c03a",
