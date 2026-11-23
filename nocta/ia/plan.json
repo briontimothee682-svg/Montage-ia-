@@ -1,0 +1,233 @@
+{
+ "style": "Cinematic night film still, shot on ARRI Alexa, photorealistic, natural skin texture, shallow depth of field, film grain, deep blue and violet tones with warm practical lights.",
+ "cast": "a white man with short brown hair in a black overshirt, a Black man with short twists and a beard in a cream knit sweater, a platinum-blonde woman in a black satin top, and a woman with big dark curly hair in a burgundy top",
+ "keyframe_dir": "nocta/ia/images",
+ "clip_dir": "nocta/ia/clips",
+ "keyframes": [
+  {
+   "id": "k01",
+   "prompt": "Four young friends in their twenties sit around a low coffee table in a modern apartment living room at night: {cast}. All four look down at their smartphones, faces lit by the screens. Bottles, glasses and playing cards on the table, big window behind with Annecy city lights, the lake and mountains.",
+   "seed": 11
+  },
+  {
+   "id": "k01b",
+   "prompt": "Close-up of a platinum-blonde young woman in a black satin top sitting on a dark sofa at night looking down at her smartphone, the screen glow softly lighting her face, a Black man with short twists and a beard in a cream knit sweater beside her out of focus, warm lamp and city light bokeh behind.",
+   "seed": 11
+  },
+  {
+   "id": "k02",
+   "prompt": "Four young friends in a modern apartment at night lower their phones and look at each other with excited, knowing smiles: {cast}. Coffee table with bottles and cards, warm lamp light, big window with city lights and mountains behind.",
+   "seed": 11
+  },
+  {
+   "id": "k03a",
+   "prompt": "View from inside a dark modern apartment toward a huge floor-to-ceiling window at night, coffee table with bottles in the foreground, through the glass the rooftops of Annecy old town, a church spire, the lake and dark mountains under a deep blue night sky.",
+   "seed": 11
+  },
+  {
+   "id": "k03b",
+   "prompt": "Aerial drone photo at night above the roofs of Annecy old town and its canals, a lakeside road lit by orange streetlights with one black Volkswagen Golf GTI driving, mountains in the distance under a deep blue sky.",
+   "seed": 11
+  },
+  {
+   "id": "k04",
+   "prompt": "First-person view from the driver's seat of a black Volkswagen Golf 8 GTI at night, the driver's two hands on the flat-bottomed leather steering wheel with the VW logo, red ambient interior lighting, glowing digital dashboard, through the windshield a lakeside road with orange streetlights and city lights reflecting on the water.",
+   "seed": 11
+  },
+  {
+   "id": "k05",
+   "prompt": "Low tracking shot at wheel height of a black Volkswagen Golf 8 GTI driving fast at night in side profile, glossy paint reflecting orange streetlights, red brake calipers, wet asphalt reflections, background motion blur with light streaks.",
+   "seed": 11
+  },
+  {
+   "id": "k06",
+   "prompt": "Night drone shot of a modern nightclub building with a black facade glowing with blue, violet and magenta neon lines and a big glowing neon sign that reads \"NOCTA\" above the entrance, a long queue of stylish young people behind velvet ropes, two bouncers in black, haze, wet pavement reflecting the neon, mountains faintly behind.",
+   "seed": 11
+  },
+  {
+   "id": "k07a",
+   "prompt": "View just above the raised hands of a huge packed crowd dancing in a big nightclub, blue and violet lasers cutting through thick haze, strobe lights, LED walls, the DJ stage glowing ahead.",
+   "seed": 11
+  },
+  {
+   "id": "k07b",
+   "prompt": "A DJ in a black t-shirt with headphones raises both hands toward the ceiling behind the mixer on a nightclub stage, backlit by white beams, blue and violet lasers through thick haze, LED walls, confetti falling, crowd hands in the foreground.",
+   "seed": 11
+  },
+  {
+   "id": "k08",
+   "prompt": "Four young friends dance, laugh and sing with their arms around each other in a VIP booth above a packed nightclub dance floor: {cast}. Blue and violet lasers and strobes light their faces, thick haze, the crowd and DJ booth behind them, candid joy.",
+   "seed": 11
+  }
+ ],
+ "clips": [
+  {
+   "id": "c01",
+   "keyframe": "k01",
+   "engine": "wan",
+   "priority": 1,
+   "seconds": 3.5,
+   "prompt": "Four friends sit around a coffee table at night scrolling their phones; their phone screens suddenly light up brighter at the same moment, they blink, raise their eyebrows in surprise and glance up from their phones. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera."
+  },
+  {
+   "id": "c08",
+   "keyframe": "k08",
+   "engine": "wan",
+   "priority": 2,
+   "seconds": 3.5,
+   "prompt": "Four friends in a nightclub VIP booth dance, laugh and sing along with their arms around each other, bouncing to the beat, lasers sweeping over them through the haze. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera."
+  },
+  {
+   "id": "c02",
+   "keyframe": "k02",
+   "engine": "wan",
+   "priority": 3,
+   "seconds": 3.5,
+   "prompt": "The four friends look at each other one after another and break into knowing, excited smiles, one of them laughs and nods, natural eye contact and blinking, the camera slowly pushes in. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera."
+  },
+  {
+   "id": "c04",
+   "keyframe": "k04",
+   "engine": "wan",
+   "priority": 4,
+   "seconds": 3.5,
+   "prompt": "Driver point of view in a car at night driving fast along a lakeside road, streetlights streaking past through the windshield, the driver's hands hold the steering wheel and the right hand taps the wheel to the beat, slight engine vibration. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera."
+  },
+  {
+   "id": "c07b",
+   "keyframe": "k07b",
+   "engine": "wan",
+   "priority": 5,
+   "seconds": 3.5,
+   "prompt": "The DJ dances behind the mixer and pumps both hands toward the ceiling as the beat drops, lasers sweep through the haze, confetti falls, the crowd's hands jump in the foreground. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera."
+  },
+  {
+   "id": "c01b",
+   "keyframe": "k01b",
+   "engine": "wan",
+   "priority": 6,
+   "seconds": 3.0,
+   "prompt": "The young woman looks at her phone, the screen lights up brighter, her eyes widen and she slowly smiles, then glances up at her friend beside her. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera."
+  },
+  {
+   "id": "c03a",
+   "keyframe": "k03a",
+   "engine": "still",
+   "motion": [
+    "--dur",
+    "2.8",
+    "--zoom",
+    "1.0",
+    "2.6",
+    "--ease",
+    "in",
+    "--blur",
+    "7",
+    "--focus",
+    "0.5",
+    "0.4",
+    "--shake",
+    "3"
+   ]
+  },
+  {
+   "id": "c03b",
+   "keyframe": "k03b",
+   "engine": "still",
+   "motion": [
+    "--dur",
+    "2.3",
+    "--zoom",
+    "1.35",
+    "1.0",
+    "--roll",
+    "-4",
+    "2",
+    "--ease",
+    "out",
+    "--blur",
+    "6",
+    "--pan",
+    "0",
+    "-0.06",
+    "0",
+    "0.04",
+    "--shake",
+    "3"
+   ]
+  },
+  {
+   "id": "c05",
+   "keyframe": "k05",
+   "engine": "still",
+   "motion": [
+    "--dur",
+    "4.1",
+    "--zoom",
+    "1.12",
+    "1.2",
+    "--pan",
+    "0.05",
+    "0",
+    "-0.05",
+    "0",
+    "--ease",
+    "lin",
+    "--blur",
+    "5",
+    "--shake",
+    "6"
+   ]
+  },
+  {
+   "id": "c06",
+   "keyframe": "k06",
+   "engine": "still",
+   "motion": [
+    "--dur",
+    "5.0",
+    "--zoom",
+    "1.0",
+    "1.35",
+    "--pan",
+    "0",
+    "-0.05",
+    "0",
+    "0.02",
+    "--roll",
+    "2",
+    "0",
+    "--ease",
+    "inout",
+    "--blur",
+    "4",
+    "--focus",
+    "0.5",
+    "0.45",
+    "--shake",
+    "2.5"
+   ]
+  },
+  {
+   "id": "c07a",
+   "keyframe": "k07a",
+   "engine": "still",
+   "motion": [
+    "--dur",
+    "4.2",
+    "--zoom",
+    "1.0",
+    "1.8",
+    "--ease",
+    "in",
+    "--blur",
+    "6",
+    "--focus",
+    "0.5",
+    "0.42",
+    "--shake",
+    "5"
+   ]
+  }
+ ]
+}
