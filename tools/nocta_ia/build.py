@@ -40,7 +40,7 @@ def to24(src, dst, speed=1.0):
     """1080x1920 at 24 fps, slowed down by `speed` (<1 = slow motion); Wan's 16 fps frames get
     motion-compensated in-between frames so the slow motion stays fluid."""
     run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vf",
-         f"setpts=PTS/{speed},scale=1080:1920:force_original_aspect_ratio=increase:flags=lanczos,crop=1080:1920,"
+         f"setpts=PTS/{speed},scale=1080:1920:force_original_aspect_ratio=increase:flags=lanczos,crop=1080:1920,unsharp=5:5:0.6:5:5:0.0,"
          "minterpolate=fps=24:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1,setsar=1",
          "-an", "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-pix_fmt", "yuv420p", dst])
 
