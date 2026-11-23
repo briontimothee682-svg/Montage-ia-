@@ -26,7 +26,7 @@
   },
   {
    "id": "k03b",
-   "prompt": "Aerial drone photo at night above the roofs of Annecy old town and its canals, a lakeside road lit by orange streetlights with one black Volkswagen Golf GTI driving, mountains in the distance under a deep blue sky.",
+   "prompt": "Aerial FPV drone shot at night from behind and slightly above a black Volkswagen Golf 8 GTI driving along the lakeside road of Lake Annecy, its red tail lights glowing, orange streetlights lining the road, the dark lake beside the road reflecting the lights of the town, mountains under a deep blue night sky.",
    "seed": 11
   },
   {
@@ -36,8 +36,8 @@
   },
   {
    "id": "k05",
-   "prompt": "Low tracking shot at wheel height of a black Volkswagen Golf 8 GTI driving fast at night in side profile, glossy paint reflecting orange streetlights, red brake calipers, wet asphalt reflections, background motion blur with light streaks.",
-   "seed": 11
+   "prompt": "Low tracking shot at night from a camera car driving alongside a black Volkswagen Golf 8 GTI, three-quarter front side view filling the frame, driving along a lakeside road, Lake Annecy behind it with town lights reflecting on the water and dark mountains, orange streetlights reflecting on the glossy black paint, red brake calipers, spinning wheels.",
+   "seed": 23
   },
   {
    "id": "k06",
@@ -55,6 +55,11 @@
    "seed": 11
   },
   {
+   "id": "k07c",
+   "prompt": "Four young friends dance wildly in the middle of a packed nightclub dance floor, jumping with their arms up, laughing and singing along: {cast}. Blue and violet lasers through thick haze, confetti in the air, the crowd dancing all around them, the DJ stage glowing behind.",
+   "seed": 11
+  },
+  {
    "id": "k08",
    "prompt": "Four young friends dance, laugh and sing with their arms around each other in a VIP booth above a packed nightclub dance floor: {cast}. Blue and violet lasers and strobes light their faces, thick haze, the crowd and DJ booth behind them, candid joy.",
    "seed": 11
@@ -68,52 +73,28 @@
    "priority": 1,
    "seconds": 3.5,
    "prompt": "Four friends sit around a coffee table at night scrolling their phones; their phone screens suddenly light up brighter at the same moment, they blink, raise their eyebrows in surprise and glance up from their phones. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
-   "speed": 1.0
-  },
-  {
-   "id": "c08",
-   "keyframe": "k08",
-   "engine": "wan",
-   "priority": 2,
-   "seconds": 3.5,
-   "prompt": "Four friends in a nightclub VIP booth dance, laugh and sing along with their arms around each other, bouncing to the beat, lasers sweeping over them through the haze. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
-   "speed": 0.7
-  },
-  {
-   "id": "c02",
-   "keyframe": "k02",
-   "engine": "wan",
-   "priority": 3,
-   "seconds": 3.5,
-   "prompt": "The four friends look at each other one after another and break into knowing, excited smiles, one of them laughs and nods, natural eye contact and blinking, the camera slowly pushes in. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
-   "speed": 0.66
-  },
-  {
-   "id": "c04",
-   "keyframe": "k04",
-   "engine": "wan",
-   "priority": 4,
-   "seconds": 3.5,
-   "prompt": "Driver point of view in a car at night driving fast along a lakeside road, streetlights streaking past through the windshield, the driver's hands hold the steering wheel and the right hand taps the wheel to the beat, slight engine vibration. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
-   "speed": 0.62
-  },
-  {
-   "id": "c07b",
-   "keyframe": "k07b",
-   "engine": "wan",
-   "priority": 5,
-   "seconds": 3.5,
-   "prompt": "The DJ dances behind the mixer and pumps both hands toward the ceiling as the beat drops, lasers sweep through the haze, confetti falls, the crowd's hands jump in the foreground. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
-   "speed": 1.0
+   "speed": 1.0,
+   "steps": 6
   },
   {
    "id": "c01b",
    "keyframe": "k01b",
    "engine": "wan",
-   "priority": 6,
+   "priority": 10,
    "seconds": 3.0,
    "prompt": "The young woman looks at her phone, the screen lights up brighter, her eyes widen and she slowly smiles, then glances up at her friend beside her. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
-   "speed": 1.0
+   "speed": 1.0,
+   "steps": 4
+  },
+  {
+   "id": "c02",
+   "keyframe": "k02",
+   "engine": "wan",
+   "priority": 2,
+   "seconds": 3.5,
+   "prompt": "The four friends look at each other one after another and break into knowing, excited smiles, one of them laughs and nods, natural eye contact and blinking, the camera slowly pushes in. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
+   "speed": 0.66,
+   "steps": 6
   },
   {
    "id": "c03a",
@@ -121,7 +102,7 @@
    "engine": "still",
    "motion": [
     "--dur",
-    "2.8",
+    "3.1",
     "--zoom",
     "1.0",
     "2.6",
@@ -139,51 +120,63 @@
   {
    "id": "c03b",
    "keyframe": "k03b",
-   "engine": "still",
-   "motion": [
-    "--dur",
-    "2.3",
+   "engine": "wan",
+   "priority": 7,
+   "seconds": 3.0,
+   "speed": 1.15,
+   "prompt": "Fast FPV drone shot: the drone dives and races behind the black Golf GTI as it drives fast along the lakeside road at night, tail lights glowing, streetlights rushing past, the lake and the town lights sliding by, the drone closes in on the car. Real live-action footage, cinematic, realistic car motion and physics, fast smooth drone motion.",
+   "fallback": [
     "--zoom",
-    "1.35",
     "1.0",
-    "--roll",
-    "-4",
-    "2",
+    "1.5",
     "--ease",
-    "out",
+    "in",
     "--blur",
     "6",
-    "--pan",
-    "0",
-    "-0.06",
-    "0",
-    "0.04",
+    "--focus",
+    "0.47",
+    "0.72",
     "--shake",
-    "3"
-   ]
+    "4"
+   ],
+   "steps": 4
+  },
+  {
+   "id": "c04",
+   "keyframe": "k04",
+   "engine": "wan",
+   "priority": 9,
+   "seconds": 3.5,
+   "prompt": "Driver point of view in a car at night driving fast along a lakeside road, streetlights streaking past through the windshield, the driver's hands hold the steering wheel and the right hand taps the wheel to the beat, slight engine vibration. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
+   "speed": 0.55,
+   "steps": 4
   },
   {
    "id": "c05",
    "keyframe": "k05",
-   "engine": "still",
-   "motion": [
-    "--dur",
-    "4.1",
+   "engine": "wan",
+   "priority": 4,
+   "seconds": 3.5,
+   "speed": 0.78,
+   "crop_x": 0.0,
+   "prompt": "Tracking shot from a camera car driving alongside: the black Golf GTI drives fast along the lakeside road at night, its wheels spinning, the camera keeps pace with the car while the streetlights, the lake and the town lights behind slide past quickly, reflections glide over the glossy paint. Real live-action footage, cinematic, realistic car motion and physics, smooth fast tracking camera.",
+   "fallback": [
     "--zoom",
-    "1.12",
-    "1.2",
+    "1.1",
+    "1.18",
     "--pan",
-    "0.05",
+    "0.04",
     "0",
-    "-0.05",
+    "-0.04",
     "0",
     "--ease",
     "lin",
     "--blur",
     "5",
     "--shake",
-    "6"
-   ]
+    "5"
+   ],
+   "steps": 4
   },
   {
    "id": "c06",
@@ -191,7 +184,7 @@
    "engine": "still",
    "motion": [
     "--dur",
-    "5.0",
+    "5.4",
     "--zoom",
     "1.0",
     "1.35",
@@ -217,10 +210,13 @@
   {
    "id": "c07a",
    "keyframe": "k07a",
-   "engine": "still",
-   "motion": [
-    "--dur",
-    "4.2",
+   "engine": "wan",
+   "priority": 6,
+   "seconds": 3.0,
+   "speed": 1.0,
+   "take": 2.514,
+   "prompt": "Fast FPV drone shot flying forward low over a packed crowd dancing and jumping with their hands in the air toward the glowing DJ stage, lasers sweeping and strobes flashing through thick haze. Realistic natural human motion, real live-action footage, cinematic, fast smooth forward drone motion.",
+   "fallback": [
     "--zoom",
     "1.0",
     "1.8",
@@ -233,7 +229,50 @@
     "0.42",
     "--shake",
     "5"
-   ]
+   ],
+   "steps": 4
+  },
+  {
+   "id": "c07b",
+   "keyframe": "k07b",
+   "engine": "wan",
+   "priority": 8,
+   "seconds": 2.5,
+   "prompt": "The DJ dances behind the mixer and pumps both hands toward the ceiling as the beat drops, lasers sweep through the haze, confetti falls, the crowd's hands jump in the foreground. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
+   "speed": 1.0,
+   "take": 2.305,
+   "steps": 4
+  },
+  {
+   "id": "c07c",
+   "keyframe": "k07c",
+   "engine": "wan",
+   "priority": 5,
+   "seconds": 3.5,
+   "speed": 0.95,
+   "prompt": "The four friends dance wildly on the packed dance floor, jumping to the beat with their arms up, hair flying, laughing and singing along, the crowd around them jumps too, confetti falls, lasers and strobes flash through the haze. Realistic natural human motion, real live-action footage, cinematic, energetic handheld camera.",
+   "fallback": [
+    "--zoom",
+    "1.05",
+    "1.2",
+    "--ease",
+    "inout",
+    "--blur",
+    "3",
+    "--shake",
+    "7"
+   ],
+   "steps": 4
+  },
+  {
+   "id": "c08",
+   "keyframe": "k08",
+   "engine": "wan",
+   "priority": 3,
+   "seconds": 3.5,
+   "prompt": "Four friends in a nightclub VIP booth dance, laugh and sing along with their arms around each other, bouncing to the beat, lasers sweeping over them through the haze. Realistic natural human motion, real live-action footage, cinematic, subtle handheld camera.",
+   "speed": 0.7,
+   "steps": 6
   }
  ]
 }

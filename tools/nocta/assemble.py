@@ -113,6 +113,16 @@ def zoom_blur(u8, amount, bright=0.0):
     return np.clip(acc, 0, 255).astype(np.uint8)
 
 
+def punch(u8, a):
+    """Beat pulse: push the frame in by `a` (fraction) and lift it a little, like a camera bump on the kick."""
+    if a <= 0.001:
+        return u8
+    cw, ch = W / (1 + a), H / (1 + a)
+    x0, y0 = (W - cw) / 2, (H - ch) / 2
+    im = Image.fromarray(u8).transform((W, H), Image.EXTENT, (x0, y0, x0 + cw, y0 + ch), Image.BILINEAR)
+    return np.clip(np.asarray(im, np.float32) * (1 + 2.2 * a), 0, 255).astype(np.uint8)
+
+
 # ------------------------------------------------------------------ segments
 class Segment:
     def __init__(self, sid, a, b, title, desc, cfg, clips_dir, grade):
@@ -334,12 +344,15 @@ def render(cfg, clips_dir, out_path, preview=False):
                     frame = (fa * (1 - w) + fb * w).astype(np.uint8)
                     bump = np.sin(np.pi * w)
                     if P.trans == "traversee":
-                        frame = zoom_blur(frame, 0.24 * bump, 0.12 * bump)
+                        frame = zoom_blur(frame, 0.32 * bump, 0.12 * bump)
                     else:
                         frame = zoom_blur(frame, 0.03 * bump)
                     break
             if frame is None:
                 frame = seg.frame(t)
+            pulse = float(seg.cfg.get("pulsation", 0))     # club shots breathe with the kick drum
+            if pulse and t >= DROP:
+                frame = punch(frame, pulse * float(np.exp(-(((t - DROP) / BEAT) % 1) * 7)))
             if seg.trans == "flash" and t > seg.b - 3.5 / FPS:
                 wf = (t - (seg.b - 3.5 / FPS)) / (3.5 / FPS)
                 frame = (frame.astype(np.float32) * (1 - 0.72 * wf) + np.array([200, 175, 245], np.float32) * 0.72 * wf).astype(np.uint8)

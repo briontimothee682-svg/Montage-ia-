@@ -20,7 +20,7 @@ WORK = ROOT / "exports" / "nocta_ia_work"
 
 # which clips make each shot of the film (in order)
 SHOTS = {"01": ["c01", "c01b"], "02": ["c02"], "03a": ["c03a"], "03b": ["c03b"], "04": ["c04"],
-         "05": ["c05"], "06": ["c06"], "07": ["c07a", "c07b"], "08": ["c08"]}
+         "05": ["c05"], "06": ["c06"], "07": ["c07a", "c07b", "c07c"], "08": ["c08"]}
 # fallback camera move for a human clip that Wan has not generated yet
 FALLBACK = ["--zoom", "1.0", "1.1", "--ease", "inout", "--blur", "3", "--shake", "3"]
 
@@ -34,6 +34,11 @@ def duration(p):
     r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(p)],
                        capture_output=True, text=True)
     return float(r.stdout.strip())
+
+
+def trim(src, dst, seconds):
+    run(["ffmpeg", "-v", "error", "-y", "-i", src, "-t", f"{seconds:.3f}", "-an", "-c:v", "libx264", "-preset", "slow",
+         "-crf", "14", "-pix_fmt", "yuv420p", dst])
 
 
 def to24(src, dst, speed=1.0):
@@ -71,10 +76,15 @@ def main():
                 else:
                     fb = WORK / f"{cid}_photo.mp4"
                     if not fb.exists():
-                        dur = c.get("seconds", 3.5) / c.get("speed", 1.0)
-                        run([sys.executable, HERE / "still_motion.py", img, fb, *FALLBACK, "--dur", f"{dur:.2f}"])
+                        dur = c.get("take") or c.get("seconds", 3.5) / c.get("speed", 1.0)
+                        run([sys.executable, HERE / "still_motion.py", img, fb, *c.get("fallback", FALLBACK),
+                             "--dur", f"{dur:.2f}", "--crop_x", str(c.get("crop_x", 0.5))])
                     out = fb
                     status[cid] = "EN ATTENTE de Wan -> photo animee provisoire"
+            if c.get("take"):        # keep only the part that lands on the beat grid (see plan.json)
+                cut = WORK / f"{cid}_take.mp4"
+                trim(out, cut, c["take"])
+                out = cut
             parts.append(out)
         dst = SHOTS_DIR / f"shot_{sid}.mp4"
         if len(parts) == 1:

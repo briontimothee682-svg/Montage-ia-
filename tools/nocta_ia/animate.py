@@ -25,12 +25,12 @@ NEG = ("blurry, distorted face, face changing, deformed hands, extra fingers, fu
        "plastic skin, static frame, text, subtitles, watermark, logo, jpeg artifacts, flicker, morphing, warped car")
 
 
-def prep(img, tmp):
-    """9:16 crop of the keyframe, the format of the final film."""
+def prep(img, tmp, crop_x=0.5):
+    """9:16 crop of the keyframe, the format of the final film (crop_x: 0 = left edge, 0.5 = centre)."""
     im = Image.open(img).convert("RGB")
     w, h = im.size
     cw = min(w, round(h * 9 / 16))
-    x0 = (w - cw) // 2
+    x0 = round((w - cw) * crop_x)
     im.crop((x0, 0, x0 + cw, round(cw * 16 / 9))).resize((576, 1024), Image.LANCZOS).save(tmp, quality=95)
     return tmp
 
@@ -52,10 +52,10 @@ def main():
         out = ROOT / plan["clip_dir"] / f"{c['id']}.mp4"
         if out.exists() and not a.only:
             continue
-        img = prep(ROOT / plan["keyframe_dir"] / f"{c['keyframe']}.jpg", f"/tmp/wan_in_{c['id']}.jpg")
+        img = prep(ROOT / plan["keyframe_dir"] / f"{c['keyframe']}.jpg", f"/tmp/wan_in_{c['id']}.jpg", c.get("crop_x", 0.5))
         t = time.time()
         try:
-            r = client.predict(handle_file(img), c["prompt"], c.get("steps", 6), NEG, c.get("seconds", 3.5),
+            r = client.predict(handle_file(img), c["prompt"], c.get("steps", 4), NEG, c.get("seconds", 3.5),
                                1, 1, c.get("seed", 42), False, api_name="/generate_video")
         except Exception as e:
             msg = str(e)
